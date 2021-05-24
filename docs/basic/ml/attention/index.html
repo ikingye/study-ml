@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.71.0" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="关注项目 #  机器学习 #  tensorflow/tensorflow #  scikit-learn/scikit-learn #  scikit-learn: machine learning in Python https://scikit-learn.org
+php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
+ 深度学习 #  paddlepaddle/paddle #   机器人 #  gunthercox/ChatterBot #  ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.readthedocs.io">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="关注项目" />
+<meta property="og:description" content="关注项目 #  机器学习 #  tensorflow/tensorflow #  scikit-learn/scikit-learn #  scikit-learn: machine learning in Python https://scikit-learn.org
+php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
+ 深度学习 #  paddlepaddle/paddle #   机器人 #  gunthercox/ChatterBot #  ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.readthedocs.io" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://ikingye.github.io/study-ml/docs/basic/ml/attention/" />
+
+<title>关注项目 | Machine Learning 学习笔记</title>
+<link rel="manifest" href="/study-ml/manifest.json">
+<link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/study-ml/book.min.47e4577a72cc9340ba815ebf8200a2e1642b6e7a28caf0622c921ba9d7c4478e.css" integrity="sha256-R&#43;RXenLMk0C6gV6/ggCi4WQrbnooyvBiLJIbqdfER44=">
+<script defer src="/study-ml/en.search.min.3a3b048ebb3b06bf2a29fdc56822bea4cae115cdf71b4801b7c155be91874115.js" integrity="sha256-OjsEjrs7Br8qKf3FaCK&#43;pMrhFc33G0gBt8FVvpGHQRU="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/study-ml"><span>Machine Learning 学习笔记</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+<ul>
+  <li><a href="https://kingye.me" target="_blank" rel="noopener noreferrer">博客</a></li>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417021727.png" target="_blank" rel="noopener noreferrer">公众号</a></li>
+  <li><a href="https://github.com/ikingye" target="_blank" rel="noopener noreferrer">Github</a></li>
+  <li><a href="https://weibo.com/kingyip15215" target="_blank" rel="noopener noreferrer">微博</a></li>
+  <li><a href="https://www.zhihu.com/people/wutongyip" target="_blank" rel="noopener noreferrer">知乎</a></li>
+</ul>
+<hr />
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第一部分 基础入门</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-37e814e3dfe73a593962185273498adf" class="toggle" checked />
+    <label for="section-37e814e3dfe73a593962185273498adf" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/basic/ml/attention/" class="active">关注项目</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-eb27adadc4ba4e375c55913d57d48805" class="toggle"  />
+    <label for="section-eb27adadc4ba4e375c55913d57d48805" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/basic/ml/tutorial/" class="">教程</a>
+    </label>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第二部分 进阶实战</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第三部分 设计与实现</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第四部分 附录</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2d181cd3861ca7652e852d22b5c3ff21" class="toggle"  />
+    <label for="section-2d181cd3861ca7652e852d22b5c3ff21" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/tutorial/" class="">4.1 教程</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-1291561338a2c243cca077171f0fe528" class="toggle"  />
+    <label for="section-1291561338a2c243cca077171f0fe528" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/" class="">4.2 面试题</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7acebfc4b461748521469ab23214109e" class="toggle"  />
+    <label for="section-7acebfc4b461748521469ab23214109e" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/basic/" class="">基础</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/advanced/" class="">进阶</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c743998336860c656367010fc7573b86" class="toggle"  />
+    <label for="section-c743998336860c656367010fc7573b86" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/attention/" class="">4.3 关注项目</a>
+    </label>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+</nav>
+
+
+
+
+  <script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>关注项目</strong>
+
+  <label for="toc-control">
+    
+    <img src="/study-ml/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#机器学习">机器学习</a>
+      <ul>
+        <li><a href="#tensorflowtensorflowhttpsgithubcomtensorflowtensorflow-github-starshttpsimgshieldsiogithubstarstensorflowtensorflowsvg-languagehttpsimgshieldsiogithublanguagestoptensorflowtensorflowsvg-last-taghttpsimgshieldsiogithubvtagtensorflowtensorflowsvgsortsemver-last-commithttpsimgshieldsiogithublast-committensorflowtensorflowsvg"><a href="https://github.com/tensorflow/tensorflow">tensorflow/tensorflow</a> <img src="https://img.shields.io/github/stars/tensorflow/tensorflow.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/tensorflow/tensorflow.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/tensorflow/tensorflow.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/tensorflow/tensorflow.svg" alt="Last commit"></a></li>
+        <li><a href="#scikit-learnscikit-learnhttpsgithubcomscikit-learnscikit-learn-github-starshttpsimgshieldsiogithubstarsscikit-learnscikit-learnsvg-languagehttpsimgshieldsiogithublanguagestopscikit-learnscikit-learnsvg-last-taghttpsimgshieldsiogithubvtagscikit-learnscikit-learnsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitscikit-learnscikit-learnsvg"><a href="https://github.com/scikit-learn/scikit-learn">scikit-learn/scikit-learn</a> <img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit"></a></li>
+        <li><a href="#php-aiphp-mlhttpsgithubcomphp-aiphp-ml-github-starshttpsimgshieldsiogithubstarsphp-aiphp-mlsvg-languagehttpsimgshieldsiogithublanguagestopphp-aiphp-mlsvg-last-taghttpsimgshieldsiogithubvtagphp-aiphp-mlsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitphp-aiphp-mlsvg"><a href="https://github.com/php-ai/php-ml">php-ai/php-ml</a> <img src="https://img.shields.io/github/stars/php-ai/php-ml.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/php-ai/php-ml.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/php-ai/php-ml.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/php-ai/php-ml.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#深度学习">深度学习</a>
+      <ul>
+        <li><a href="#paddlepaddlepaddlehttpsgithubcompaddlepaddlepaddle-github-starshttpsimgshieldsiogithubstarspaddlepaddlepaddlesvg-languagehttpsimgshieldsiogithublanguagestoppaddlepaddlepaddlesvg-last-taghttpsimgshieldsiogithubvtagpaddlepaddlepaddlesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitpaddlepaddlepaddlesvg"><a href="https://github.com/paddlepaddle/paddle">paddlepaddle/paddle</a> <img src="https://img.shields.io/github/stars/paddlepaddle/paddle.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/paddlepaddle/paddle.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/paddlepaddle/paddle.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/paddlepaddle/paddle.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#机器人">机器人</a>
+      <ul>
+        <li><a href="#gunthercoxchatterbothttpsgithubcomgunthercoxchatterbot-github-starshttpsimgshieldsiogithubstarsgunthercoxchatterbotsvg-languagehttpsimgshieldsiogithublanguagestopgunthercoxchatterbotsvg-last-taghttpsimgshieldsiogithubvtaggunthercoxchatterbotsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitgunthercoxchatterbotsvg"><a href="https://github.com/gunthercox/ChatterBot">gunthercox/ChatterBot</a> <img src="https://img.shields.io/github/stars/gunthercox/ChatterBot.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/gunthercox/ChatterBot.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/gunthercox/ChatterBot.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/gunthercox/ChatterBot.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="关注项目">
+  关注项目
+  <a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae">#</a>
+</h1>
+<h2 id="机器学习">
+  机器学习
+  <a class="anchor" href="#%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0">#</a>
+</h2>
+<a href="https://github.com/tensorflow/tensorflow">tensorflow/tensorflow</a> <img src="https://img.shields.io/github/stars/tensorflow/tensorflow.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/tensorflow/tensorflow.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/tensorflow/tensorflow.svg?sort=semver" alt="Last Tag" /> <h3 id="tensorflowtensorflowhttpsgithubcomtensorflowtensorflow-github-starshttpsimgshieldsiogithubstarstensorflowtensorflowsvg-languagehttpsimgshieldsiogithublanguagestoptensorflowtensorflowsvg-last-taghttpsimgshieldsiogithubvtagtensorflowtensorflowsvgsortsemver-last-commithttpsimgshieldsiogithublast-committensorflowtensorflowsvg">
+  <img src="https://img.shields.io/github/last-commit/tensorflow/tensorflow.svg" alt="Last commit" />
+  <a class="anchor" href="#tensorflowtensorflowhttpsgithubcomtensorflowtensorflow-github-starshttpsimgshieldsiogithubstarstensorflowtensorflowsvg-languagehttpsimgshieldsiogithublanguagestoptensorflowtensorflowsvg-last-taghttpsimgshieldsiogithubvtagtensorflowtensorflowsvgsortsemver-last-commithttpsimgshieldsiogithublast-committensorflowtensorflowsvg">#</a>
+</h3>
+<a href="https://github.com/scikit-learn/scikit-learn">scikit-learn/scikit-learn</a> <img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag" /> <h3 id="scikit-learnscikit-learnhttpsgithubcomscikit-learnscikit-learn-github-starshttpsimgshieldsiogithubstarsscikit-learnscikit-learnsvg-languagehttpsimgshieldsiogithublanguagestopscikit-learnscikit-learnsvg-last-taghttpsimgshieldsiogithubvtagscikit-learnscikit-learnsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitscikit-learnscikit-learnsvg">
+  <img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit" />
+  <a class="anchor" href="#scikit-learnscikit-learnhttpsgithubcomscikit-learnscikit-learn-github-starshttpsimgshieldsiogithubstarsscikit-learnscikit-learnsvg-languagehttpsimgshieldsiogithublanguagestopscikit-learnscikit-learnsvg-last-taghttpsimgshieldsiogithubvtagscikit-learnscikit-learnsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitscikit-learnscikit-learnsvg">#</a>
+</h3>
+<p>scikit-learn: machine learning in Python <a href="https://scikit-learn.org">https://scikit-learn.org</a></p>
+<a href="https://github.com/php-ai/php-ml">php-ai/php-ml</a> <img src="https://img.shields.io/github/stars/php-ai/php-ml.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/php-ai/php-ml.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/php-ai/php-ml.svg?sort=semver" alt="Last Tag" /> <h3 id="php-aiphp-mlhttpsgithubcomphp-aiphp-ml-github-starshttpsimgshieldsiogithubstarsphp-aiphp-mlsvg-languagehttpsimgshieldsiogithublanguagestopphp-aiphp-mlsvg-last-taghttpsimgshieldsiogithubvtagphp-aiphp-mlsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitphp-aiphp-mlsvg">
+  <img src="https://img.shields.io/github/last-commit/php-ai/php-ml.svg" alt="Last commit" />
+  <a class="anchor" href="#php-aiphp-mlhttpsgithubcomphp-aiphp-ml-github-starshttpsimgshieldsiogithubstarsphp-aiphp-mlsvg-languagehttpsimgshieldsiogithublanguagestopphp-aiphp-mlsvg-last-taghttpsimgshieldsiogithubvtagphp-aiphp-mlsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitphp-aiphp-mlsvg">#</a>
+</h3>
+<p>PHP-ML - Machine Learning library for PHP <a href="https://php-ml.org/">https://php-ml.org/</a></p>
+<hr>
+<h2 id="深度学习">
+  深度学习
+  <a class="anchor" href="#%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0">#</a>
+</h2>
+<a href="https://github.com/paddlepaddle/paddle">paddlepaddle/paddle</a> <img src="https://img.shields.io/github/stars/paddlepaddle/paddle.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/paddlepaddle/paddle.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/paddlepaddle/paddle.svg?sort=semver" alt="Last Tag" /> <h3 id="paddlepaddlepaddlehttpsgithubcompaddlepaddlepaddle-github-starshttpsimgshieldsiogithubstarspaddlepaddlepaddlesvg-languagehttpsimgshieldsiogithublanguagestoppaddlepaddlepaddlesvg-last-taghttpsimgshieldsiogithubvtagpaddlepaddlepaddlesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitpaddlepaddlepaddlesvg">
+  <img src="https://img.shields.io/github/last-commit/paddlepaddle/paddle.svg" alt="Last commit" />
+  <a class="anchor" href="#paddlepaddlepaddlehttpsgithubcompaddlepaddlepaddle-github-starshttpsimgshieldsiogithubstarspaddlepaddlepaddlesvg-languagehttpsimgshieldsiogithublanguagestoppaddlepaddlepaddlesvg-last-taghttpsimgshieldsiogithubvtagpaddlepaddlepaddlesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitpaddlepaddlepaddlesvg">#</a>
+</h3>
+<hr>
+<h2 id="机器人">
+  机器人
+  <a class="anchor" href="#%e6%9c%ba%e5%99%a8%e4%ba%ba">#</a>
+</h2>
+<a href="https://github.com/gunthercox/ChatterBot">gunthercox/ChatterBot</a> <img src="https://img.shields.io/github/stars/gunthercox/ChatterBot.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/gunthercox/ChatterBot.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/gunthercox/ChatterBot.svg?sort=semver" alt="Last Tag" /> <h3 id="gunthercoxchatterbothttpsgithubcomgunthercoxchatterbot-github-starshttpsimgshieldsiogithubstarsgunthercoxchatterbotsvg-languagehttpsimgshieldsiogithublanguagestopgunthercoxchatterbotsvg-last-taghttpsimgshieldsiogithubvtaggunthercoxchatterbotsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitgunthercoxchatterbotsvg">
+  <img src="https://img.shields.io/github/last-commit/gunthercox/ChatterBot.svg" alt="Last commit" />
+  <a class="anchor" href="#gunthercoxchatterbothttpsgithubcomgunthercoxchatterbot-github-starshttpsimgshieldsiogithubstarsgunthercoxchatterbotsvg-languagehttpsimgshieldsiogithublanguagestopgunthercoxchatterbotsvg-last-taghttpsimgshieldsiogithubvtaggunthercoxchatterbotsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitgunthercoxchatterbotsvg">#</a>
+</h3>
+<p>ChatterBot is a machine learning, conversational dialog engine for creating chat bots
+<a href="https://chatterbot.readthedocs.io">https://chatterbot.readthedocs.io</a></p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+ 
+        <div>
+    <br>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <p><span id="busuanzi_container_page_pv">本文访问量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_pv">本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_uv">本站总访客数 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 人次</span></p>
+</div>
+
+
+      </footer>
+
+      
+  
+  <div class="book-comments">
+<script src="https://utteranc.es/client.js"
+  repo="ikingye/note"
+  issue-term="pathname"
+  theme="github-light"
+  crossorigin="anonymous"
+  async
+></script>
+
+<div id="footer">
+  <p>
+    <a href="https://kingye.me">叶王</a> &copy; 2013-2021
+    版权所有。如果本文档对你有所帮助，可以<a
+      href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200428110046.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      >请作者喝饮料</a
+    >。
+  </p>
+</div>
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#机器学习">机器学习</a>
+      <ul>
+        <li><a href="#tensorflowtensorflowhttpsgithubcomtensorflowtensorflow-github-starshttpsimgshieldsiogithubstarstensorflowtensorflowsvg-languagehttpsimgshieldsiogithublanguagestoptensorflowtensorflowsvg-last-taghttpsimgshieldsiogithubvtagtensorflowtensorflowsvgsortsemver-last-commithttpsimgshieldsiogithublast-committensorflowtensorflowsvg"><a href="https://github.com/tensorflow/tensorflow">tensorflow/tensorflow</a> <img src="https://img.shields.io/github/stars/tensorflow/tensorflow.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/tensorflow/tensorflow.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/tensorflow/tensorflow.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/tensorflow/tensorflow.svg" alt="Last commit"></a></li>
+        <li><a href="#scikit-learnscikit-learnhttpsgithubcomscikit-learnscikit-learn-github-starshttpsimgshieldsiogithubstarsscikit-learnscikit-learnsvg-languagehttpsimgshieldsiogithublanguagestopscikit-learnscikit-learnsvg-last-taghttpsimgshieldsiogithubvtagscikit-learnscikit-learnsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitscikit-learnscikit-learnsvg"><a href="https://github.com/scikit-learn/scikit-learn">scikit-learn/scikit-learn</a> <img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit"></a></li>
+        <li><a href="#php-aiphp-mlhttpsgithubcomphp-aiphp-ml-github-starshttpsimgshieldsiogithubstarsphp-aiphp-mlsvg-languagehttpsimgshieldsiogithublanguagestopphp-aiphp-mlsvg-last-taghttpsimgshieldsiogithubvtagphp-aiphp-mlsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitphp-aiphp-mlsvg"><a href="https://github.com/php-ai/php-ml">php-ai/php-ml</a> <img src="https://img.shields.io/github/stars/php-ai/php-ml.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/php-ai/php-ml.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/php-ai/php-ml.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/php-ai/php-ml.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#深度学习">深度学习</a>
+      <ul>
+        <li><a href="#paddlepaddlepaddlehttpsgithubcompaddlepaddlepaddle-github-starshttpsimgshieldsiogithubstarspaddlepaddlepaddlesvg-languagehttpsimgshieldsiogithublanguagestoppaddlepaddlepaddlesvg-last-taghttpsimgshieldsiogithubvtagpaddlepaddlepaddlesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitpaddlepaddlepaddlesvg"><a href="https://github.com/paddlepaddle/paddle">paddlepaddle/paddle</a> <img src="https://img.shields.io/github/stars/paddlepaddle/paddle.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/paddlepaddle/paddle.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/paddlepaddle/paddle.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/paddlepaddle/paddle.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#机器人">机器人</a>
+      <ul>
+        <li><a href="#gunthercoxchatterbothttpsgithubcomgunthercoxchatterbot-github-starshttpsimgshieldsiogithubstarsgunthercoxchatterbotsvg-languagehttpsimgshieldsiogithublanguagestopgunthercoxchatterbotsvg-last-taghttpsimgshieldsiogithubvtaggunthercoxchatterbotsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitgunthercoxchatterbotsvg"><a href="https://github.com/gunthercox/ChatterBot">gunthercox/ChatterBot</a> <img src="https://img.shields.io/github/stars/gunthercox/ChatterBot.svg" alt="Github stars"> <img src="https://img.shields.io/github/languages/top/gunthercox/ChatterBot.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/gunthercox/ChatterBot.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/gunthercox/ChatterBot.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

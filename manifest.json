@@ -1,6 +1,6 @@
 {
-  "name": "叶王笔记",
-  "short_name": "叶王笔记",
+  "name": "Machine Learning 学习笔记",
+  "short_name": "Machine Learning 学习笔记",
   "start_url": "/study-ml/",
   "scope": "/study-ml/",
   "display": "standalone",
