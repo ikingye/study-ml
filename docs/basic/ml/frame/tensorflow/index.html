@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.87.0" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Tensorflow #  tensorflow/tensorflow 教程 #  lyhue1991/eat_tensorflow2_in_30_days #  tensorflow/models #  Models and examples built with TensorFlow
+aymericdamien/TensorFlow-Examples #  TensorFlow Tutorial and Examples for Beginners (support TF v1 &amp; v2)">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="Tensorflow" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://ikingye.github.io/study-ml/docs/basic/ml/frame/tensorflow/" />
+
+<title>Tensorflow | Machine Learning 学习笔记</title>
+<link rel="manifest" href="/study-ml/manifest.json">
+<link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
+<script defer src="/study-ml/en.search.min.210cfcf89218e46fbeb07a5c51793f7791e0abd54d74b9204e72474ccf0f87f0.js" integrity="sha256-IQz8&#43;JIY5G&#43;&#43;sHpcUXk/d5Hgq9VNdLkgTnJHTM8Ph/A="></script>
+<link rel="alternate" type="application/rss+xml" href="https://ikingye.github.io/study-ml/docs/basic/ml/frame/tensorflow/index.xml" title="Machine Learning 学习笔记" />
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/study-ml"><span>Machine Learning 学习笔记</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+<ul>
+  <li><a href="https://kingye.me" target="_blank" rel="noopener noreferrer">博客</a></li>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417021727.png" target="_blank" rel="noopener noreferrer">公众号</a></li>
+  <li><a href="https://github.com/ikingye" target="_blank" rel="noopener noreferrer">Github</a></li>
+  <li><a href="https://weibo.com/kingyip15215" target="_blank" rel="noopener noreferrer">微博</a></li>
+  <li><a href="https://www.zhihu.com/people/wutongyip" target="_blank" rel="noopener noreferrer">知乎</a></li>
+</ul>
+<hr />
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第一部分 基础入门</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第二部分 进阶实战</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第三部分 设计与实现</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第四部分 附录</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2d181cd3861ca7652e852d22b5c3ff21" class="toggle"  />
+    <label for="section-2d181cd3861ca7652e852d22b5c3ff21" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/tutorial/" class="">4.1 教程</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-1291561338a2c243cca077171f0fe528" class="toggle"  />
+    <label for="section-1291561338a2c243cca077171f0fe528" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/" class="">4.2 面试题</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7acebfc4b461748521469ab23214109e" class="toggle"  />
+    <label for="section-7acebfc4b461748521469ab23214109e" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/basic/" class="">基础</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://ikingye.github.io/study-ml/docs/appendix/interview/advanced/" class="">进阶</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c743998336860c656367010fc7573b86" class="toggle"  />
+    <label for="section-c743998336860c656367010fc7573b86" class="flex justify-between">
+      <a href="https://ikingye.github.io/study-ml/docs/appendix/attention/" class="">4.3 关注项目</a>
+    </label>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+</nav>
+
+
+
+
+  <script>(function(){var a=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(b){localStorage.setItem("menu.scrollTop",a.scrollTop)}),a.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>Tensorflow</strong>
+
+  <label for="toc-control">
+    
+    <img src="/study-ml/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#教程">教程</a>
+      <ul>
+        <li><a href="#lyhue1991eat_tensorflow2_in_30_dayshttpsgithubcomlyhue1991eat_tensorflow2_in_30_days-github-starshttpsimgshieldsiogithubstarslyhue1991eat_tensorflow2_in_30_dayssvg"><a href="https://github.com/lyhue1991/eat_tensorflow2_in_30_days">lyhue1991/eat_tensorflow2_in_30_days</a> <img src="https://img.shields.io/github/stars/lyhue1991/eat_tensorflow2_in_30_days.svg" alt="Github stars"></a></li>
+        <li><a href="#tensorflowmodelshttpsgithubcomtensorflowmodels-github-starshttpsimgshieldsiogithubstarstensorflowmodelssvg"><a href="https://github.com/tensorflow/models">tensorflow/models</a> <img src="https://img.shields.io/github/stars/tensorflow/models.svg" alt="Github stars"></a></li>
+        <li><a href="#aymericdamientensorflow-exampleshttpsgithubcomaymericdamientensorflow-examples-github-starshttpsimgshieldsiogithubstarsaymericdamientensorflow-examplessvg"><a href="https://github.com/aymericdamien/TensorFlow-Examples">aymericdamien/TensorFlow-Examples</a> <img src="https://img.shields.io/github/stars/aymericdamien/TensorFlow-Examples.svg" alt="Github stars"></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article class="markdown"><h1 id="tensorflow">
+  Tensorflow
+  <a class="anchor" href="#tensorflow">#</a>
+</h1>
+<p><a href="https://github.com/tensorflow/tensorflow">tensorflow/tensorflow</a> <img src="https://img.shields.io/github/stars/tensorflow/tensorflow.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/tensorflow/tensorflow.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/tensorflow/tensorflow.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/tensorflow/tensorflow.svg" alt="Last commit" /></p>
+<h2 id="教程">
+  教程
+  <a class="anchor" href="#%e6%95%99%e7%a8%8b">#</a>
+</h2>
+<a href="https://github.com/lyhue1991/eat_tensorflow2_in_30_days">lyhue1991/eat_tensorflow2_in_30_days</a> <h3 id="lyhue1991eat_tensorflow2_in_30_dayshttpsgithubcomlyhue1991eat_tensorflow2_in_30_days-github-starshttpsimgshieldsiogithubstarslyhue1991eat_tensorflow2_in_30_dayssvg">
+  <img src="https://img.shields.io/github/stars/lyhue1991/eat_tensorflow2_in_30_days.svg" alt="Github stars" />
+  <a class="anchor" href="#lyhue1991eat_tensorflow2_in_30_dayshttpsgithubcomlyhue1991eat_tensorflow2_in_30_days-github-starshttpsimgshieldsiogithubstarslyhue1991eat_tensorflow2_in_30_dayssvg">#</a>
+</h3>
+<a href="https://github.com/tensorflow/models">tensorflow/models</a> <h3 id="tensorflowmodelshttpsgithubcomtensorflowmodels-github-starshttpsimgshieldsiogithubstarstensorflowmodelssvg">
+  <img src="https://img.shields.io/github/stars/tensorflow/models.svg" alt="Github stars" />
+  <a class="anchor" href="#tensorflowmodelshttpsgithubcomtensorflowmodels-github-starshttpsimgshieldsiogithubstarstensorflowmodelssvg">#</a>
+</h3>
+<p>Models and examples built with TensorFlow</p>
+<a href="https://github.com/aymericdamien/TensorFlow-Examples">aymericdamien/TensorFlow-Examples</a> <h3 id="aymericdamientensorflow-exampleshttpsgithubcomaymericdamientensorflow-examples-github-starshttpsimgshieldsiogithubstarsaymericdamientensorflow-examplessvg">
+  <img src="https://img.shields.io/github/stars/aymericdamien/TensorFlow-Examples.svg" alt="Github stars" />
+  <a class="anchor" href="#aymericdamientensorflow-exampleshttpsgithubcomaymericdamientensorflow-examples-github-starshttpsimgshieldsiogithubstarsaymericdamientensorflow-examplessvg">#</a>
+</h3>
+<p>TensorFlow Tutorial and Examples for Beginners (support TF v1 &amp; v2)</p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+  <div><a class="flex align-center" href="https://github.com/ikingye/study-ml/commit/4df3e68270326cf4ef1c7a1807557f0b9a3ae605" title='Last modified by yewang | 2021-05-24' target="_blank" rel="noopener">
+      <img src="/study-ml/svg/calendar.svg" class="book-icon" alt="Calendar" />
+      <span>2021-05-24</span>
+    </a>
+  </div>
+
+
+
+</div>
+
+ 
+        <div>
+    <br>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <p><span id="busuanzi_container_page_pv">本文访问量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_pv">本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_uv">本站总访客数 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 人</span></p>
+</div>
+
+
+      </footer>
+
+      
+  
+  <div class="book-comments">
+<script src="https://utteranc.es/client.js"
+  repo="ikingye/study-ml"
+  issue-term="pathname"
+  theme="github-light"
+  crossorigin="anonymous"
+  async
+></script>
+
+<div id="footer">
+  <p>
+    <a href="https://kingye.me">叶王</a> &copy; 2013-2021
+    版权所有。如果本文档对你有所帮助，可以<a
+      href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200428110046.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      >请作者喝饮料</a
+    >。
+  </p>
+</div>
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#教程">教程</a>
+      <ul>
+        <li><a href="#lyhue1991eat_tensorflow2_in_30_dayshttpsgithubcomlyhue1991eat_tensorflow2_in_30_days-github-starshttpsimgshieldsiogithubstarslyhue1991eat_tensorflow2_in_30_dayssvg"><a href="https://github.com/lyhue1991/eat_tensorflow2_in_30_days">lyhue1991/eat_tensorflow2_in_30_days</a> <img src="https://img.shields.io/github/stars/lyhue1991/eat_tensorflow2_in_30_days.svg" alt="Github stars"></a></li>
+        <li><a href="#tensorflowmodelshttpsgithubcomtensorflowmodels-github-starshttpsimgshieldsiogithubstarstensorflowmodelssvg"><a href="https://github.com/tensorflow/models">tensorflow/models</a> <img src="https://img.shields.io/github/stars/tensorflow/models.svg" alt="Github stars"></a></li>
+        <li><a href="#aymericdamientensorflow-exampleshttpsgithubcomaymericdamientensorflow-examples-github-starshttpsimgshieldsiogithubstarsaymericdamientensorflow-examplessvg"><a href="https://github.com/aymericdamien/TensorFlow-Examples">aymericdamien/TensorFlow-Examples</a> <img src="https://img.shields.io/github/stars/aymericdamien/TensorFlow-Examples.svg" alt="Github stars"></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
