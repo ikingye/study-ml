@@ -29,9 +29,10 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/appendix/tutorial/</guid>
-      <description>教程 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2.0 《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 #  ShusenTang/Dive-into-DL-PyTorch  手写实现李航《统计学习方法》书中全部算法 #  dod-o/statistical-learning-method_code  机器学习白板推导系列 #  shuhuai007/machine-learning-session 【机器学习】【白板推导系列】【合集 1 ～ 23】
-机器学习白板系列 笔记 #  tsyw/MachineLearningNotes Bilibili - 机器学习白板系列
- 机器学习教程（小象学院） #   josephmisiti/awesome-machine-learning #   ZuzooVn/machine-learning-for-software-engineers #  A complete daily plan for studying to become a machine learning engineer.</description>
+      <description>教程 #  基础 #  李宏毅 2021/2022 春机器学习课程 #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
+Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
+llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube
+ 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2.</description>
     </item>
     
     <item>

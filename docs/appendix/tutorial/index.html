@@ -5,13 +5,15 @@
   <meta name="generator" content="Hugo 0.98.0" />
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="教程 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2.0 《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 #  ShusenTang/Dive-into-DL-PyTorch  手写实现李航《统计学习方法》书中全部算法 #  dod-o/statistical-learning-method_code  机器学习白板推导系列 #  shuhuai007/machine-learning-session 【机器学习】【白板推导系列】【合集 1 ～ 23】
-机器学习白板系列 笔记 #  tsyw/MachineLearningNotes Bilibili - 机器学习白板系列
- 机器学习教程（小象学院） #   josephmisiti/awesome-machine-learning #   ZuzooVn/machine-learning-for-software-engineers #  A complete daily plan for studying to become a machine learning engineer.">
+<meta name="description" content="教程 #  基础 #  李宏毅 2021/2022 春机器学习课程 #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
+Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
+llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &ldquo;Learn Machine Learning in 3 Months&rdquo; by Siraj Raval on Youtube
+ 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2.">
 <meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="4.1 教程" />
-<meta property="og:description" content="教程 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2.0 《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 #  ShusenTang/Dive-into-DL-PyTorch  手写实现李航《统计学习方法》书中全部算法 #  dod-o/statistical-learning-method_code  机器学习白板推导系列 #  shuhuai007/machine-learning-session 【机器学习】【白板推导系列】【合集 1 ～ 23】
-机器学习白板系列 笔记 #  tsyw/MachineLearningNotes Bilibili - 机器学习白板系列
- 机器学习教程（小象学院） #   josephmisiti/awesome-machine-learning #   ZuzooVn/machine-learning-for-software-engineers #  A complete daily plan for studying to become a machine learning engineer." />
+<meta property="og:description" content="教程 #  基础 #  李宏毅 2021/2022 春机器学习课程 #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
+Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
+llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &ldquo;Learn Machine Learning in 3 Months&rdquo; by Siraj Raval on Youtube
+ 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 #  TrickyGo/Dive-into-DL-TensorFlow2." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://kingye.me/study-ml/docs/appendix/tutorial/" /><meta property="article:section" content="docs" />
 
@@ -21,7 +23,7 @@
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
-<script defer src="/study-ml/en.search.min.2eaad87df91638cbf325eece0bff97deec6f4842953073e32007710bf9851e3e.js" integrity="sha256-LqrYffkWOMvzJe7OC/&#43;X3uxvSEKVMHPjIAdxC/mFHj4="></script>
+<script defer src="/study-ml/en.search.min.305b2eeca7999502988c9cc2dd7ccd462c908f86ada1775138679f0f52e48930.js" integrity="sha256-MFsu7KeZlQKYjJzC3XzNRiyQj4atoXdROGefD1LkiTA="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -287,7 +289,22 @@ https://github.com/alex-shpak/hugo-book
   
 <nav id="TableOfContents">
   <ul>
-    <li>
+    <li><a href="#基础">基础</a>
+      <ul>
+        <li><a href="#李宏毅-20212022-春机器学习课程httpswwwbilibilicomvideobv1wv411h7kn"><a href="https://www.bilibili.com/video/BV1Wv411h7kN">李宏毅 2021/2022 春机器学习课程</a></a>
+          <ul>
+            <li><a href="#fafa-dllhy_machine_learninghttpsgithubcomfafa-dllhy_machine_learning-github-starshttpsimgshieldsiogithubstarsfafa-dllhy_machine_learningsvg-github-forkshttpsimgshieldsiogithubforksfafa-dllhy_machine_learningsvg-languagehttpsimgshieldsiogithublanguagestopfafa-dllhy_machine_learningsvg-last-taghttpsimgshieldsiogithubvtagfafa-dllhy_machine_learningsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitfafa-dllhy_machine_learningsvg"><a href="https://github.com/Fafa-DL/Lhy_Machine_Learning">Fafa-DL/Lhy_Machine_Learning</a> <img src="https://img.shields.io/github/stars/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/Fafa-DL/Lhy_Machine_Learning.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/Fafa-DL/Lhy_Machine_Learning.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/Fafa-DL/Lhy_Machine_Learning.svg" alt="Last commit"></a></li>
+          </ul>
+        </li>
+        <li><a href="#avik-jain100-days-of-ml-codehttpsgithubcomavik-jain100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsavik-jain100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksavik-jain100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopavik-jain100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagavik-jain100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitavik-jain100-days-of-ml-codesvg"><a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code">Avik-Jain/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit"></a>
+          <ul>
+            <li><a href="#mleveryday100-days-of-ml-codehttpsgithubcommleveryday100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsmleveryday100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksmleveryday100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopmleveryday100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagmleveryday100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitmleveryday100-days-of-ml-codesvg"><a href="https://github.com/MLEveryday/100-Days-Of-ML-Code">MLEveryday/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit"></a></li>
+          </ul>
+        </li>
+        <li><a href="#llsourcelllearn_machine_learning_in_3_monthshttpsgithubcomllsourcelllearn_machine_learning_in_3_months-github-starshttpsimgshieldsiogithubstarsllsourcelllearn_machine_learning_in_3_monthssvg-github-forkshttpsimgshieldsiogithubforksllsourcelllearn_machine_learning_in_3_monthssvg-languagehttpsimgshieldsiogithublanguagestopllsourcelllearn_machine_learning_in_3_monthssvg-last-taghttpsimgshieldsiogithubvtagllsourcelllearn_machine_learning_in_3_monthssvgsortsemver-last-commithttpsimgshieldsiogithublast-commitllsourcelllearn_machine_learning_in_3_monthssvg"><a href="https://github.com/llSourcell/Learn_Machine_Learning_in_3_Months">llSourcell/Learn_Machine_Learning_in_3_Months</a> <img src="https://img.shields.io/github/stars/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/llSourcell/Learn_Machine_Learning_in_3_Months.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#进阶">进阶</a>
       <ul>
         <li><a href="#dive-into-deep-learninghttpsd2lai"><a href="https://d2l.ai/">dive into deep learning</a></a>
           <ul>
@@ -317,7 +334,7 @@ https://github.com/alex-shpak/hugo-book
         <li><a href="#斯坦福大学-2014吴恩达机器学习教程中文笔记">斯坦福大学 2014（吴恩达）机器学习教程中文笔记</a></li>
       </ul>
     </li>
-    <li><a href="#进阶">进阶</a>
+    <li><a href="#进阶-1">进阶</a>
       <ul>
         <li><a href="#christophminterpretable-ml-bookhttpsgithubcomchristophminterpretable-ml-book-github-starshttpsimgshieldsiogithubstarschristophminterpretable-ml-booksvg"><a href="https://github.com/christophM/interpretable-ml-book">christophm/interpretable-ml-book</a> <img src="https://img.shields.io/github/stars/christophM/interpretable-ml-book.svg" alt="Github stars"></a>
           <ul>
@@ -351,6 +368,38 @@ https://github.com/alex-shpak/hugo-book
   教程
   <a class="anchor" href="#%e6%95%99%e7%a8%8b">#</a>
 </h1>
+<h2 id="基础">
+  基础
+  <a class="anchor" href="#%e5%9f%ba%e7%a1%80">#</a>
+</h2>
+<h3 id="李宏毅-20212022-春机器学习课程httpswwwbilibilicomvideobv1wv411h7kn">
+  <a href="https://www.bilibili.com/video/BV1Wv411h7kN">李宏毅 2021/2022 春机器学习课程</a>
+  <a class="anchor" href="#%e6%9d%8e%e5%ae%8f%e6%af%85-20212022-%e6%98%a5%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e8%af%be%e7%a8%8bhttpswwwbilibilicomvideobv1wv411h7kn">#</a>
+</h3>
+<h4 id="fafa-dllhy_machine_learninghttpsgithubcomfafa-dllhy_machine_learning-github-starshttpsimgshieldsiogithubstarsfafa-dllhy_machine_learningsvg-github-forkshttpsimgshieldsiogithubforksfafa-dllhy_machine_learningsvg-languagehttpsimgshieldsiogithublanguagestopfafa-dllhy_machine_learningsvg-last-taghttpsimgshieldsiogithubvtagfafa-dllhy_machine_learningsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitfafa-dllhy_machine_learningsvg">
+  <a href="https://github.com/Fafa-DL/Lhy_Machine_Learning">Fafa-DL/Lhy_Machine_Learning</a> <img src="https://img.shields.io/github/stars/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/Fafa-DL/Lhy_Machine_Learning.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/Fafa-DL/Lhy_Machine_Learning.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/Fafa-DL/Lhy_Machine_Learning.svg" alt="Last commit" />
+  <a class="anchor" href="#fafa-dllhy_machine_learninghttpsgithubcomfafa-dllhy_machine_learning-github-starshttpsimgshieldsiogithubstarsfafa-dllhy_machine_learningsvg-github-forkshttpsimgshieldsiogithubforksfafa-dllhy_machine_learningsvg-languagehttpsimgshieldsiogithublanguagestopfafa-dllhy_machine_learningsvg-last-taghttpsimgshieldsiogithubvtagfafa-dllhy_machine_learningsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitfafa-dllhy_machine_learningsvg">#</a>
+</h4>
+<p>李宏毅 2021 春季机器学习课程课件及作业</p>
+<h3 id="avik-jain100-days-of-ml-codehttpsgithubcomavik-jain100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsavik-jain100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksavik-jain100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopavik-jain100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagavik-jain100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitavik-jain100-days-of-ml-codesvg">
+  <a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code">Avik-Jain/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit" />
+  <a class="anchor" href="#avik-jain100-days-of-ml-codehttpsgithubcomavik-jain100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsavik-jain100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksavik-jain100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopavik-jain100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagavik-jain100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitavik-jain100-days-of-ml-codesvg">#</a>
+</h3>
+<h4 id="mleveryday100-days-of-ml-codehttpsgithubcommleveryday100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsmleveryday100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksmleveryday100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopmleveryday100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagmleveryday100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitmleveryday100-days-of-ml-codesvg">
+  <a href="https://github.com/MLEveryday/100-Days-Of-ML-Code">MLEveryday/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit" />
+  <a class="anchor" href="#mleveryday100-days-of-ml-codehttpsgithubcommleveryday100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsmleveryday100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksmleveryday100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopmleveryday100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagmleveryday100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitmleveryday100-days-of-ml-codesvg">#</a>
+</h4>
+<p>机器学习 100 天</p>
+<h3 id="llsourcelllearn_machine_learning_in_3_monthshttpsgithubcomllsourcelllearn_machine_learning_in_3_months-github-starshttpsimgshieldsiogithubstarsllsourcelllearn_machine_learning_in_3_monthssvg-github-forkshttpsimgshieldsiogithubforksllsourcelllearn_machine_learning_in_3_monthssvg-languagehttpsimgshieldsiogithublanguagestopllsourcelllearn_machine_learning_in_3_monthssvg-last-taghttpsimgshieldsiogithubvtagllsourcelllearn_machine_learning_in_3_monthssvgsortsemver-last-commithttpsimgshieldsiogithublast-commitllsourcelllearn_machine_learning_in_3_monthssvg">
+  <a href="https://github.com/llSourcell/Learn_Machine_Learning_in_3_Months">llSourcell/Learn_Machine_Learning_in_3_Months</a> <img src="https://img.shields.io/github/stars/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/llSourcell/Learn_Machine_Learning_in_3_Months.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Last commit" />
+  <a class="anchor" href="#llsourcelllearn_machine_learning_in_3_monthshttpsgithubcomllsourcelllearn_machine_learning_in_3_months-github-starshttpsimgshieldsiogithubstarsllsourcelllearn_machine_learning_in_3_monthssvg-github-forkshttpsimgshieldsiogithubforksllsourcelllearn_machine_learning_in_3_monthssvg-languagehttpsimgshieldsiogithublanguagestopllsourcelllearn_machine_learning_in_3_monthssvg-last-taghttpsimgshieldsiogithubvtagllsourcelllearn_machine_learning_in_3_monthssvgsortsemver-last-commithttpsimgshieldsiogithublast-commitllsourcelllearn_machine_learning_in_3_monthssvg">#</a>
+</h3>
+<p>This is the code for &ldquo;Learn Machine Learning in 3 Months&rdquo; by Siraj Raval on Youtube</p>
+<hr>
+<h2 id="进阶">
+  进阶
+  <a class="anchor" href="#%e8%bf%9b%e9%98%b6">#</a>
+</h2>
 <h3 id="dive-into-deep-learninghttpsd2lai">
   <a href="https://d2l.ai/">dive into deep learning</a>
   <a class="anchor" href="#dive-into-deep-learninghttpsd2lai">#</a>
@@ -471,9 +520,9 @@ https://github.com/alex-shpak/hugo-book
 </h3>
 <p><a href="https://github.com/fengdu78/Coursera-ML-AndrewNg-Notes">fengdu78/Coursera-ML-AndrewNg-Notes</a> <img src="https://img.shields.io/github/stars/fengdu78/Coursera-ML-AndrewNg-Notes.svg" alt="Github stars" /> <img src="https://img.shields.io/github/languages/top/fengdu78/Coursera-ML-AndrewNg-Notes.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/fengdu78/Coursera-ML-AndrewNg-Notes.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/fengdu78/Coursera-ML-AndrewNg-Notes.svg" alt="Last commit" /></p>
 <hr>
-<h2 id="进阶">
+<h2 id="进阶-1">
   进阶
-  <a class="anchor" href="#%e8%bf%9b%e9%98%b6">#</a>
+  <a class="anchor" href="#%e8%bf%9b%e9%98%b6-1">#</a>
 </h2>
 <h3 id="christophminterpretable-ml-bookhttpsgithubcomchristophminterpretable-ml-book-github-starshttpsimgshieldsiogithubstarschristophminterpretable-ml-booksvg">
   <a href="https://github.com/christophM/interpretable-ml-book">christophm/interpretable-ml-book</a> <img src="https://img.shields.io/github/stars/christophM/interpretable-ml-book.svg" alt="Github stars" />
@@ -585,7 +634,22 @@ https://github.com/alex-shpak/hugo-book
   
 <nav id="TableOfContents">
   <ul>
-    <li>
+    <li><a href="#基础">基础</a>
+      <ul>
+        <li><a href="#李宏毅-20212022-春机器学习课程httpswwwbilibilicomvideobv1wv411h7kn"><a href="https://www.bilibili.com/video/BV1Wv411h7kN">李宏毅 2021/2022 春机器学习课程</a></a>
+          <ul>
+            <li><a href="#fafa-dllhy_machine_learninghttpsgithubcomfafa-dllhy_machine_learning-github-starshttpsimgshieldsiogithubstarsfafa-dllhy_machine_learningsvg-github-forkshttpsimgshieldsiogithubforksfafa-dllhy_machine_learningsvg-languagehttpsimgshieldsiogithublanguagestopfafa-dllhy_machine_learningsvg-last-taghttpsimgshieldsiogithubvtagfafa-dllhy_machine_learningsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitfafa-dllhy_machine_learningsvg"><a href="https://github.com/Fafa-DL/Lhy_Machine_Learning">Fafa-DL/Lhy_Machine_Learning</a> <img src="https://img.shields.io/github/stars/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/Fafa-DL/Lhy_Machine_Learning.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/Fafa-DL/Lhy_Machine_Learning.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/Fafa-DL/Lhy_Machine_Learning.svg" alt="Last commit"></a></li>
+          </ul>
+        </li>
+        <li><a href="#avik-jain100-days-of-ml-codehttpsgithubcomavik-jain100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsavik-jain100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksavik-jain100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopavik-jain100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagavik-jain100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitavik-jain100-days-of-ml-codesvg"><a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code">Avik-Jain/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit"></a>
+          <ul>
+            <li><a href="#mleveryday100-days-of-ml-codehttpsgithubcommleveryday100-days-of-ml-code-github-starshttpsimgshieldsiogithubstarsmleveryday100-days-of-ml-codesvg-github-forkshttpsimgshieldsiogithubforksmleveryday100-days-of-ml-codesvg-languagehttpsimgshieldsiogithublanguagestopmleveryday100-days-of-ml-codesvg-last-taghttpsimgshieldsiogithubvtagmleveryday100-days-of-ml-codesvgsortsemver-last-commithttpsimgshieldsiogithublast-commitmleveryday100-days-of-ml-codesvg"><a href="https://github.com/MLEveryday/100-Days-Of-ML-Code">MLEveryday/100-Days-Of-ML-Code</a> <img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit"></a></li>
+          </ul>
+        </li>
+        <li><a href="#llsourcelllearn_machine_learning_in_3_monthshttpsgithubcomllsourcelllearn_machine_learning_in_3_months-github-starshttpsimgshieldsiogithubstarsllsourcelllearn_machine_learning_in_3_monthssvg-github-forkshttpsimgshieldsiogithubforksllsourcelllearn_machine_learning_in_3_monthssvg-languagehttpsimgshieldsiogithublanguagestopllsourcelllearn_machine_learning_in_3_monthssvg-last-taghttpsimgshieldsiogithubvtagllsourcelllearn_machine_learning_in_3_monthssvgsortsemver-last-commithttpsimgshieldsiogithublast-commitllsourcelllearn_machine_learning_in_3_monthssvg"><a href="https://github.com/llSourcell/Learn_Machine_Learning_in_3_Months">llSourcell/Learn_Machine_Learning_in_3_Months</a> <img src="https://img.shields.io/github/stars/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github stars"> <img src="https://img.shields.io/github/forks/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Github forks"> <img src="https://img.shields.io/github/languages/top/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Language"> <img src="https://img.shields.io/github/v/tag/llSourcell/Learn_Machine_Learning_in_3_Months.svg?sort=semver" alt="Last Tag"> <img src="https://img.shields.io/github/last-commit/llSourcell/Learn_Machine_Learning_in_3_Months.svg" alt="Last commit"></a></li>
+      </ul>
+    </li>
+    <li><a href="#进阶">进阶</a>
       <ul>
         <li><a href="#dive-into-deep-learninghttpsd2lai"><a href="https://d2l.ai/">dive into deep learning</a></a>
           <ul>
@@ -615,7 +679,7 @@ https://github.com/alex-shpak/hugo-book
         <li><a href="#斯坦福大学-2014吴恩达机器学习教程中文笔记">斯坦福大学 2014（吴恩达）机器学习教程中文笔记</a></li>
       </ul>
     </li>
-    <li><a href="#进阶">进阶</a>
+    <li><a href="#进阶-1">进阶</a>
       <ul>
         <li><a href="#christophminterpretable-ml-bookhttpsgithubcomchristophminterpretable-ml-book-github-starshttpsimgshieldsiogithubstarschristophminterpretable-ml-booksvg"><a href="https://github.com/christophM/interpretable-ml-book">christophm/interpretable-ml-book</a> <img src="https://img.shields.io/github/stars/christophM/interpretable-ml-book.svg" alt="Github stars"></a>
           <ul>
