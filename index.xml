@@ -11,7 +11,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/appendix/interview/basic/</guid>
-      <description>基础面试题 #  </description>
+      <description> 基础面试题 # </description>
     </item>
     
     <item>
@@ -20,7 +20,7 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/appendix/interview/advanced/</guid>
-      <description>进阶面试题 #  </description>
+      <description> 进阶面试题 # </description>
     </item>
     
     <item>
@@ -29,10 +29,10 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/appendix/tutorial/</guid>
-      <description>教程 #  基础 #  【视频】李宏毅 2021/2022 春机器学习课程 #  【视频】吴恩达机器学习系列课程 #  【视频】吴恩达深度学习 deeplearning.ai #  【视频】林轩田机器学习基石 #  【视频】机器学习技法（林轩田） #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
-Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
-llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube
- 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.</description>
+      <description>教程 # 基础 # 【视频】李宏毅 2021/2022 春机器学习课程 # 【视频】吴恩达机器学习系列课程 # 【视频】吴恩达深度学习 deeplearning.ai # 【视频】林轩田机器学习基石 # 【视频】机器学习技法（林轩田） # Fafa-DL/Lhy_Machine_Learning # 李宏毅 2021 春季机器学习课程课件及作业
+Avik-Jain/100-Days-Of-ML-Code # MLEveryday/100-Days-Of-ML-Code # 机器学习 100 天
+llSourcell/Learn_Machine_Learning_in_3_Months # This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube
+进阶 # dive into deep learning # d2l-ai/d2l-en 动手学深度学习 # d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 # TrickyGo/Dive-into-DL-TensorFlow2.0 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 # ShusenTang/Dive-into-DL-PyTorch 手写实现李航《统计学习方法》书中全部算法 # dod-o/statistical-learning-method_code 机器学习白板推导系列 # shuhuai007/machine-learning-session 【视频】【机器学习】【白板推导系列】【合集 1 ～ 23】</description>
     </item>
     
     <item>
@@ -41,10 +41,10 @@ llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/appendix/attention/</guid>
-      <description>关注项目 #  机器学习 #  tensorflow/tensorflow #  scikit-learn/scikit-learn #  scikit-learn: machine learning in Python https://scikit-learn.org
-php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
- 深度学习 #  paddlepaddle/paddle #  Tencent/ncnn #  ncnn is a high-performance neural network inference framework optimized for the mobile platform
- 机器人 #  gunthercox/ChatterBot #  ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.</description>
+      <description>关注项目 # 机器学习 # tensorflow/tensorflow # scikit-learn/scikit-learn # scikit-learn: machine learning in Python https://scikit-learn.org
+php-ai/php-ml # PHP-ML - Machine Learning library for PHP https://php-ml.org/
+深度学习 # paddlepaddle/paddle # Tencent/ncnn # ncnn is a high-performance neural network inference framework optimized for the mobile platform
+机器人 # gunthercox/ChatterBot # ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.readthedocs.io</description>
     </item>
     
     <item>
@@ -53,8 +53,8 @@ php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</guid>
-      <description>教程 #  基础 #  《深度学习》(花书) #  MingchaoZhu/DeepLearning #  Python for《Deep Learning》，该书为《深度学习》(花书) 数学推导、原理剖析与源码级别代码实现
- 进阶 #   </description>
+      <description> 教程 # 基础 # 《深度学习》(花书) # MingchaoZhu/DeepLearning # Python for《Deep Learning》，该书为《深度学习》(花书) 数学推导、原理剖析与源码级别代码实现
+进阶 # </description>
     </item>
     
   </channel>
