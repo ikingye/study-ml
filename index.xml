@@ -32,7 +32,7 @@
       <description>教程 #  基础 #  【视频】李宏毅 2021/2022 春机器学习课程 #  【视频】吴恩达机器学习系列课程 #  【视频】吴恩达深度学习 deeplearning.ai #  【视频】林轩田机器学习基石 #  【视频】机器学习技法（林轩田） #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
 Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
 llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube
- 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.</description>
+ 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 #  ShusenTang/Dive-into-DL-PyTorch 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.</description>
     </item>
     
     <item>
@@ -45,6 +45,17 @@ llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo
 php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
  深度学习 #  paddlepaddle/paddle #  Tencent/ncnn #  ncnn is a high-performance neural network inference framework optimized for the mobile platform
  机器人 #  gunthercox/ChatterBot #  ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.</description>
+    </item>
+    
+    <item>
+      <title>ONNX</title>
+      <link>https://kingye.me/study-ml/docs/basic/onnx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://kingye.me/study-ml/docs/basic/onnx/</guid>
+      <description>ONNX #  Open Neural Network Exchange
+开放神经网络交换
+ 是微软和 Facebook 提出用来表示深度学习模型的开放格式 定义了一组和环境，平台均无关的标准格式，来增强各种 AI 模型的可交互性 无论你使用何种训练框架训练模型（比如 TensorFlow/Pytorch/OneFlow/Paddle），在训练完毕后你都可以将这些框架的模型统一转换为 ONNX 这种统一的格式进行存储  </description>
     </item>
     
     <item>

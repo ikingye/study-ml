@@ -5,5 +5,16 @@
     <link>https://kingye.me/study-ml/docs/basic/</link>
     <description>Recent content in 第一部分 基础入门 on Machine Learning 学习笔记</description>
     <generator>Hugo -- gohugo.io</generator><atom:link href="https://kingye.me/study-ml/docs/basic/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ONNX</title>
+      <link>https://kingye.me/study-ml/docs/basic/onnx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://kingye.me/study-ml/docs/basic/onnx/</guid>
+      <description>ONNX #  Open Neural Network Exchange
+开放神经网络交换
+ 是微软和 Facebook 提出用来表示深度学习模型的开放格式 定义了一组和环境，平台均无关的标准格式，来增强各种 AI 模型的可交互性 无论你使用何种训练框架训练模型（比如 TensorFlow/Pytorch/OneFlow/Paddle），在训练完毕后你都可以将这些框架的模型统一转换为 ONNX 这种统一的格式进行存储  </description>
+    </item>
+    
   </channel>
 </rss>
