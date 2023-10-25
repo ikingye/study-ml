@@ -29,8 +29,7 @@
     <loc>https://kingye.me/study-ml/docs/appendix/interview/</loc>
     <lastmod>2021-05-24T16:46:10+08:00</lastmod>
   </url><url>
-    <loc>https://kingye.me/study-ml/docs/basic/ml/frame/paddlepaddle/</loc>
-    <lastmod>2021-05-24T20:29:25+08:00</lastmod>
+    <loc>https://kingye.me/study-ml/docs/basic/ml/frame/paddle/</loc>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/ml/dl/</loc>
     <lastmod>2021-05-24T20:29:25+08:00</lastmod>
@@ -41,11 +40,17 @@
     <loc>https://kingye.me/study-ml/docs/basic/ml/frame/</loc>
     <lastmod>2021-05-24T20:29:25+08:00</lastmod>
   </url><url>
+    <loc>https://kingye.me/study-ml/docs/basic/lm/llm/</loc>
+  </url><url>
+    <loc>https://kingye.me/study-ml/docs/basic/nlp/</loc>
+  </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/onnx/</loc>
     <lastmod>2023-04-06T15:56:09+08:00</lastmod>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/ml/frame/pytorch/</loc>
     <lastmod>2021-05-24T20:29:25+08:00</lastmod>
+  </url><url>
+    <loc>https://kingye.me/study-ml/docs/basic/lm/</loc>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</loc>
     <lastmod>2021-05-24T20:29:25+08:00</lastmod>

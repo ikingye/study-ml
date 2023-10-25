@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.99.1" />
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="LLM（大型语言模型） #  大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。
+开源大语言模型 #   OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI)   Falcon: https://huggingface.co/tiiuae/falcon-7b  大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers
+google-research/bert 微调 #  预训练大语言模型的三种微调技术总结：
+ fine-tuning  Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。   parameter-efficient fine-tuning  PEFT 在尽可能减少所需的参数和计算资源的情况下，实现对预训练语言模型的有效微调。 3 种技术  蒸馏(distillation)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。 适配器训练(adapter training)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。 渐进收缩(progressive shrinking)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。     prompt-tuning  只修改模型的输入，不需要大量计算资源    参考：预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="LLM" />
+<meta property="og:description" content="LLM（大型语言模型） #  大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。
+开源大语言模型 #   OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI)   Falcon: https://huggingface.co/tiiuae/falcon-7b  大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers
+google-research/bert 微调 #  预训练大语言模型的三种微调技术总结：
+ fine-tuning  Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。   parameter-efficient fine-tuning  PEFT 在尽可能减少所需的参数和计算资源的情况下，实现对预训练语言模型的有效微调。 3 种技术  蒸馏(distillation)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。 适配器训练(adapter training)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。 渐进收缩(progressive shrinking)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。     prompt-tuning  只修改模型的输入，不需要大量计算资源    参考：预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kingye.me/study-ml/docs/basic/lm/llm/" /><meta property="article:section" content="docs" />
+
+
+
+<title>LLM | Machine Learning 学习笔记</title>
+<link rel="manifest" href="/study-ml/manifest.json">
+<link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
+<script defer src="/study-ml/en.search.min.b20a85043eab8ec9c3f3c0cd903e59484e11b883741406347918ec98f09225b4.js" integrity="sha256-sgqFBD6rjsnD88DNkD5ZSE4RuIN0FAY0eRjsmPCSJbQ="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/study-ml"><span>Machine Learning 学习笔记</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+<ul>
+  <li><a href="https://kingye.me" target="_blank" rel="noopener noreferrer">博客</a></li>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417021727.png" target="_blank" rel="noopener noreferrer">公众号</a></li>
+  <li><a href="https://github.com/ikingye" target="_blank" rel="noopener noreferrer">Github</a></li>
+  <li><a href="https://weibo.com/kingyip15215" target="_blank" rel="noopener noreferrer">微博</a></li>
+  <li><a href="https://www.zhihu.com/people/wutongyip" target="_blank" rel="noopener noreferrer">知乎</a></li>
+</ul>
+<hr />
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第一部分 基础入门</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2693f76ee7795ee2fc7d3d516834e7d6" class="toggle"  />
+    <label for="section-2693f76ee7795ee2fc7d3d516834e7d6" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/basic/nlp/" class="">NLP</a>
+    </label>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c84e8e9351b2e30b6788dfccaa5e2dfd" class="toggle"  />
+    <label for="section-c84e8e9351b2e30b6788dfccaa5e2dfd" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/basic/onnx/" class="">ONNX</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/" class="">LM</a>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/llm/" class=" active">LLM</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第二部分 进阶实战</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第三部分 设计与实现</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第四部分 附录</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2d181cd3861ca7652e852d22b5c3ff21" class="toggle"  />
+    <label for="section-2d181cd3861ca7652e852d22b5c3ff21" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/tutorial/" class="">4.1 教程</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-1291561338a2c243cca077171f0fe528" class="toggle"  />
+    <label for="section-1291561338a2c243cca077171f0fe528" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/interview/" class="">4.2 面试题</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7acebfc4b461748521469ab23214109e" class="toggle"  />
+    <label for="section-7acebfc4b461748521469ab23214109e" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/interview/basic/" class="">基础</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/appendix/interview/advanced/" class="">进阶</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c743998336860c656367010fc7573b86" class="toggle"  />
+    <label for="section-c743998336860c656367010fc7573b86" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/attention/" class="">4.3 关注项目</a>
+    </label>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>LLM</strong>
+
+  <label for="toc-control">
+    
+    <img src="/study-ml/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#开源大语言模型">开源大语言模型</a></li>
+    <li><a href="#大模型应用工具">大模型应用工具</a></li>
+    <li><a href="#bert">BERT</a></li>
+    <li><a href="#微调">微调</a></li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article id="article" class="markdown"><h1 id="llm大型语言模型">
+  LLM（大型语言模型）
+  <a class="anchor" href="#llm%e5%a4%a7%e5%9e%8b%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b">#</a>
+</h1>
+<p>大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。</p>
+<h2 id="开源大语言模型">
+  开源大语言模型
+  <a class="anchor" href="#%e5%bc%80%e6%ba%90%e5%a4%a7%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<ul>
+<li>OpenLLaMA: <a href="https://github.com/openlm-research/open_llama">openlm-research/open_llama</a> <img src="https://img.shields.io/github/stars/openlm-research/open_llama.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/openlm-research/open_llama.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/openlm-research/open_llama.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/openlm-research/open_llama.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/openlm-research/open_llama.svg" alt="Last commit" />
+<ul>
+<li>LLaMA (Large Language Model Meta AI)</li>
+</ul>
+</li>
+<li>Falcon: <a href="https://huggingface.co/tiiuae/falcon-7b">https://huggingface.co/tiiuae/falcon-7b</a></li>
+</ul>
+<h2 id="大模型应用工具">
+  大模型应用工具
+  <a class="anchor" href="#%e5%a4%a7%e6%a8%a1%e5%9e%8b%e5%ba%94%e7%94%a8%e5%b7%a5%e5%85%b7">#</a>
+</h2>
+<ul>
+<li><a href="https://github.com/langchain-ai/langchain">langchain-ai/langchain</a> <img src="https://img.shields.io/github/stars/langchain-ai/langchain.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/langchain-ai/langchain.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/langchain-ai/langchain.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/langchain-ai/langchain.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/langchain-ai/langchain.svg" alt="Last commit" /></li>
+<li><a href="https://github.com/microsoft/TaskMatrix">microsoft/TaskMatrix</a> <img src="https://img.shields.io/github/stars/microsoft/TaskMatrix.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/microsoft/TaskMatrix.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/microsoft/TaskMatrix.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/microsoft/TaskMatrix.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/microsoft/TaskMatrix.svg" alt="Last commit" /></li>
+<li><a href="https://github.com/microsoft/semantic-kernel">microsoft/semantic-kernel</a> <img src="https://img.shields.io/github/stars/microsoft/semantic-kernel.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/microsoft/semantic-kernel.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/microsoft/semantic-kernel.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/microsoft/semantic-kernel.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/microsoft/semantic-kernel.svg" alt="Last commit" /></li>
+<li><a href="https://github.com/Significant-Gravitas/Auto-GPT">Significant-Gravitas/Auto-GPT</a> <img src="https://img.shields.io/github/stars/Significant-Gravitas/Auto-GPT.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/Significant-Gravitas/Auto-GPT.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/Significant-Gravitas/Auto-GPT.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/Significant-Gravitas/Auto-GPT.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/Significant-Gravitas/Auto-GPT.svg" alt="Last commit" /></li>
+<li><a href="https://github.com/reworkd/AgentGPT">reworkd/AgentGPT</a> <img src="https://img.shields.io/github/stars/reworkd/AgentGPT.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/reworkd/AgentGPT.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/reworkd/AgentGPT.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/reworkd/AgentGPT.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/reworkd/AgentGPT.svg" alt="Last commit" /></li>
+</ul>
+<hr>
+<h2 id="bert">
+  BERT
+  <a class="anchor" href="#bert">#</a>
+</h2>
+<p><code>Bidirectional Encoder Representations from Transformers</code></p>
+<p><a href="https://github.com/google-research/bert">google-research/bert</a> <img src="https://img.shields.io/github/stars/google-research/bert.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/google-research/bert.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/google-research/bert.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/google-research/bert.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/google-research/bert.svg" alt="Last commit" /></p>
+<h2 id="微调">
+  微调
+  <a class="anchor" href="#%e5%be%ae%e8%b0%83">#</a>
+</h2>
+<p>预训练大语言模型的三种微调技术总结：</p>
+<ul>
+<li>fine-tuning
+<ul>
+<li>Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。</li>
+</ul>
+</li>
+<li>parameter-efficient fine-tuning
+<ul>
+<li><code>PEFT</code></li>
+<li>在尽可能<em>减少所需的参数</em>和计算资源的情况下，实现对预训练语言模型的有效微调。</li>
+<li>3 种技术
+<ol>
+<li>蒸馏(<code>distillation</code>)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。</li>
+<li>适配器训练(<code>adapter training</code>)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。</li>
+<li>渐进收缩(<code>progressive shrinking</code>)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>prompt-tuning
+<ul>
+<li>只修改模型的输入，不需要大量计算资源</li>
+</ul>
+</li>
+</ul>
+<p>参考：<a href="https://www.datalearner.com/blog/1051681052801935">预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning</a></p>
+</article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+
+
+</div>
+
+ 
+        <div>
+    <br>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <p><span id="busuanzi_container_page_pv">本文访问量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_pv">本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_uv">本站总访客数 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 人</span></p>
+</div>
+
+
+
+
+
+      </footer>
+
+      
+  
+  <div class="book-comments">
+<script src="https://utteranc.es/client.js"
+  repo="ikingye/study-ml"
+  issue-term="pathname"
+  theme="github-light"
+  crossorigin="anonymous"
+  async
+></script>
+
+<div id="footer">
+  <p>
+    <a href="https://kingye.me">叶王</a> &copy; 2013-2021
+    版权所有。如果本文档对你有所帮助，可以<a
+      href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200428110046.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      >请作者喝饮料</a
+    >。
+  </p>
+</div>
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#开源大语言模型">开源大语言模型</a></li>
+    <li><a href="#大模型应用工具">大模型应用工具</a></li>
+    <li><a href="#bert">BERT</a></li>
+    <li><a href="#微调">微调</a></li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

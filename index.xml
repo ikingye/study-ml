@@ -30,9 +30,9 @@
       
       <guid>https://kingye.me/study-ml/docs/appendix/tutorial/</guid>
       <description>教程 #  基础 #  【视频】李宏毅 2021/2022 春机器学习课程 #  【视频】吴恩达机器学习系列课程 #  【视频】吴恩达深度学习 deeplearning.ai #  【视频】林轩田机器学习基石 #  【视频】机器学习技法（林轩田） #  Fafa-DL/Lhy_Machine_Learning #  李宏毅 2021 春季机器学习课程课件及作业
+microsoft/ML-For-Beginners #  Azure Cloud Advocates at Microsoft are pleased to offer a 12-week, 26-lesson curriculum all about Machine Learning.
 Avik-Jain/100-Days-Of-ML-Code #  MLEveryday/100-Days-Of-ML-Code #  机器学习 100 天
-llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube
- 进阶 #  dive into deep learning #  d2l-ai/d2l-en 动手学深度学习 #  d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 #  ShusenTang/Dive-into-DL-PyTorch 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.</description>
+llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo;Learn Machine Learning in 3 Months&amp;rdquo; by Siraj Raval on Youtube</description>
     </item>
     
     <item>
@@ -45,6 +45,18 @@ llSourcell/Learn_Machine_Learning_in_3_Months #  This is the code for &amp;ldquo
 php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
  深度学习 #  paddlepaddle/paddle #  Tencent/ncnn #  ncnn is a high-performance neural network inference framework optimized for the mobile platform
  机器人 #  gunthercox/ChatterBot #  ChatterBot is a machine learning, conversational dialog engine for creating chat bots https://chatterbot.</description>
+    </item>
+    
+    <item>
+      <title>LLM</title>
+      <link>https://kingye.me/study-ml/docs/basic/lm/llm/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://kingye.me/study-ml/docs/basic/lm/llm/</guid>
+      <description>LLM（大型语言模型） #  大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。
+开源大语言模型 #   OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI)   Falcon: https://huggingface.co/tiiuae/falcon-7b  大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers
+google-research/bert 微调 #  预训练大语言模型的三种微调技术总结：
+ fine-tuning  Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。   parameter-efficient fine-tuning  PEFT 在尽可能减少所需的参数和计算资源的情况下，实现对预训练语言模型的有效微调。 3 种技术  蒸馏(distillation)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。 适配器训练(adapter training)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。 渐进收缩(progressive shrinking)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。     prompt-tuning  只修改模型的输入，不需要大量计算资源    参考：预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning</description>
     </item>
     
     <item>
