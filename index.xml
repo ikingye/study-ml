@@ -48,6 +48,15 @@ php-ai/php-ml #  PHP-ML - Machine Learning library for PHP https://php-ml.org/
     </item>
     
     <item>
+      <title>HuggingFace</title>
+      <link>https://kingye.me/study-ml/docs/basic/huggingface/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://kingye.me/study-ml/docs/basic/huggingface/</guid>
+      <description>HuggingFace #  下载模型 #   from huggingface_hub import snapshot_download snapshot_download(repo_id=&amp;#34;THUDM/chatglm3-6b&amp;#34;, local_dir_use_symlinks=False)   from huggingface_hub import snapshot_download  snapshot_download(repo_id=&amp;#39;THUDM/chatglm3-6b&amp;#39;,  repo_type=&amp;#39;model&amp;#39;,  local_dir=&amp;#39;./model_dir&amp;#39;,  resume_download=True) Huggingface 镜像站 #  https://hf-mirror.com/ #  # 安装依赖 pip install -U huggingface_hub hf_transfer  export HF_ENDPOINT=https://hf-mirror.com  # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1  huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir chatglm3-6b 阿里魔搭社区 #  from modelscope.hub.snapshot_download import snapshot_download  model_dir = snapshot_download(&amp;#39;qwen/Qwen-7B&amp;#39;,  cache_dir=&amp;#39;.</description>
+    </item>
+    
+    <item>
       <title>LLM</title>
       <link>https://kingye.me/study-ml/docs/basic/lm/llm/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

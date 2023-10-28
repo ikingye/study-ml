@@ -5,19 +5,19 @@
   <meta name="generator" content="Hugo 0.99.1" />
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="PyTorch #  pytorch/pytorch PyTorch is a Python package that provides two high-level features:
- Tensor computation (like NumPy) with strong GPU acceleration Deep neural networks built on a tape-based autograd system  ">
-<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="PyTorch" />
-<meta property="og:description" content="" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://kingye.me/study-ml/docs/basic/ml/frame/pytorch/" />
+<meta name="description" content="HuggingFace #  下载模型 #   from huggingface_hub import snapshot_download snapshot_download(repo_id=&#34;THUDM/chatglm3-6b&#34;, local_dir_use_symlinks=False)   from huggingface_hub import snapshot_download  snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;,  repo_type=&#39;model&#39;,  local_dir=&#39;./model_dir&#39;,  resume_download=True) Huggingface 镜像站 #  https://hf-mirror.com/ #  # 安装依赖 pip install -U huggingface_hub hf_transfer  export HF_ENDPOINT=https://hf-mirror.com  # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1  huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir chatglm3-6b 阿里魔搭社区 #  from modelscope.hub.snapshot_download import snapshot_download  model_dir = snapshot_download(&#39;qwen/Qwen-7B&#39;,  cache_dir=&#39;.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="HuggingFace" />
+<meta property="og:description" content="HuggingFace #  下载模型 #   from huggingface_hub import snapshot_download snapshot_download(repo_id=&#34;THUDM/chatglm3-6b&#34;, local_dir_use_symlinks=False)   from huggingface_hub import snapshot_download  snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;,  repo_type=&#39;model&#39;,  local_dir=&#39;./model_dir&#39;,  resume_download=True) Huggingface 镜像站 #  https://hf-mirror.com/ #  # 安装依赖 pip install -U huggingface_hub hf_transfer  export HF_ENDPOINT=https://hf-mirror.com  # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1  huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir chatglm3-6b 阿里魔搭社区 #  from modelscope.hub.snapshot_download import snapshot_download  model_dir = snapshot_download(&#39;qwen/Qwen-7B&#39;,  cache_dir=&#39;." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kingye.me/study-ml/docs/basic/huggingface/" /><meta property="article:section" content="docs" />
 
-<title>PyTorch | Machine Learning 学习笔记</title>
+
+
+<title>HuggingFace | Machine Learning 学习笔记</title>
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
 <script defer src="/study-ml/en.search.min.148a424f76d970adb95c4f77950e37b09aad7f5b948c650e841af3e260c35ef0.js" integrity="sha256-FIpCT3bZcK25XE93lQ43sJqtf1uUjGUOhBrz4mDDXvA="></script>
-<link rel="alternate" type="application/rss+xml" href="https://kingye.me/study-ml/docs/basic/ml/frame/pytorch/index.xml" title="Machine Learning 学习笔记" />
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -91,7 +91,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   
-    <a href="https://kingye.me/study-ml/docs/basic/huggingface/" class="">HuggingFace</a>
+    <a href="https://kingye.me/study-ml/docs/basic/huggingface/" class=" active">HuggingFace</a>
   
 
         </li>
@@ -348,7 +348,7 @@ https://github.com/alex-shpak/hugo-book
     <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
   </label>
 
-  <strong>PyTorch</strong>
+  <strong>HuggingFace</strong>
 
   <label for="toc-control">
     
@@ -362,7 +362,20 @@ https://github.com/alex-shpak/hugo-book
   <aside class="hidden clearfix">
     
   
-<nav id="TableOfContents"></nav>
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#下载模型">下载模型</a>
+      <ul>
+        <li><a href="#huggingface-镜像站">Huggingface 镜像站</a>
+          <ul>
+            <li><a href="#httpshf-mirrorcom"><a href="https://hf-mirror.com/">https://hf-mirror.com/</a></a></li>
+            <li><a href="#阿里魔搭社区">阿里魔搭社区</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
 <hr />
 <ul>
   <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
@@ -378,17 +391,53 @@ https://github.com/alex-shpak/hugo-book
 
       
       
-  <article id="article" class="markdown"><h1 id="pytorch">
-  PyTorch
-  <a class="anchor" href="#pytorch">#</a>
+  <article id="article" class="markdown"><h1 id="huggingface">
+  HuggingFace
+  <a class="anchor" href="#huggingface">#</a>
 </h1>
-<p><a href="https://github.com/pytorch/pytorch">pytorch/pytorch</a> <img src="https://img.shields.io/github/stars/pytorch/pytorch.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/pytorch/pytorch.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/pytorch/pytorch.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/pytorch/pytorch.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/pytorch/pytorch.svg" alt="Last commit" /></p>
-<p>PyTorch is a Python package that provides two high-level features:</p>
-<ul>
-<li>Tensor computation (like NumPy) with strong GPU acceleration</li>
-<li>Deep neural networks built on a tape-based autograd system</li>
-</ul>
-</article>
+<h2 id="下载模型">
+  下载模型
+  <a class="anchor" href="#%e4%b8%8b%e8%bd%bd%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> huggingface_hub <span style="color:#f92672">import</span> snapshot_download
+</span></span><span style="display:flex;"><span>snapshot_download(repo_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;THUDM/chatglm3-6b&#34;</span>, local_dir_use_symlinks<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> huggingface_hub <span style="color:#f92672">import</span> snapshot_download
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>snapshot_download(repo_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;THUDM/chatglm3-6b&#39;</span>,
+</span></span><span style="display:flex;"><span>                  repo_type<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;model&#39;</span>,
+</span></span><span style="display:flex;"><span>                  local_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;./model_dir&#39;</span>,
+</span></span><span style="display:flex;"><span>                  resume_download<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><h3 id="huggingface-镜像站">
+  Huggingface 镜像站
+  <a class="anchor" href="#huggingface-%e9%95%9c%e5%83%8f%e7%ab%99">#</a>
+</h3>
+<h4 id="httpshf-mirrorcom">
+  <a href="https://hf-mirror.com/">https://hf-mirror.com/</a>
+  <a class="anchor" href="#httpshf-mirrorcom">#</a>
+</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 安装依赖</span>
+</span></span><span style="display:flex;"><span>pip install -U huggingface_hub hf_transfer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>export HF_ENDPOINT<span style="color:#f92672">=</span>https://hf-mirror.com
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 缺点是没有进度条</span>
+</span></span><span style="display:flex;"><span>export HF_HUB_ENABLE_HF_TRANSFER<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir chatglm3-6b
+</span></span></code></pre></div><h4 id="阿里魔搭社区">
+  阿里魔搭社区
+  <a class="anchor" href="#%e9%98%bf%e9%87%8c%e9%ad%94%e6%90%ad%e7%a4%be%e5%8c%ba">#</a>
+</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> modelscope.hub.snapshot_download <span style="color:#f92672">import</span> snapshot_download
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model_dir <span style="color:#f92672">=</span> snapshot_download(<span style="color:#e6db74">&#39;qwen/Qwen-7B&#39;</span>,
+</span></span><span style="display:flex;"><span>                              cache_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;./model_dir&#39;</span>,
+</span></span><span style="display:flex;"><span>                              revision<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;master&#39;</span>)
+</span></span></code></pre></div></article>
  
       
 
@@ -397,12 +446,6 @@ https://github.com/alex-shpak/hugo-book
   <div class="flex flex-wrap justify-between">
 
 
-
-  <div><a class="flex align-center" href="https://github.com/ikingye/study-ml/commit/924e79f2eadfd8bc78c11395a7147796aea3b462" title='Last modified by yewang | 2023-10-25' target="_blank" rel="noopener">
-      <img src="/study-ml/svg/calendar.svg" class="book-icon" alt="Calendar" />
-      <span>2023-10-25</span>
-    </a>
-  </div>
 
 
 
@@ -459,7 +502,20 @@ https://github.com/alex-shpak/hugo-book
       <div class="book-toc-content">
         
   
-<nav id="TableOfContents"></nav>
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#下载模型">下载模型</a>
+      <ul>
+        <li><a href="#huggingface-镜像站">Huggingface 镜像站</a>
+          <ul>
+            <li><a href="#httpshf-mirrorcom"><a href="https://hf-mirror.com/">https://hf-mirror.com/</a></a></li>
+            <li><a href="#阿里魔搭社区">阿里魔搭社区</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
 <hr />
 <ul>
   <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
