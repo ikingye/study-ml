@@ -6,14 +6,10 @@
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="LLM（大型语言模型） #  大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。
-开源大语言模型 #   OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI)   Falcon: https://huggingface.co/tiiuae/falcon-7b  大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers
-google-research/bert 微调 #  预训练大语言模型的三种微调技术总结：
- fine-tuning  Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。   parameter-efficient fine-tuning  PEFT 在尽可能减少所需的参数和计算资源的情况下，实现对预训练语言模型的有效微调。 3 种技术  蒸馏(distillation)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。 适配器训练(adapter training)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。 渐进收缩(progressive shrinking)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。     prompt-tuning  只修改模型的输入，不需要大量计算资源    参考：预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning">
+开源大语言模型 #   meta-LLaMa  OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI) 7B  meta-llama/Llama-2-7b meta-llama/Llama-2-7b-hf meta-llama/Llama-2-7b-chat meta-llama/Llama-2-7b-chat-hf   13B  meta-llama/Llama-2-13b meta-llama/Llama-2-13b-hf meta-llama/Llama-2-13b-chat meta-llama/Llama-2-13b-chat-hf   70B  meta-llama/Llama-2-70b meta-llama/Llama-2-70b-hf meta-llama/Llama-2-70b-chat meta-llama/Llama-2-70b-chat-hf     tiiuae  7B  tiiuae/falcon-7b-instruct tiiuae/falcon-7b   40B  tiiuae/falcon-40b-instruct tiiuae/falcon-40b   180B  tiiuae/falcon-180B tiiuae/falcon-180B-chat     THUDM  GLM: General Language Model 6B  THUDM/chatglm3-6b-base THUDM/chatglm3-6b THUDM/chatglm3-6b-32k THUDM/chatglm2-6b THUDM/chatglm2-6b-int4   7B  THUDM/agentlm-7b   10B  THUDM/glm-10b-chinese     bigscience  560m  bigscience/bloom-560m   1B  bigscience/bloom-1b7   7B  bigscience/bloom-7b1   3B  bigscience/bloom-3b   176B  bigscience/bloom     Baichuan  7B  baichuan-inc/Baichuan2-7B-Base baichuan-inc/Baichuan2-7B-Chat baichuan-inc/Baichuan2-7B-Chat-4bits baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints baichuan-inc/Baichuan-7B   13B  baichuan-inc/Baichuan-13B-Base baichuan-inc/Baichuan2-13B-Base baichuan-inc/Baichuan-13B-Chat baichuan-inc/Baichuan2-13B-Chat baichuan-inc/Baichuan2-13B-Chat-4bits       大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers">
 <meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="LLM" />
 <meta property="og:description" content="LLM（大型语言模型） #  大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。
-开源大语言模型 #   OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI)   Falcon: https://huggingface.co/tiiuae/falcon-7b  大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers
-google-research/bert 微调 #  预训练大语言模型的三种微调技术总结：
- fine-tuning  Fine-tuning 的基本思想是采用已经在大量文本上进行训练的预训练语言模型，然后在小规模的任务特定文本上继续训练它。   parameter-efficient fine-tuning  PEFT 在尽可能减少所需的参数和计算资源的情况下，实现对预训练语言模型的有效微调。 3 种技术  蒸馏(distillation)，它由 Hinton 等人于 2015 年引入。该方法涉及训练一个较小的模型来模仿一个较大的预训练模型的行为。预训练模型生成“教师”预测结果，然后用于训练较小的“学生”模型。通过这样做，学生模型可以从较大模型的知识中学习，而无需存储所有参数。 适配器训练(adapter training)，它由 Houlsby 等人于 2019 年引入。适配器是添加到预训练模型中的小型神经网络，用于特定任务的微调。这些适配器只占原始模型大小的一小部分，这使得训练更快，内存需求更低。适配器可以针对多种任务进行训练，然后插入到预训练模型中以执行新任务。 渐进收缩(progressive shrinking)，它由 Kaplan 等人于 2020 年引入。这种技术涉及在 fine-tuning 期间逐渐减小预训练模型的大小。从一个大模型开始，逐渐减少参数的数量，直到达到所需的性能。这种方法可以产生比从头开始训练的模型性能更好的小型模型。     prompt-tuning  只修改模型的输入，不需要大量计算资源    参考：预训练大语言模型的三种微调技术总结：fine-tuning、parameter-efficient fine-tuning 和 prompt-tuning" />
+开源大语言模型 #   meta-LLaMa  OpenLLaMA: openlm-research/open_llama  LLaMA (Large Language Model Meta AI) 7B  meta-llama/Llama-2-7b meta-llama/Llama-2-7b-hf meta-llama/Llama-2-7b-chat meta-llama/Llama-2-7b-chat-hf   13B  meta-llama/Llama-2-13b meta-llama/Llama-2-13b-hf meta-llama/Llama-2-13b-chat meta-llama/Llama-2-13b-chat-hf   70B  meta-llama/Llama-2-70b meta-llama/Llama-2-70b-hf meta-llama/Llama-2-70b-chat meta-llama/Llama-2-70b-chat-hf     tiiuae  7B  tiiuae/falcon-7b-instruct tiiuae/falcon-7b   40B  tiiuae/falcon-40b-instruct tiiuae/falcon-40b   180B  tiiuae/falcon-180B tiiuae/falcon-180B-chat     THUDM  GLM: General Language Model 6B  THUDM/chatglm3-6b-base THUDM/chatglm3-6b THUDM/chatglm3-6b-32k THUDM/chatglm2-6b THUDM/chatglm2-6b-int4   7B  THUDM/agentlm-7b   10B  THUDM/glm-10b-chinese     bigscience  560m  bigscience/bloom-560m   1B  bigscience/bloom-1b7   7B  bigscience/bloom-7b1   3B  bigscience/bloom-3b   176B  bigscience/bloom     Baichuan  7B  baichuan-inc/Baichuan2-7B-Base baichuan-inc/Baichuan2-7B-Chat baichuan-inc/Baichuan2-7B-Chat-4bits baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints baichuan-inc/Baichuan-7B   13B  baichuan-inc/Baichuan-13B-Base baichuan-inc/Baichuan2-13B-Base baichuan-inc/Baichuan-13B-Chat baichuan-inc/Baichuan2-13B-Chat baichuan-inc/Baichuan2-13B-Chat-4bits       大模型应用工具 #   langchain-ai/langchain  microsoft/TaskMatrix  microsoft/semantic-kernel  Significant-Gravitas/Auto-GPT  reworkd/AgentGPT    BERT #  Bidirectional Encoder Representations from Transformers" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://kingye.me/study-ml/docs/basic/lm/llm/" /><meta property="article:section" content="docs" />
 
@@ -23,7 +19,7 @@ google-research/bert 微调 #  预训练大语言模型的三种微调技术总�
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
-<script defer src="/study-ml/en.search.min.ace6238336c3a26e87ddcfed5f27e871b53cff9acfd3f65d5acef114e61e8cd0.js" integrity="sha256-rOYjgzbDom6H3c/tXyfocbU8/5rP0/ZdWs7xFOYejNA="></script>
+<script defer src="/study-ml/en.search.min.3f8ff95af056477571798fddd2fbd1ac3d1f6cd0e7dd530cff48d24ddfe8efd0.js" integrity="sha256-P4/5WvBWR3VxeY/d0vvRrD0fbNDn3VMM/0jSTd/o79A="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -188,6 +184,24 @@ https://github.com/alex-shpak/hugo-book
 
           
   <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/advanced/llm/" class="">LLM</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
     
   </ul>
 
@@ -401,13 +415,135 @@ https://github.com/alex-shpak/hugo-book
   <a class="anchor" href="#%e5%bc%80%e6%ba%90%e5%a4%a7%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b">#</a>
 </h2>
 <ul>
-<li>OpenLLaMA: <a href="https://github.com/openlm-research/open_llama">openlm-research/open_llama</a> <img src="https://img.shields.io/github/stars/openlm-research/open_llama.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/openlm-research/open_llama.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/openlm-research/open_llama.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/openlm-research/open_llama.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/openlm-research/open_llama.svg" alt="Last commit" />
+<li><a href="https://huggingface.co/meta-llama">meta-LLaMa</a>
 <ul>
-<li>LLaMA (Large Language Model Meta AI)</li>
+<li>OpenLLaMA: <a href="https://github.com/openlm-research/open_llama">openlm-research/open_llama</a> <img src="https://img.shields.io/github/stars/openlm-research/open_llama.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/openlm-research/open_llama.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/openlm-research/open_llama.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/openlm-research/open_llama.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/openlm-research/open_llama.svg" alt="Last commit" /></li>
+<li>LLaMA (<code>Large Language Model Meta AI</code>)</li>
+<li>7B
+<ul>
+<li>meta-llama/Llama-2-7b</li>
+<li>meta-llama/Llama-2-7b-hf</li>
+<li>meta-llama/Llama-2-7b-chat</li>
+<li>meta-llama/Llama-2-7b-chat-hf</li>
 </ul>
 </li>
-<li>Falcon: <a href="https://huggingface.co/tiiuae/falcon-7b">https://huggingface.co/tiiuae/falcon-7b</a></li>
+<li>13B
+<ul>
+<li>meta-llama/Llama-2-13b</li>
+<li>meta-llama/Llama-2-13b-hf</li>
+<li>meta-llama/Llama-2-13b-chat</li>
+<li>meta-llama/Llama-2-13b-chat-hf</li>
 </ul>
+</li>
+<li>70B
+<ul>
+<li>meta-llama/Llama-2-70b</li>
+<li>meta-llama/Llama-2-70b-hf</li>
+<li>meta-llama/Llama-2-70b-chat</li>
+<li>meta-llama/Llama-2-70b-chat-hf</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://huggingface.co/tiiuae">tiiuae</a>
+<ul>
+<li>7B
+<ul>
+<li>tiiuae/falcon-7b-instruct</li>
+<li>tiiuae/falcon-7b</li>
+</ul>
+</li>
+<li>40B
+<ul>
+<li>tiiuae/falcon-40b-instruct</li>
+<li>tiiuae/falcon-40b</li>
+</ul>
+</li>
+<li>180B
+<ul>
+<li>tiiuae/falcon-180B</li>
+<li>tiiuae/falcon-180B-chat</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://huggingface.co/THUDM">THUDM</a>
+<ul>
+<li>GLM: <a href="https://aclanthology.org/2022.acl-long.26/">General Language Model</a></li>
+<li>6B
+<ul>
+<li>THUDM/chatglm3-6b-base</li>
+<li>THUDM/chatglm3-6b</li>
+<li>THUDM/chatglm3-6b-32k</li>
+<li>THUDM/chatglm2-6b</li>
+<li>THUDM/chatglm2-6b-int4</li>
+</ul>
+</li>
+<li>7B
+<ul>
+<li>THUDM/agentlm-7b</li>
+</ul>
+</li>
+<li>10B
+<ul>
+<li>THUDM/glm-10b-chinese</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://huggingface.co/bigscience">bigscience</a>
+<ul>
+<li>560m
+<ul>
+<li>bigscience/bloom-560m</li>
+</ul>
+</li>
+<li>1B
+<ul>
+<li>bigscience/bloom-1b7</li>
+</ul>
+</li>
+<li>7B
+<ul>
+<li>bigscience/bloom-7b1</li>
+</ul>
+</li>
+<li>3B
+<ul>
+<li>bigscience/bloom-3b</li>
+</ul>
+</li>
+<li>176B
+<ul>
+<li>bigscience/bloom</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="https://huggingface.co/baichuan-inc">Baichuan</a>
+<ul>
+<li>7B
+<ul>
+<li>baichuan-inc/Baichuan2-7B-Base</li>
+<li>baichuan-inc/Baichuan2-7B-Chat</li>
+<li>baichuan-inc/Baichuan2-7B-Chat-4bits</li>
+<li>baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints</li>
+<li>baichuan-inc/Baichuan-7B</li>
+</ul>
+</li>
+<li>13B
+<ul>
+<li>baichuan-inc/Baichuan-13B-Base</li>
+<li>baichuan-inc/Baichuan2-13B-Base</li>
+<li>baichuan-inc/Baichuan-13B-Chat</li>
+<li>baichuan-inc/Baichuan2-13B-Chat</li>
+<li>baichuan-inc/Baichuan2-13B-Chat-4bits</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
 <h2 id="大模型应用工具">
   大模型应用工具
   <a class="anchor" href="#%e5%a4%a7%e6%a8%a1%e5%9e%8b%e5%ba%94%e7%94%a8%e5%b7%a5%e5%85%b7">#</a>
