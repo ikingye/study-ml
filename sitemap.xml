@@ -38,6 +38,9 @@
     <loc>https://kingye.me/study-ml/docs/appendix/attention/</loc>
     <lastmod>2021-05-27T10:38:02+08:00</lastmod>
   </url><url>
+    <loc>https://kingye.me/study-ml/docs/basic/lm/agent/</loc>
+    <lastmod>2024-01-29T12:00:17+08:00</lastmod>
+  </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/ml/frame/</loc>
     <lastmod>2021-05-24T20:29:25+08:00</lastmod>
   </url><url>
@@ -45,9 +48,6 @@
     <lastmod>2023-11-13T21:00:18+08:00</lastmod>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/lm/llm/</loc>
-    <lastmod>2024-01-29T12:00:17+08:00</lastmod>
-  </url><url>
-    <loc>https://kingye.me/study-ml/docs/basic/lm/agent/</loc>
     <lastmod>2024-01-29T12:00:17+08:00</lastmod>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/nlp/</loc>
@@ -58,6 +58,8 @@
   </url><url>
     <loc>https://kingye.me/study-ml/docs/basic/ml/frame/pytorch/</loc>
     <lastmod>2023-10-25T21:30:34+08:00</lastmod>
+  </url><url>
+    <loc>https://kingye.me/study-ml/docs/basic/lm/rag/</loc>
   </url><url>
     <loc>https://kingye.me/study-ml/docs/advanced/llm/</loc>
     <lastmod>2023-11-06T12:00:18+08:00</lastmod>

@@ -5,18 +5,27 @@
   <meta name="generator" content="Hugo 0.121.1">
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="">
-<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="首页" />
-<meta property="og:description" content="" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://kingye.me/study-ml/" />
+<meta name="description" content=" RAG # RAG (Retrieval-Augmented Generation) 框架：
+是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。
+可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。
+RAG 工作过程分两个阶段：
+知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 ">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="RAG" />
+<meta property="og:description" content=" RAG # RAG (Retrieval-Augmented Generation) 框架：
+是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。
+可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。
+RAG 工作过程分两个阶段：
+知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kingye.me/study-ml/docs/basic/lm/rag/" /><meta property="article:section" content="docs" />
 
-<title>首页 | Machine Learning 学习笔记</title>
+
+
+<title>RAG | Machine Learning 学习笔记</title>
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
 <script defer src="/study-ml/en.search.min.61594d6417ea5b39d73a579f916c2393942d132c881ac87649a015e4b7f9e669.js" integrity="sha256-YVlNZBfqWznXOlefkWwjk5QtEyyIGsh2SaAV5Lf55mk="></script>
-<link rel="alternate" type="application/rss+xml" href="https://kingye.me/study-ml/index.xml" title="Machine Learning 学习笔记" />
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -179,7 +188,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   
-    <a href="https://kingye.me/study-ml/docs/basic/lm/rag/" class="">RAG</a>
+    <a href="https://kingye.me/study-ml/docs/basic/lm/rag/" class=" active">RAG</a>
   
 
         </li>
@@ -391,7 +400,7 @@ https://github.com/alex-shpak/hugo-book
     <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
   </label>
 
-  <strong>首页</strong>
+  <strong>RAG</strong>
 
   <label for="toc-control">
     
@@ -421,7 +430,28 @@ https://github.com/alex-shpak/hugo-book
 
       
       
-  <article id="article" class="markdown"></article>
+  <article id="article" class="markdown"><h1 id="rag">
+  RAG
+  <a class="anchor" href="#rag">#</a>
+</h1>
+<p>RAG (<code>Retrieval-Augmented Generation</code>) 框架：</p>
+<p>是一种结合才信息检索 <code>Retrieval</code> 和生成 <code>Generation</code> 的语言模型架构。</p>
+<p>可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。</p>
+<hr>
+<p>RAG 工作过程分两个阶段：</p>
+<ul>
+<li>知识构建阶段
+<ul>
+<li>文本分片清洗、文本向量化、存入向量数据库</li>
+</ul>
+</li>
+<li>检索应用阶段
+<ul>
+<li>用户输入查询、 用户问题向量化、向量检索、排序、生成答案</li>
+</ul>
+</li>
+</ul>
+</article>
  
       
 
@@ -430,12 +460,6 @@ https://github.com/alex-shpak/hugo-book
   <div class="flex flex-wrap justify-between">
 
 
-
-  <div><a class="flex align-center" href="https://github.com/ikingye/study-ml/commit/3d000affc7f4ef20aa314a7d3f0bfd8b42475338" title='Last modified by yewang | 2021-05-24' target="_blank" rel="noopener">
-      <img src="/study-ml/svg/calendar.svg" class="book-icon" alt="Calendar" />
-      <span>2021-05-24</span>
-    </a>
-  </div>
 
 
 
@@ -458,6 +482,29 @@ https://github.com/alex-shpak/hugo-book
       </footer>
 
       
+  
+  <div class="book-comments">
+<script src="https://utteranc.es/client.js"
+  repo="ikingye/study-ml"
+  issue-term="pathname"
+  theme="github-light"
+  crossorigin="anonymous"
+  async
+></script>
+
+<div id="footer">
+  <p>
+    <a href="https://kingye.me">叶王</a> &copy; 2013-2024
+    版权所有。如果本文档对你有所帮助，可以<a
+      href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200428110046.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      >请作者喝饮料</a
+    >。
+  </p>
+</div>
+
+</div>
   
  
 

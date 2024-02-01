@@ -8,6 +8,13 @@
     <language>en</language>
     <atom:link href="https://kingye.me/study-ml/docs/basic/lm/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>AI Agent</title>
+      <link>https://kingye.me/study-ml/docs/basic/lm/agent/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://kingye.me/study-ml/docs/basic/lm/agent/</guid>
+      <description> AI Agent # Significant-Gravitas/Auto-GPT geekan/MetaGPT reworkd/AgentGPT TransformerOptimus/SuperAGI </description>
+    </item>
+    <item>
       <title>LLM</title>
       <link>https://kingye.me/study-ml/docs/basic/lm/llm/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -15,11 +22,11 @@
       <description>LLM（大型语言模型） # 大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。&#xA;图片来自：Foundation Large Language Model Stack&#xA;开源大语言模型 # meta-LLaMa OpenLLaMA: openlm-research/open_llama LLaMA (Large Language Model Meta AI) 7B meta-llama/Llama-2-7b meta-llama/Llama-2-7b-hf meta-llama/Llama-2-7b-chat meta-llama/Llama-2-7b-chat-hf 13B meta-llama/Llama-2-13b meta-llama/Llama-2-13b-hf meta-llama/Llama-2-13b-chat meta-llama/Llama-2-13b-chat-hf 70B meta-llama/Llama-2-70b meta-llama/Llama-2-70b-hf meta-llama/Llama-2-70b-chat meta-llama/Llama-2-70b-chat-hf tiiuae 7B tiiuae/falcon-7b-instruct tiiuae/falcon-7b 40B tiiuae/falcon-40b-instruct tiiuae/falcon-40b 180B tiiuae/falcon-180B tiiuae/falcon-180B-chat THUDM GLM: General Language Model 6B THUDM/chatglm3-6b-base THUDM/chatglm3-6b THUDM/chatglm3-6b-32k THUDM/chatglm2-6b THUDM/chatglm2-6b-int4 7B THUDM/agentlm-7b 10B THUDM/glm-10b-chinese bigscience 560m bigscience/bloom-560m 1B bigscience/bloom-1b7 7B bigscience/bloom-7b1 3B bigscience/bloom-3b 176B bigscience/bloom Baichuan 7B baichuan-inc/Baichuan2-7B-Base baichuan-inc/Baichuan2-7B-Chat baichuan-inc/Baichuan2-7B-Chat-4bits baichuan-inc/Baichuan2-7B-Intermediate-Checkpoints baichuan-inc/Baichuan-7B 13B baichuan-inc/Baichuan-13B-Base baichuan-inc/Baichuan2-13B-Base baichuan-inc/Baichuan-13B-Chat baichuan-inc/Baichuan2-13B-Chat baichuan-inc/Baichuan2-13B-Chat-4bits 大模型应用工具 # langchain-ai/langchain microsoft/TaskMatrix microsoft/semantic-kernel BERT # Bidirectional Encoder Representations from Transformers</description>
     </item>
     <item>
-      <title>LLM Agent</title>
-      <link>https://kingye.me/study-ml/docs/basic/lm/agent/</link>
+      <title>RAG</title>
+      <link>https://kingye.me/study-ml/docs/basic/lm/rag/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://kingye.me/study-ml/docs/basic/lm/agent/</guid>
-      <description> LLM Agent # Significant-Gravitas/Auto-GPT geekan/MetaGPT reworkd/AgentGPT TransformerOptimus/SuperAGI </description>
+      <guid>https://kingye.me/study-ml/docs/basic/lm/rag/</guid>
+      <description> RAG # RAG (Retrieval-Augmented Generation) 框架：&#xA;是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。&#xA;可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。&#xA;RAG 工作过程分两个阶段：&#xA;知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 </description>
     </item>
   </channel>
 </rss>
