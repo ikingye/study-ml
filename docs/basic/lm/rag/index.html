@@ -9,13 +9,15 @@
 是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。
 可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。
 RAG 工作过程分两个阶段：
-知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 ">
+知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 如果给大模型喂企业私有数据，做模型微调，也能实现同样的效果，为什么还要用 RAG 呢，我认为还要看场景：
+私有数据存在一定频率的动态更新的； 需要给出引用原文的； 硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）； ">
 <meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="RAG" />
 <meta property="og:description" content=" RAG # RAG (Retrieval-Augmented Generation) 框架：
 是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。
 可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。
 RAG 工作过程分两个阶段：
-知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 " />
+知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 如果给大模型喂企业私有数据，做模型微调，也能实现同样的效果，为什么还要用 RAG 呢，我认为还要看场景：
+私有数据存在一定频率的动态更新的； 需要给出引用原文的； 硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）； " />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://kingye.me/study-ml/docs/basic/lm/rag/" /><meta property="article:section" content="docs" />
 
@@ -25,7 +27,7 @@ RAG 工作过程分两个阶段：
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
-<script defer src="/study-ml/en.search.min.61594d6417ea5b39d73a579f916c2393942d132c881ac87649a015e4b7f9e669.js" integrity="sha256-YVlNZBfqWznXOlefkWwjk5QtEyyIGsh2SaAV5Lf55mk="></script>
+<script defer src="/study-ml/en.search.min.8c418a82202e18f02dc382e725cd78617cd2ed016ea22093abd3a95e2be86870.js" integrity="sha256-jEGKgiAuGPAtw4LnJc14YXzS7QFuoiCTq9OpXivoaHA="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -451,6 +453,13 @@ https://github.com/alex-shpak/hugo-book
 </ul>
 </li>
 </ul>
+<hr>
+<p>如果给大模型喂企业私有数据，做模型微调，也能实现同样的效果，为什么还要用 RAG 呢，我认为还要看场景：</p>
+<ol>
+<li>私有数据存在一定频率的动态更新的；</li>
+<li>需要给出引用原文的；</li>
+<li>硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）；</li>
+</ol>
 </article>
  
       
