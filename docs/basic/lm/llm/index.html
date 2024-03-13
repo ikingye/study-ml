@@ -21,7 +21,7 @@
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
-<script defer src="/study-ml/en.search.min.82b66d300d9f7e6b22f85739de760beabd60b2d8a5d493f5f2c79eca6b7f4df4.js" integrity="sha256-grZtMA2ffmsi&#43;Fc53nYL6r1gstil1JP18seeymt/TfQ="></script>
+<script defer src="/study-ml/en.search.min.b9c6e5e2698ce92e364ff34289d7d7b39c8702b9815be638a54136a77754509a.js" integrity="sha256-ucbl4mmM6S42T/NCidfXs5yHArmBW&#43;Y4pUE2p3dUUJo="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -639,6 +639,47 @@ https://github.com/alex-shpak/hugo-book
 <p>在这里，“Qwen” 指的是基础语言模型，而 “Qwen-Chat” 则指的是通过后训练技术如 SFT（有监督微调）和 RLHF（强化学习人类反馈）训练的聊天模型。</p>
 <p>我们还有提供了专门针对特定领域和任务的模型，例如用于编程的 “Code-Qwen” 和用于数学的 “Math-Qwen”。</p>
 <p>大型语言模型（LLM）可以通过模态对齐扩展到多模态，因此我们有视觉-语言模型 “Qwen-VL” 以及音频-语言模型 “Qwen-Audio” 。</p>
+<hr>
+<ul>
+<li>RLHF（<code>Reinforcement Learning from Human Feedback</code>）</li>
+</ul>
+<hr>
+<p>大模型，如 GPT（Generative Pretrained Transformer）或 BERT（Bidirectional Encoder Representations from Transformers），是基于变换器（Transformer）架构的深度学习模型。它们通常用于自然语言处理任务。让我来详细解释这些模型的工作过程：</p>
+<ol>
+<li>接收 Prompt：
+当模型接收到一段文本（称为“prompt”），它首先需要理解和处理这段文本。在处理前，通常会先进行分词（将句子分解成单词或子词单元）。</li>
+<li>转换为<strong>嵌入 (<code>Embedding</code>)</strong>：
+分词后，模型将每个词或子词转换为一个嵌入。嵌入是一种高维空间中的向量，这些向量捕捉了词的语义和语法属性。嵌入可以通过查找预训练的嵌入矩阵来获得，这个矩阵将每个词映射到一个固定长度的向量。
+<ul>
+<li>嵌入（Embedding）是将词、短语或者整个文档从原始表示（通常是文本形式的）转换为实数向量的过程。在自然语言处理（NLP）中，嵌入向量通常捕捉单词的语义意义和在语境中的用法。这些嵌入向量让计算机能够理解词语，并对其进行数学运算。嵌入向量是深度学习模型能够处理文本数据的关键。</li>
+</ul>
+</li>
+<li>注意力计算和前馈计算：
+之后，模型通过其多层结构进行计算，每一层都包含两个主要部分：
+<ul>
+<li>自注意力机制（<code>Self-Attention</code>）： 这个机制让模型能够在处理每个词时考虑到句子中的其他词，从而理解词与词之间的关系。</li>
+<li>前馈网络（<code>Feed-Forward Neural Network</code>）： 在自注意力之后，每个词的表示将通过一个前馈网络，这个网络通常包含几个线性变换和非线性激活函数。</li>
+</ul>
+</li>
+<li>生成 <code>Logits</code>：
+每一层的输出会传递到下一层，直到最后一层。在最后一层，模型生成一个 logit 向量，其长度等于词汇表的大小。每个 logit 代表模型预测下一个词是词汇表中每个词的非规范化概率。</li>
+<li>概率分布：
+最终，logits 通过一个激活函数（如 SoftMax）转换为概率分布。SoftMax 函数可以确保所有可能词的预测概率加起来等于 1。
+这个概率分布反映了在给定前面的文本后，模型预测下一个词是词汇表中任何一个词的可能性。</li>
+<li>生成文本：
+根据这个概率分布，模型会选择概率最高的词作为下一个词，或者根据概率分布随机抽取一个词，从而生成文本。</li>
+</ol>
+<p>整个过程涉及大量的矩阵计算，通常在 GPU 或 TPU 上执行以加速这些操作。这种模型的强大之处在于其能够理解和生成复杂的语言结构，这使得它们在许多自然语言任务中都非常有效。</p>
+<hr>
+<p>嵌入 (<code>Embedding</code>) 是高维空间中的点，这些点代表了词汇表中的词。它们通常通过训练得到，以便具有这样的属性：语义或语法上相似的词在嵌入空间中彼此靠近。这里有一些关于嵌入的关键点：</p>
+<p>维度： 嵌入向量有固定的维度，这个维度通常远小于词汇表的大小。例如，你可能有一个由数百万个词组成的词汇表，但每个词的嵌入向量可能只有几百维。</p>
+<p>训练过程： 在预训练的模型（如 word2vec 或 GloVe）中，嵌入向量是通过在大量文本上学习得到的，这些模型会调整嵌入向量，使得在文本中共现的词在嵌入空间中更接近。</p>
+<p>上下文敏感度： 传统的嵌入模型（如 word2vec 和 GloVe）生成的是静态嵌入，这意味着对于词汇表中的每个词，它总是有同样的嵌入向量，不管它出现在什么上下文中。而上下文相关的嵌入（如 BERT 中的嵌入）能够根据词出现的上下文生成不同的向量。</p>
+<p>嵌入的使用： 嵌入向量用于初始化深度学习模型中的权重，随着模型在特定任务上的训练，它们可能会进行微调。例如，在 GPT 这样的模型中，嵌入层是模型的第一层，它将输入的文本转换为向量，这些向量随后通过模型的其它层进行处理。</p>
+<p>举一个简单的比喻，你可以想象每个词都是一点颜料，而嵌入就像是把这些点颜料滴在一个巨大的白纸上。在这张白纸上，相似的颜色（词）会更接近，而不同的颜色（词）会更远。深度学习模型通过这样的方式“看”文本，并了解不同词和短语之间的关系。</p>
+<hr>
+<p>“<code>Logit</code>”这个词来源于 <code>logistic regression</code>（逻辑回归）中，是“<code>logistic unit</code>”的缩写。在数学上，logit 函数通常指的是一个特定的函数，它把一个概率值（介于 0 和 1 之间的值）映射到负无穷到正无穷的范围内。这个函数是逻辑函数的逆函数。但在深度学习和机器学习的上下文中，&ldquo;logit&quot;一词有时被用来指代模型的原始输出，即还没有经过 softmax 或其他归一化函数转换成概率之前的值。</p>
+<p>在深度学习中，当我们讨论模型（尤其是分类模型）的输出时，模型通常会输出一个向量，这个向量的每个元素对应于一个类别的得分或者说是“原始”概率——这就是 logit。这些得分后来通常会通过一个 softmax 函数转换成概率分布，softmax 函数能够确保所有输出值的总和为 1，使其可以被解释为概率。</p>
 </article>
  
       
