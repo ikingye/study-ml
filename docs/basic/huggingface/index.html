@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta name="generator" content="Hugo 0.121.1">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download.">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="HuggingFace" />
+<meta property="og:description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://kingye.me/study-ml/docs/basic/huggingface/" /><meta property="article:section" content="docs" />
+
+<meta property="article:modified_time" content="2023-11-13T21:00:18+08:00" />
+
+<title>HuggingFace | Machine Learning 学习笔记</title>
+<link rel="manifest" href="/study-ml/manifest.json">
+<link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
+<link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
+<script defer src="/study-ml/en.search.min.a445f273d9d9a906d9259c6a7d8dc374c28a49ab93bfb634ed62abf10b473067.js" integrity="sha256-pEXyc9nZqQbZJZxqfY3DdMKKSauTv7Y07WKr8QtHMGc="></script>
+<!--
+Made with Book Theme
+https://github.com/alex-shpak/hugo-book
+-->
+
+  
+</head>
+
+<body dir="ltr">
+  <input type="checkbox" class="hidden toggle" id="menu-control" />
+  <input type="checkbox" class="hidden toggle" id="toc-control" />
+  <main class="container flex">
+    <aside class="book-menu">
+      <div class="book-menu-content">
+        
+  <nav>
+<h2 class="book-brand">
+  <a href="/study-ml"><span>Machine Learning 学习笔记</span>
+  </a>
+</h2>
+
+
+<div class="book-search">
+  <input type="text" id="book-search-input" placeholder="Search" aria-label="Search" maxlength="64" data-hotkeys="s/" />
+  <div class="book-search-spinner hidden"></div>
+  <ul id="book-search-results"></ul>
+</div>
+
+
+
+<ul>
+  <li><a href="https://kingye.me" target="_blank" rel="noopener noreferrer">博客</a></li>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417021727.png" target="_blank" rel="noopener noreferrer">公众号</a></li>
+  <li><a href="https://github.com/ikingye" target="_blank" rel="noopener noreferrer">Github</a></li>
+  <li><a href="https://weibo.com/kingyip15215" target="_blank" rel="noopener noreferrer">微博</a></li>
+  <li><a href="https://www.zhihu.com/people/wutongyip" target="_blank" rel="noopener noreferrer">知乎</a></li>
+</ul>
+<hr />
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第一部分 基础入门</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/huggingface/" class=" active">HuggingFace</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2693f76ee7795ee2fc7d3d516834e7d6" class="toggle"  />
+    <label for="section-2693f76ee7795ee2fc7d3d516834e7d6" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/basic/nlp/" class="">NLP</a>
+    </label>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c84e8e9351b2e30b6788dfccaa5e2dfd" class="toggle"  />
+    <label for="section-c84e8e9351b2e30b6788dfccaa5e2dfd" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/basic/onnx/" class="">ONNX</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/" class="">LM</a>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/agent/" class="">AI Agent</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/llm/" class="">LLM</a>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/basic/lm/rag/" class="">RAG</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第二部分 进阶实战</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/advanced/llm/" class="">LLM</a>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第三部分 设计与实现</span>
+  
+
+          
+  <ul>
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <span>第四部分 附录</span>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-2d181cd3861ca7652e852d22b5c3ff21" class="toggle"  />
+    <label for="section-2d181cd3861ca7652e852d22b5c3ff21" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/tutorial/" class="">4.1 教程</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-1291561338a2c243cca077171f0fe528" class="toggle"  />
+    <label for="section-1291561338a2c243cca077171f0fe528" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/interview/" class="">4.2 面试题</a>
+    </label>
+  
+
+          
+  <ul>
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-7acebfc4b461748521469ab23214109e" class="toggle"  />
+    <label for="section-7acebfc4b461748521469ab23214109e" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/interview/basic/" class="">基础</a>
+    </label>
+  
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <a href="https://kingye.me/study-ml/docs/appendix/interview/advanced/" class="">进阶</a>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+      
+        <li>
+          
+  
+  
+
+  
+    <input type="checkbox" id="section-c743998336860c656367010fc7573b86" class="toggle"  />
+    <label for="section-c743998336860c656367010fc7573b86" class="flex justify-between">
+      <a href="https://kingye.me/study-ml/docs/appendix/attention/" class="">4.3 关注项目</a>
+    </label>
+  
+
+        </li>
+      
+    
+  </ul>
+
+        </li>
+      
+    
+  </ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+</nav>
+
+
+
+
+  <script>(function(){var e=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script>
+
+
+ 
+      </div>
+    </aside>
+
+    <div class="book-page">
+      <header class="book-header">
+        
+  <div class="flex align-center justify-between">
+  <label for="menu-control">
+    <img src="/study-ml/svg/menu.svg" class="book-icon" alt="Menu" />
+  </label>
+
+  <strong>HuggingFace</strong>
+
+  <label for="toc-control">
+    
+    <img src="/study-ml/svg/toc.svg" class="book-icon" alt="Table of Contents" />
+    
+  </label>
+</div>
+
+
+  
+  <aside class="hidden clearfix">
+    
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#下载模型">下载模型</a>
+      <ul>
+        <li><a href="#huggingface_hub">huggingface_hub</a></li>
+        <li><a href="#huggingface-镜像站">Huggingface 镜像站</a>
+          <ul>
+            <li><a href="#httpshf-mirrorcom"><a href="https://hf-mirror.com/">https://hf-mirror.com/</a></a></li>
+            <li><a href="#aliendao">aliendao</a></li>
+            <li><a href="#阿里魔搭社区httpsmodelscopecn"><a href="https://modelscope.cn">阿里魔搭社区</a></a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+
+  </aside>
+  
+ 
+      </header>
+
+      
+      
+  <article id="article" class="markdown"><h1 id="huggingface">
+  HuggingFace
+  <a class="anchor" href="#huggingface">#</a>
+</h1>
+<h2 id="下载模型">
+  下载模型
+  <a class="anchor" href="#%e4%b8%8b%e8%bd%bd%e6%a8%a1%e5%9e%8b">#</a>
+</h2>
+<h3 id="huggingface_hub">
+  huggingface_hub
+  <a class="anchor" href="#huggingface_hub">#</a>
+</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 安装依赖</span>
+</span></span><span style="display:flex;"><span>pip install huggingface_hub
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 先在 shell 执行</span>
+</span></span><span style="display:flex;"><span>export HF_ENDPOINT<span style="color:#f92672">=</span>https://hf-mirror.com
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> huggingface_hub <span style="color:#f92672">import</span> snapshot_download
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>snapshot_download(repo_id<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;THUDM/chatglm3-6b&#39;</span>,
+</span></span><span style="display:flex;"><span>                  repo_type<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;model&#39;</span>,
+</span></span><span style="display:flex;"><span>                  local_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;./models/chatglm3-6b&#39;</span>,
+</span></span><span style="display:flex;"><span>                  resume_download<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span></code></pre></div><h3 id="huggingface-镜像站">
+  Huggingface 镜像站
+  <a class="anchor" href="#huggingface-%e9%95%9c%e5%83%8f%e7%ab%99">#</a>
+</h3>
+<h4 id="httpshf-mirrorcom">
+  <a href="https://hf-mirror.com/">https://hf-mirror.com/</a>
+  <a class="anchor" href="#httpshf-mirrorcom">#</a>
+</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 安装依赖</span>
+</span></span><span style="display:flex;"><span>pip install -U huggingface_hub hf_transfer
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>export HF_ENDPOINT<span style="color:#f92672">=</span>https://hf-mirror.com
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 缺点是没有进度条</span>
+</span></span><span style="display:flex;"><span>export HF_HUB_ENABLE_HF_TRANSFER<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 下载需要登录的模型（Gated Model）</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取</span>
+</span></span><span style="display:flex;"><span>huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+</span></span></code></pre></div><h4 id="aliendao">
+  aliendao
+  <a class="anchor" href="#aliendao">#</a>
+</h4>
+<p><a href="https://github.com/git-cloner/aliendao">git-cloner/aliendao</a> <img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /> <img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /> <img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /> <img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /> <img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" /></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 下载模型，带上 mirror 优先从镜像下载</span>
+</span></span><span style="display:flex;"><span>python model_download.py --mirror --repo_id 模型ID
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 举例</span>
+</span></span><span style="display:flex;"><span>python model_download.py --mirror --repo_id THUDM/chatglm2-6b
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 下载数据集</span>
+</span></span><span style="display:flex;"><span>python model_download.py --mirror --repo_id 数据集ID --repo_type dataset
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 举例</span>
+</span></span><span style="display:flex;"><span>python model_download.py --mirror --repo_id THUDM/chatglm2-6b --repo_type dataset
+</span></span></code></pre></div><h4 id="阿里魔搭社区httpsmodelscopecn">
+  <a href="https://modelscope.cn">阿里魔搭社区</a>
+  <a class="anchor" href="#%e9%98%bf%e9%87%8c%e9%ad%94%e6%90%ad%e7%a4%be%e5%8c%bahttpsmodelscopecn">#</a>
+</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> modelscope <span style="color:#f92672">import</span> snapshot_download
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>model_dir <span style="color:#f92672">=</span> snapshot_download(<span style="color:#e6db74">&#39;ZhipuAI/chatglm3-6b&#39;</span>,
+</span></span><span style="display:flex;"><span>                              cache_dir<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;./models&#39;</span>,
+</span></span><span style="display:flex;"><span>                              revision<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;v1.0.0&#39;</span>)
+</span></span></code></pre></div></article>
+ 
+      
+
+      <footer class="book-footer">
+        
+  <div class="flex flex-wrap justify-between">
+
+
+
+  <div><a class="flex align-center" href="https://github.com/ikingye/study-ml/commit/e54862a2977d3bb2078cee88fd8f115d06f779b4" title='Last modified by yewang | 2023-11-13' target="_blank" rel="noopener">
+      <img src="/study-ml/svg/calendar.svg" class="book-icon" alt="Calendar" />
+      <span>2023-11-13</span>
+    </a>
+  </div>
+
+
+
+</div>
+
+ 
+        <div>
+    <br>
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <p><span id="busuanzi_container_page_pv">本文访问量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_pv">本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次</span></p>
+    <p><span id="busuanzi_container_site_uv">本站总访客数 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 人</span></p>
+</div>
+
+
+
+
+
+      </footer>
+
+      
+  
+  <div class="book-comments">
+<script src="https://utteranc.es/client.js"
+  repo="ikingye/study-ml"
+  issue-term="pathname"
+  theme="github-light"
+  crossorigin="anonymous"
+  async
+></script>
+
+<div id="footer">
+  <p>
+    <a href="https://kingye.me">叶王</a> &copy; 2013-2024
+    版权所有。如果本文档对你有所帮助，可以<a
+      href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200428110046.png"
+      target="_blank"
+      rel="noopener noreferrer"
+      >请作者喝饮料</a
+    >。
+  </p>
+</div>
+
+</div>
+  
+ 
+
+      <label for="menu-control" class="hidden book-menu-overlay"></label>
+    </div>
+
+    
+    <aside class="book-toc">
+      <div class="book-toc-content">
+        
+  
+<nav id="TableOfContents">
+  <ul>
+    <li><a href="#下载模型">下载模型</a>
+      <ul>
+        <li><a href="#huggingface_hub">huggingface_hub</a></li>
+        <li><a href="#huggingface-镜像站">Huggingface 镜像站</a>
+          <ul>
+            <li><a href="#httpshf-mirrorcom"><a href="https://hf-mirror.com/">https://hf-mirror.com/</a></a></li>
+            <li><a href="#aliendao">aliendao</a></li>
+            <li><a href="#阿里魔搭社区httpsmodelscopecn"><a href="https://modelscope.cn">阿里魔搭社区</a></a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<hr />
+<ul>
+  <li><a href="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417022040.png" target="_blank" rel="noopener noreferrer">微信</a></li>
+  <li><a href="https://qm.qq.com/cgi-bin/qm/qr?k=EUhzg0UwUksxpQnwEmPngRLezlC6qrnn&jump_from=webapi" target="_blank" rel="noopener noreferrer"><img src="//pub.idqqimg.com/wpa/images/group.png"></a></li>
+</ul>
+
+
+ 
+      </div>
+    </aside>
+    
+  </main>
+
+  
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
