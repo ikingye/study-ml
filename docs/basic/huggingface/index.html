@@ -5,9 +5,9 @@
   <meta name="generator" content="Hugo 0.121.1">
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download.">
+<meta name="description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download.">
 <meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="HuggingFace" />
-<meta property="og:description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download." />
+<meta property="og:description" content="HuggingFace # 下载模型 # huggingface_hub # # 安装依赖 pip install huggingface_hub # 先在 shell 执行 export HF_ENDPOINT=https://hf-mirror.com from huggingface_hub import snapshot_download snapshot_download(repo_id=&#39;THUDM/chatglm3-6b&#39;, repo_type=&#39;model&#39;, local_dir=&#39;./models/chatglm3-6b&#39;, resume_download=True) Huggingface 镜像站 # https://hf-mirror.com/ # # 安装依赖 pip install -U huggingface_hub hf_transfer export HF_ENDPOINT=https://hf-mirror.com # 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库 # 缺点是没有进度条 export HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b # 下载需要登录的模型（Gated Model） # 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取 huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b aliendao # git-cloner/aliendao # 下载模型，带上 mirror 优先从镜像下载 python model_download." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://kingye.me/study-ml/docs/basic/huggingface/" /><meta property="article:section" content="docs" />
 
@@ -17,7 +17,7 @@
 <link rel="manifest" href="/study-ml/manifest.json">
 <link rel="icon" href="/study-ml/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/study-ml/book.min.e7360c502a84143addd190981586c3e3e8f082b67f6799dc9f237a599fe0be5a.css" integrity="sha256-5zYMUCqEFDrd0ZCYFYbD4&#43;jwgrZ/Z5ncnyN6WZ/gvlo=">
-<script defer src="/study-ml/en.search.min.a445f273d9d9a906d9259c6a7d8dc374c28a49ab93bfb634ed62abf10b473067.js" integrity="sha256-pEXyc9nZqQbZJZxqfY3DdMKKSauTv7Y07WKr8QtHMGc="></script>
+<script defer src="/study-ml/en.search.min.39d1188f4fd27bebc1099b8d4c59e9b125ab617b278a98c9429ce7c412de8ac1.js" integrity="sha256-OdEYj0/Se&#43;vBCZuNTFnpsSWrYXsnipjJQpznxBLeisE="></script>
 <!--
 Made with Book Theme
 https://github.com/alex-shpak/hugo-book
@@ -477,11 +477,11 @@ https://github.com/alex-shpak/hugo-book
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># 缺点是没有进度条</span>
 </span></span><span style="display:flex;"><span>export HF_HUB_ENABLE_HF_TRANSFER<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>huggingface-cli download --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+</span></span><span style="display:flex;"><span>huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># 下载需要登录的模型（Gated Model）</span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取</span>
-</span></span><span style="display:flex;"><span>huggingface-cli download --token hf_*** --resume-download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+</span></span><span style="display:flex;"><span>huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b
 </span></span></code></pre></div><h4 id="aliendao">
   aliendao
   <a class="anchor" href="#aliendao">#</a>
