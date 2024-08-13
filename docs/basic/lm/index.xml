@@ -28,5 +28,12 @@
       <guid>https://kingye.me/study-ml/docs/basic/lm/rag/</guid>
       <description> RAG # RAG (Retrieval-Augmented Generation) 框架：&#xA;是一种结合才信息检索 Retrieval 和生成 Generation 的语言模型架构。&#xA;可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。&#xA;RAG 工作过程分两个阶段：&#xA;知识构建阶段 文本分片清洗、文本向量化、存入向量数据库 检索应用阶段 用户输入查询、 用户问题向量化、向量检索、排序、生成答案 如果给大模型喂企业私有数据，做模型微调，也能实现同样的效果，为什么还要用 RAG 呢，我认为还要看场景：&#xA;私有数据存在一定频率的动态更新的； 需要给出引用原文的； 硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）； </description>
     </item>
+    <item>
+      <title>Stable Diffusion</title>
+      <link>https://kingye.me/study-ml/docs/basic/lm/sd/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://kingye.me/study-ml/docs/basic/lm/sd/</guid>
+      <description> Stable Diffusion # Stability-AI/stablediffusion CompVis/stable-diffusion AUTOMATIC1111/stable-diffusion-webui comfyanonymous/ComfyUI huggingface/diffusers invoke-ai/InvokeAI mudler/LocalAI Sanster/IOPaint </description>
+    </item>
   </channel>
 </rss>
