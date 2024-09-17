@@ -3,6 +3,9 @@ microsoft/ML-For-Beginners # Azure Cloud Advocates at Microsoft are pleased to o
 Avik-Jain/100-Days-Of-ML-Code # MLEveryday/100-Days-Of-ML-Code # 机器学习 100 天
 llSourcell/Learn_Machine_Learning_in_3_Months # This is the code for &ldquo;Learn Machine Learning in 3 Months&rdquo; by Siraj Raval on Youtube
 FudanNLP/nlp-beginner # NLP-Beginner：自然语言处理入门练习
+boyu-ai/Hands-on-RL # 动手学强化学习
+boyu-ai/Hands-on-ML # 动手学机器学习
+boyu-ai/Hands-on-NLP # 动手学自然语言处理
 进阶 # dive into deep learning # d2l-ai/d2l-en 动手学深度学习 # d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 # ShusenTang/Dive-into-DL-PyTorch 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 # TrickyGo/Dive-into-DL-TensorFlow2.0 动手学强化学习 # boyu-ai/Hands-on-RL 手写实现李航《统计学习方法》书中全部算法 # dod-o/statistical-learning-method_code 机器学习白板推导系列 # shuhuai007/machine-learning-session 【视频】【机器学习】【白板推导系列】【合集 1 ～ 23】
 机器学习白板系列 笔记 # tsyw/MachineLearningNotes Bilibili - 机器学习白板系列
 josephmisiti/awesome-machine-learning # ZuzooVn/machine-learning-for-software-engineers # A complete daily plan for studying to become a machine learning engineer.
