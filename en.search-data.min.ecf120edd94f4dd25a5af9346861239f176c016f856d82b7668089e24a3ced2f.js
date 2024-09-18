@@ -6,7 +6,7 @@ FudanNLP/nlp-beginner # NLP-Beginner：自然语言处理入门练习
 boyu-ai/Hands-on-RL # 动手学强化学习
 boyu-ai/Hands-on-ML # 动手学机器学习
 boyu-ai/Hands-on-NLP # 动手学自然语言处理
-进阶 # dive into deep learning # d2l-ai/d2l-en 动手学深度学习 # d2l-ai/d2l-zh 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 # ShusenTang/Dive-into-DL-PyTorch 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 # TrickyGo/Dive-into-DL-TensorFlow2.0 动手学强化学习 # boyu-ai/Hands-on-RL 手写实现李航《统计学习方法》书中全部算法 # dod-o/statistical-learning-method_code 机器学习白板推导系列 # shuhuai007/machine-learning-session 【视频】【机器学习】【白板推导系列】【合集 1 ～ 23】
+进阶 # dive into deep learning # d2l-ai/d2l-en 动手学深度学习 # d2l-ai/d2l-zh pytorch 版本 将《动手学深度学习》(Dive into Deep Learning) 原书中的 MXNet 实现改为 PyTorch 实现 # ShusenTang/Dive-into-DL-PyTorch 将《动手学深度学习》(Dive into Deep Learning)原书中的 MXNet 实现改为 TensorFlow 2.0 实现 # TrickyGo/Dive-into-DL-TensorFlow2.0 动手学强化学习 # boyu-ai/Hands-on-RL 手写实现李航《统计学习方法》书中全部算法 # dod-o/statistical-learning-method_code 机器学习白板推导系列 # shuhuai007/machine-learning-session 【视频】【机器学习】【白板推导系列】【合集 1 ～ 23】
 机器学习白板系列 笔记 # tsyw/MachineLearningNotes Bilibili - 机器学习白板系列
 josephmisiti/awesome-machine-learning # ZuzooVn/machine-learning-for-software-engineers # A complete daily plan for studying to become a machine learning engineer.
 自上而下的学习路线：软件工程师的机器学习
