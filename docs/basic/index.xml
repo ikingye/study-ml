@@ -1,25 +1,60 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>第一部分 基础入门 on Machine Learning 学习笔记</title>
-    <link>https://kingye.me/study-ml/docs/basic/</link>
-    <description>Recent content in 第一部分 基础入门 on Machine Learning 学习笔记</description>
-    <generator>Hugo</generator>
-    <language>en</language>
-    <atom:link href="https://kingye.me/study-ml/docs/basic/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>HuggingFace</title>
-      <link>https://kingye.me/study-ml/docs/basic/huggingface/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://kingye.me/study-ml/docs/basic/huggingface/</guid>
-      <description>&lt;h1 id=&#34;huggingface&#34;&gt;&#xA;  HuggingFace&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#huggingface&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;h2 id=&#34;下载模型&#34;&gt;&#xA;  下载模型&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#%e4%b8%8b%e8%bd%bd%e6%a8%a1%e5%9e%8b&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;h3 id=&#34;huggingface_hub&#34;&gt;&#xA;  huggingface_hub&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#huggingface_hub&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h3&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 安装依赖&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;pip install huggingface_hub&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 先在 shell 执行&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;export HF_ENDPOINT&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;https://hf-mirror.com&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-python&#34; data-lang=&#34;python&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;from&lt;/span&gt; huggingface_hub &lt;span style=&#34;color:#f92672&#34;&gt;import&lt;/span&gt; snapshot_download&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;snapshot_download(repo_id&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;THUDM/chatglm3-6b&amp;#39;&lt;/span&gt;,&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  repo_type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;model&amp;#39;&lt;/span&gt;,&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  local_dir&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;./models/chatglm3-6b&amp;#39;&lt;/span&gt;,&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;                  resume_download&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;True&lt;/span&gt;)&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;huggingface-镜像站&#34;&gt;&#xA;  Huggingface 镜像站&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#huggingface-%e9%95%9c%e5%83%8f%e7%ab%99&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h3&gt;&#xA;&lt;h4 id=&#34;httpshf-mirrorcom&#34;&gt;&#xA;  &lt;a href=&#34;https://hf-mirror.com/&#34;&gt;https://hf-mirror.com/&lt;/a&gt;&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#httpshf-mirrorcom&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h4&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 安装依赖&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;pip install -U huggingface_hub hf_transfer&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;export HF_ENDPOINT&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;https://hf-mirror.com&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 缺点是没有进度条&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;export HF_HUB_ENABLE_HF_TRANSFER&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 下载需要登录的模型（Gated Model）&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h4 id=&#34;aliendao&#34;&gt;&#xA;  aliendao&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#aliendao&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h4&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://github.com/git-cloner/aliendao&#34;&gt;git-cloner/aliendao&lt;/a&gt; &lt;img src=&#34;https://img.shields.io/github/stars/git-cloner/aliendao.svg&#34; alt=&#34;Github stars&#34; /&gt; &lt;img src=&#34;https://img.shields.io/github/forks/git-cloner/aliendao.svg&#34; alt=&#34;Github forks&#34; /&gt; &lt;img src=&#34;https://img.shields.io/github/languages/top/git-cloner/aliendao.svg&#34; alt=&#34;Language&#34; /&gt; &lt;img src=&#34;https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver&#34; alt=&#34;Last Tag&#34; /&gt; &lt;img src=&#34;https://img.shields.io/github/last-commit/git-cloner/aliendao.svg&#34; alt=&#34;Last commit&#34; /&gt;&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>ONNX</title>
-      <link>https://kingye.me/study-ml/docs/basic/onnx/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>https://kingye.me/study-ml/docs/basic/onnx/</guid>
-      <description>&lt;h1 id=&#34;onnx&#34;&gt;&#xA;  ONNX&#xA;  &lt;a class=&#34;anchor&#34; href=&#34;#onnx&#34;&gt;#&lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;&lt;code&gt;Open Neural Network Exchange&lt;/code&gt;&lt;/p&gt;&#xA;&lt;p&gt;开放神经网络交换&lt;/p&gt;&#xA;&lt;ul&gt;&#xA;&lt;li&gt;是微软和 Facebook 提出用来表示深度学习模型的开放格式&lt;/li&gt;&#xA;&lt;li&gt;定义了一组和环境，平台均无关的标准格式，来增强各种 AI 模型的可交互性&lt;/li&gt;&#xA;&lt;li&gt;无论你使用何种训练框架训练模型（比如 TensorFlow/Pytorch/OneFlow/Paddle），在训练完毕后你都可以将这些框架的模型统一转换为 ONNX 这种统一的格式进行存储&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
-    </item>
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第一部分 基础入门 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/basic/</link><description>Recent content in 第一部分 基础入门 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/basic/index.xml" rel="self" type="application/rss+xml"/><item><title>HuggingFace</title><link>https://kingye.me/study-ml/docs/basic/huggingface/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/huggingface/</guid><description>&lt;h1 id="huggingface">
+ HuggingFace
+ &lt;a class="anchor" href="#huggingface">#&lt;/a>
+&lt;/h1>
+&lt;h2 id="下载模型">
+ 下载模型
+ &lt;a class="anchor" href="#%e4%b8%8b%e8%bd%bd%e6%a8%a1%e5%9e%8b">#&lt;/a>
+&lt;/h2>
+&lt;h3 id="huggingface_hub">
+ huggingface_hub
+ &lt;a class="anchor" href="#huggingface_hub">#&lt;/a>
+&lt;/h3>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 安装依赖&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>pip install huggingface_hub
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 先在 shell 执行&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>export HF_ENDPOINT&lt;span style="color:#f92672">=&lt;/span>https://hf-mirror.com
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#f92672">from&lt;/span> huggingface_hub &lt;span style="color:#f92672">import&lt;/span> snapshot_download
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>snapshot_download(repo_id&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#39;THUDM/chatglm3-6b&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> repo_type&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#39;model&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> local_dir&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#39;./models/chatglm3-6b&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> resume_download&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h3 id="huggingface-镜像站">
+ Huggingface 镜像站
+ &lt;a class="anchor" href="#huggingface-%e9%95%9c%e5%83%8f%e7%ab%99">#&lt;/a>
+&lt;/h3>
+&lt;h4 id="httpshf-mirrorcom">
+ &lt;a href="https://hf-mirror.com/">https://hf-mirror.com/&lt;/a>
+ &lt;a class="anchor" href="#httpshf-mirrorcom">#&lt;/a>
+&lt;/h4>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-shell" data-lang="shell">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 安装依赖&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>pip install -U huggingface_hub hf_transfer
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>export HF_ENDPOINT&lt;span style="color:#f92672">=&lt;/span>https://hf-mirror.com
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 提高下载速度，推荐设置环境变量开启 hf_tranfer，官方的下载加速库&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 缺点是没有进度条&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>export HF_HUB_ENABLE_HF_TRANSFER&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 下载需要登录的模型（Gated Model）&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="aliendao">
+ aliendao
+ &lt;a class="anchor" href="#aliendao">#&lt;/a>
+&lt;/h4>
+&lt;p>&lt;a href="https://github.com/git-cloner/aliendao">git-cloner/aliendao&lt;/a> &lt;img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" />&lt;/p></description></item><item><title>ONNX</title><link>https://kingye.me/study-ml/docs/basic/onnx/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/onnx/</guid><description>&lt;h1 id="onnx">
+ ONNX
+ &lt;a class="anchor" href="#onnx">#&lt;/a>
+&lt;/h1>
+&lt;p>&lt;code>Open Neural Network Exchange&lt;/code>&lt;/p>
+&lt;p>开放神经网络交换&lt;/p>
+&lt;ul>
+&lt;li>是微软和 Facebook 提出用来表示深度学习模型的开放格式&lt;/li>
+&lt;li>定义了一组和环境，平台均无关的标准格式，来增强各种 AI 模型的可交互性&lt;/li>
+&lt;li>无论你使用何种训练框架训练模型（比如 TensorFlow/Pytorch/OneFlow/Paddle），在训练完毕后你都可以将这些框架的模型统一转换为 ONNX 这种统一的格式进行存储&lt;/li>
+&lt;/ul></description></item></channel></rss>
