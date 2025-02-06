@@ -99,7 +99,7 @@
  &lt;a class="anchor" href="#gunthercoxchatterbothttpsgithubcomgunthercoxchatterbot-github-starshttpsimgshieldsiogithubstarsgunthercoxchatterbotsvg-languagehttpsimgshieldsiogithublanguagestopgunthercoxchatterbotsvg-last-taghttpsimgshieldsiogithubvtaggunthercoxchatterbotsvgsortsemver-last-commithttpsimgshieldsiogithublast-commitgunthercoxchatterbotsvg">#&lt;/a>
 &lt;/h3>
 &lt;p>ChatterBot is a machine learning, conversational dialog engine for creating chat bots
-&lt;a href="https://chatterbot.readthedocs.io">https://chatterbot.readthedocs.io&lt;/a>&lt;/p></description></item><item><title>AI Agent</title><link>https://kingye.me/study-ml/docs/basic/lm/agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/lm/agent/</guid><description>&lt;h1 id="ai-agent">
+&lt;a href="https://chatterbot.readthedocs.io">https://chatterbot.readthedocs.io&lt;/a>&lt;/p></description></item><item><title>AI Agent</title><link>https://kingye.me/study-ml/docs/basic/llm/agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/agent/</guid><description>&lt;h1 id="ai-agent">
  AI Agent
  &lt;a class="anchor" href="#ai-agent">#&lt;/a>
 &lt;/h1>
@@ -157,7 +157,7 @@
  aliendao
  &lt;a class="anchor" href="#aliendao">#&lt;/a>
 &lt;/h4>
-&lt;p>&lt;a href="https://github.com/git-cloner/aliendao">git-cloner/aliendao&lt;/a> &lt;img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" />&lt;/p></description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/lm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/lm/llm/</guid><description>&lt;h1 id="llm大型语言模型">
+&lt;p>&lt;a href="https://github.com/git-cloner/aliendao">git-cloner/aliendao&lt;/a> &lt;img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" />&lt;/p></description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/llm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/llm/</guid><description>&lt;h1 id="llm大型语言模型">
  LLM（大型语言模型）
  &lt;a class="anchor" href="#llm%e5%a4%a7%e5%9e%8b%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b">#&lt;/a>
 &lt;/h1>
@@ -324,7 +324,7 @@
 &lt;li>是微软和 Facebook 提出用来表示深度学习模型的开放格式&lt;/li>
 &lt;li>定义了一组和环境，平台均无关的标准格式，来增强各种 AI 模型的可交互性&lt;/li>
 &lt;li>无论你使用何种训练框架训练模型（比如 TensorFlow/Pytorch/OneFlow/Paddle），在训练完毕后你都可以将这些框架的模型统一转换为 ONNX 这种统一的格式进行存储&lt;/li>
-&lt;/ul></description></item><item><title>RAG</title><link>https://kingye.me/study-ml/docs/basic/lm/rag/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/lm/rag/</guid><description>&lt;h1 id="rag">
+&lt;/ul></description></item><item><title>RAG</title><link>https://kingye.me/study-ml/docs/basic/llm/rag/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/rag/</guid><description>&lt;h1 id="rag">
  RAG
  &lt;a class="anchor" href="#rag">#&lt;/a>
 &lt;/h1>
@@ -351,7 +351,19 @@
 &lt;li>私有数据存在一定频率的动态更新的；&lt;/li>
 &lt;li>需要给出引用原文的；&lt;/li>
 &lt;li>硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）；&lt;/li>
-&lt;/ol></description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/lm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/lm/sd/</guid><description>&lt;h1 id="stable-diffusion">
+&lt;/ol>
+&lt;hr>
+&lt;h2 id="开源框架">
+ 开源框架
+ &lt;a class="anchor" href="#%e5%bc%80%e6%ba%90%e6%a1%86%e6%9e%b6">#&lt;/a>
+&lt;/h2>
+&lt;ul>
+&lt;li>&lt;a href="https://github.com/infiniflow/ragflow">infiniflow/ragflow&lt;/a> &lt;img src="https://img.shields.io/github/stars/infiniflow/ragflow.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/infiniflow/ragflow.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/infiniflow/ragflow.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/infiniflow/ragflow.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/infiniflow/ragflow.svg" alt="Last commit" />&lt;/li>
+&lt;li>&lt;a href="https://github.com/langgenius/dify">langgenius/dify&lt;/a> &lt;img src="https://img.shields.io/github/stars/langgenius/dify.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/langgenius/dify.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/langgenius/dify.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/langgenius/dify.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/langgenius/dify.svg" alt="Last commit" />&lt;/li>
+&lt;li>&lt;a href="https://github.com/labring/FastGPT">labring/FastGPT&lt;/a> &lt;img src="https://img.shields.io/github/stars/labring/FastGPT.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/labring/FastGPT.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/labring/FastGPT.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/labring/FastGPT.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/labring/FastGPT.svg" alt="Last commit" />&lt;/li>
+&lt;li>&lt;a href="https://github.com/netease-youdao/QAnything">netease-youdao/QAnything&lt;/a> &lt;img src="https://img.shields.io/github/stars/netease-youdao/QAnything.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/netease-youdao/QAnything.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/netease-youdao/QAnything.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/netease-youdao/QAnything.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/netease-youdao/QAnything.svg" alt="Last commit" />&lt;/li>
+&lt;li>&lt;a href="https://github.com/eosphoros-ai/DB-GPT">eosphoros-ai/DB-GPT&lt;/a> &lt;img src="https://img.shields.io/github/stars/eosphoros-ai/DB-GPT.svg" alt="Github stars" /> &lt;img src="https://img.shields.io/github/forks/eosphoros-ai/DB-GPT.svg" alt="Github forks" /> &lt;img src="https://img.shields.io/github/languages/top/eosphoros-ai/DB-GPT.svg" alt="Language" /> &lt;img src="https://img.shields.io/github/v/tag/eosphoros-ai/DB-GPT.svg?sort=semver" alt="Last Tag" /> &lt;img src="https://img.shields.io/github/last-commit/eosphoros-ai/DB-GPT.svg" alt="Last commit" />&lt;/li>
+&lt;/ul></description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion">
  Stable Diffusion
  &lt;a class="anchor" href="#stable-diffusion">#&lt;/a>
 &lt;/h1>
