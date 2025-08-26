@@ -148,11 +148,11 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 缺点是没有进度条&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>export HF_HUB_ENABLE_HF_TRANSFER&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">1&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>huggingface-cli download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>hf download THUDM/chatglm3-6b --local-dir models/chatglm3-6b
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 下载需要登录的模型（Gated Model）&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e"># 添加 --token hf_*** 参数，其中 hf_*** 是 access token，请在 https://huggingface.co/settings/tokens 获取&lt;/span>
-&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>huggingface-cli download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>hf download --token hf_*** THUDM/chatglm3-6b --local-dir models/chatglm3-6b
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h4 id="aliendao">
  aliendao
  &lt;a class="anchor" href="#aliendao">#&lt;/a>
