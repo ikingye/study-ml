@@ -1,23 +1,33 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>深度学习 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/basic/ml/dl/</link><description>Recent content in 深度学习 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/basic/ml/dl/index.xml" rel="self" type="application/rss+xml"/><item><title>教程</title><link>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</guid><description>&lt;h1 id="教程">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>深度学习 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/basic/ml/dl/</link><description>Recent content in 深度学习 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/basic/ml/dl/index.xml" rel="self" type="application/rss+xml"/><item><title>教程</title><link>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/ml/dl/tutorial/</guid><description>&lt;h1 id="教程"&gt;
  教程
- &lt;a class="anchor" href="#%e6%95%99%e7%a8%8b">#&lt;/a>
-&lt;/h1>
-&lt;h2 id="基础">
+ 
+ &lt;a class="anchor" href="#%e6%95%99%e7%a8%8b"&gt;#&lt;/a&gt;
+ 
+&lt;/h1&gt;
+&lt;h2 id="基础"&gt;
  基础
- &lt;a class="anchor" href="#%e5%9f%ba%e7%a1%80">#&lt;/a>
-&lt;/h2>
-&lt;h3 id="深度学习花书">
+ 
+ &lt;a class="anchor" href="#%e5%9f%ba%e7%a1%80"&gt;#&lt;/a&gt;
+ 
+&lt;/h2&gt;
+&lt;h3 id="深度学习花书"&gt;
  《深度学习》(花书)
- &lt;a class="anchor" href="#%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0%e8%8a%b1%e4%b9%a6">#&lt;/a>
-&lt;/h3>
-&lt;h4 id="mingchaozhudeeplearninghttpsgithubcommingchaozhudeeplearning-github-starshttpsimgshieldsiogithubstarsmingchaozhudeeplearningsvg">
- &lt;a href="https://github.com/MingchaoZhu/DeepLearning">MingchaoZhu/DeepLearning&lt;/a> &lt;img src="https://img.shields.io/github/stars/MingchaoZhu/DeepLearning.svg" alt="Github stars" />
- &lt;a class="anchor" href="#mingchaozhudeeplearninghttpsgithubcommingchaozhudeeplearning-github-starshttpsimgshieldsiogithubstarsmingchaozhudeeplearningsvg">#&lt;/a>
-&lt;/h4>
-&lt;p>Python for《Deep Learning》，该书为《深度学习》(花书) 数学推导、原理剖析与源码级别代码实现&lt;/p>
-&lt;hr>
-&lt;h2 id="进阶">
+ 
+ &lt;a class="anchor" href="#%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0%e8%8a%b1%e4%b9%a6"&gt;#&lt;/a&gt;
+ 
+&lt;/h3&gt;
+&lt;h4 id="mingchaozhudeeplearning-github-stars"&gt;
+ &lt;a href="https://github.com/MingchaoZhu/DeepLearning"&gt;MingchaoZhu/DeepLearning&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/MingchaoZhu/DeepLearning.svg" alt="Github stars" /&gt;
+ 
+ &lt;a class="anchor" href="#mingchaozhudeeplearning-github-stars"&gt;#&lt;/a&gt;
+ 
+&lt;/h4&gt;
+&lt;p&gt;Python for《Deep Learning》，该书为《深度学习》(花书) 数学推导、原理剖析与源码级别代码实现&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id="进阶"&gt;
  进阶
- &lt;a class="anchor" href="#%e8%bf%9b%e9%98%b6">#&lt;/a>
-&lt;/h2>
-&lt;hr></description></item></channel></rss>
+ 
+ &lt;a class="anchor" href="#%e8%bf%9b%e9%98%b6"&gt;#&lt;/a&gt;
+ 
+&lt;/h2&gt;
+&lt;hr&gt;</description></item></channel></rss>
