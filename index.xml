@@ -211,7 +211,29 @@
  &lt;a class="anchor" href="#aliendao"&gt;#&lt;/a&gt;
  
 &lt;/h4&gt;
-&lt;p&gt;&lt;a href="https://github.com/git-cloner/aliendao"&gt;git-cloner/aliendao&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" /&gt;&lt;/p&gt;</description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/llm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/llm/</guid><description>&lt;h1 id="llm大型语言模型"&gt;
+&lt;p&gt;&lt;a href="https://github.com/git-cloner/aliendao"&gt;git-cloner/aliendao&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/git-cloner/aliendao.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/git-cloner/aliendao.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/git-cloner/aliendao.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/git-cloner/aliendao.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/git-cloner/aliendao.svg" alt="Last commit" /&gt;&lt;/p&gt;</description></item><item><title>llama.cpp</title><link>https://kingye.me/study-ml/docs/code/llama.cpp/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/code/llama.cpp/</guid><description>&lt;h1 id="llamacpp"&gt;
+ llama.cpp
+ 
+ &lt;a class="anchor" href="#llamacpp"&gt;#&lt;/a&gt;
+ 
+&lt;/h1&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-shell" data-lang="shell"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# ubuntu server, 4090&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;sudo apt-get update
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;sudo apt-get install -y git build-essential cmake python3 python3-venv libcurl4-openssl-dev
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 可选：提速工具 &amp;amp; 压缩库&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# ccache 装上后，二次编译速度会更快&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;sudo apt-get install -y ccache zlib1g-dev libzstd-dev
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;cd /home/users/yewang/study/llama.cpp
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# 只编译 4090 的 8.9 架构，显著加快编译&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;cmake -S . -B build &lt;span style="color:#ae81ff"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#ae81ff"&gt;&lt;/span&gt; -DCMAKE_BUILD_TYPE&lt;span style="color:#f92672"&gt;=&lt;/span&gt;Debug &lt;span style="color:#ae81ff"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#ae81ff"&gt;&lt;/span&gt; -DGGML_CUDA&lt;span style="color:#f92672"&gt;=&lt;/span&gt;ON &lt;span style="color:#ae81ff"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#ae81ff"&gt;&lt;/span&gt; -DGGML_CUDA_ARCHITECTURES&lt;span style="color:#f92672"&gt;=&lt;/span&gt;&lt;span style="color:#ae81ff"&gt;89&lt;/span&gt; &lt;span style="color:#ae81ff"&gt;\
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#ae81ff"&gt;&lt;/span&gt; -DCMAKE_EXPORT_COMPILE_COMMANDS&lt;span style="color:#f92672"&gt;=&lt;/span&gt;ON
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;cmake --build build -j
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/llm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/llm/</guid><description>&lt;h1 id="llm大型语言模型"&gt;
  LLM（大型语言模型）
  
  &lt;a class="anchor" href="#llm%e5%a4%a7%e5%9e%8b%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;
