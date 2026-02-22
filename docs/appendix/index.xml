@@ -1,104 +1,24 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第四部分 附录 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/appendix/</link><description>Recent content in 第四部分 附录 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/appendix/index.xml" rel="self" type="application/rss+xml"/><item><title>4.1 教程</title><link>https://kingye.me/study-ml/docs/appendix/tutorial/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/tutorial/</guid><description>&lt;h1 id="教程"&gt;
- 教程
- 
- &lt;a class="anchor" href="#%e6%95%99%e7%a8%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
-&lt;h2 id="基础"&gt;
- 基础
- 
- &lt;a class="anchor" href="#%e5%9f%ba%e7%a1%80"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
-&lt;h3 id="视频李宏毅-20212022-春机器学习课程"&gt;
- 【视频】&lt;a href="https://www.bilibili.com/video/BV1Wv411h7kN"&gt;李宏毅 2021/2022 春机器学习课程&lt;/a&gt;
- 
- &lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9d%8e%e5%ae%8f%e6%af%85-20212022-%e6%98%a5%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e8%af%be%e7%a8%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h3 id="视频吴恩达机器学习系列课程"&gt;
- 【视频】&lt;a href="https://www.bilibili.com/video/BV164411b7dx"&gt;吴恩达机器学习系列课程&lt;/a&gt;
- 
- &lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e5%90%b4%e6%81%a9%e8%be%be%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e7%b3%bb%e5%88%97%e8%af%be%e7%a8%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h3 id="视频吴恩达深度学习-deeplearningai"&gt;
- 【视频】&lt;a href="https://www.bilibili.com/video/BV1FT4y1E74V"&gt;吴恩达深度学习 deeplearning.ai&lt;/a&gt;
- 
- &lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e5%90%b4%e6%81%a9%e8%be%be%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0-deeplearningai"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h3 id="视频林轩田机器学习基石"&gt;
- 【视频】&lt;a href="https://www.bilibili.com/video/BV1Cx411i7op"&gt;林轩田机器学习基石&lt;/a&gt;
- 
- &lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9e%97%e8%bd%a9%e7%94%b0%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e5%9f%ba%e7%9f%b3"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h3 id="视频机器学习技法林轩田"&gt;
- 【视频】&lt;a href="https://www.bilibili.com/video/BV1ix411i7yp"&gt;机器学习技法（林轩田）&lt;/a&gt;
- 
- &lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e6%8a%80%e6%b3%95%e6%9e%97%e8%bd%a9%e7%94%b0"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h4 id="fafa-dllhy_-github-stars-github-forks-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/Fafa-DL/Lhy_Machine_Learning"&gt;Fafa-DL/Lhy_Machine_Learning&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Fafa-DL/Lhy_Machine_Learning.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Fafa-DL/Lhy_Machine_Learning.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Fafa-DL/Lhy_Machine_Learning.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#fafa-dllhy_-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h4&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第四部分 附录 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/appendix/</link><description>Recent content in 第四部分 附录 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/appendix/index.xml" rel="self" type="application/rss+xml"/><item><title>4.1 教程</title><link>https://kingye.me/study-ml/docs/appendix/tutorial/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/tutorial/</guid><description>&lt;h1 id="教程"&gt;教程&lt;a class="anchor" href="#%e6%95%99%e7%a8%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="基础"&gt;基础&lt;a class="anchor" href="#%e5%9f%ba%e7%a1%80"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;h3 id="视频李宏毅-20212022-春机器学习课程"&gt;【视频】&lt;a href="https://www.bilibili.com/video/BV1Wv411h7kN"&gt;李宏毅 2021/2022 春机器学习课程&lt;/a&gt;&lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9d%8e%e5%ae%8f%e6%af%85-20212022-%e6%98%a5%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e8%af%be%e7%a8%8b"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h3 id="视频吴恩达机器学习系列课程"&gt;【视频】&lt;a href="https://www.bilibili.com/video/BV164411b7dx"&gt;吴恩达机器学习系列课程&lt;/a&gt;&lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e5%90%b4%e6%81%a9%e8%be%be%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e7%b3%bb%e5%88%97%e8%af%be%e7%a8%8b"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h3 id="视频吴恩达深度学习-deeplearningai"&gt;【视频】&lt;a href="https://www.bilibili.com/video/BV1FT4y1E74V"&gt;吴恩达深度学习 deeplearning.ai&lt;/a&gt;&lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e5%90%b4%e6%81%a9%e8%be%be%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0-deeplearningai"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h3 id="视频林轩田机器学习基石"&gt;【视频】&lt;a href="https://www.bilibili.com/video/BV1Cx411i7op"&gt;林轩田机器学习基石&lt;/a&gt;&lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9e%97%e8%bd%a9%e7%94%b0%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e5%9f%ba%e7%9f%b3"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h3 id="视频机器学习技法林轩田"&gt;【视频】&lt;a href="https://www.bilibili.com/video/BV1ix411i7yp"&gt;机器学习技法（林轩田）&lt;/a&gt;&lt;a class="anchor" href="#%e8%a7%86%e9%a2%91%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0%e6%8a%80%e6%b3%95%e6%9e%97%e8%bd%a9%e7%94%b0"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h4 id="fafa-dllhy_-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/Fafa-DL/Lhy_Machine_Learning"&gt;Fafa-DL/Lhy_Machine_Learning&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Fafa-DL/Lhy_Machine_Learning.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Fafa-DL/Lhy_Machine_Learning.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Fafa-DL/Lhy_Machine_Learning.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Fafa-DL/Lhy_Machine_Learning.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#fafa-dllhy_-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h4&gt;
 &lt;p&gt;李宏毅 2021 春季机器学习课程课件及作业&lt;/p&gt;
-&lt;h3 id="microsoftml-for-beginners-github-stars-github-forks-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/microsoft/ML-For-Beginners"&gt;microsoft/ML-For-Beginners&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/microsoft/ML-For-Beginners.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/microsoft/ML-For-Beginners.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/microsoft/ML-For-Beginners.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/microsoft/ML-For-Beginners.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/microsoft/ML-For-Beginners.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#microsoftml-for-beginners-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
+&lt;h3 id="microsoftml-for-beginners-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/microsoft/ML-For-Beginners"&gt;microsoft/ML-For-Beginners&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/microsoft/ML-For-Beginners.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/microsoft/ML-For-Beginners.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/microsoft/ML-For-Beginners.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/microsoft/ML-For-Beginners.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/microsoft/ML-For-Beginners.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#microsoftml-for-beginners-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;Azure Cloud Advocates at Microsoft are pleased to offer a 12-week, 26-lesson curriculum all about Machine Learning.&lt;/p&gt;
-&lt;h3 id="avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code"&gt;Avik-Jain/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
-&lt;h4 id="mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/MLEveryday/100-Days-Of-ML-Code"&gt;MLEveryday/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h4&gt;
-&lt;p&gt;机器学习 100 天&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;
- 关注项目
- 
- &lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
-&lt;h2 id="机器学习"&gt;
- 机器学习
- 
- &lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
-&lt;h3 id="scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/scikit-learn/scikit-learn"&gt;scikit-learn/scikit-learn&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
+&lt;h3 id="avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code"&gt;Avik-Jain/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;h4 id="mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/MLEveryday/100-Days-Of-ML-Code"&gt;MLEveryday/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h4&gt;
+&lt;p&gt;机器学习 100 天&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;关注项目&lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="机器学习"&gt;机器学习&lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;h3 id="scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/scikit-learn/scikit-learn"&gt;scikit-learn/scikit-learn&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;scikit-learn: machine learning in Python &lt;a href="https://scikit-learn.org"&gt;https://scikit-learn.org&lt;/a&gt;&lt;/p&gt;
-&lt;h3 id="php-aiphp-ml-github-stars-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/php-ai/php-ml"&gt;php-ai/php-ml&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/php-ai/php-ml.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/php-ai/php-ml.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/php-ai/php-ml.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/php-ai/php-ml.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#php-aiphp-ml-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
+&lt;h3 id="php-aiphp-ml-github-stars-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/php-ai/php-ml"&gt;php-ai/php-ml&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/php-ai/php-ml.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/php-ai/php-ml.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/php-ai/php-ml.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/php-ai/php-ml.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#php-aiphp-ml-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;PHP-ML - Machine Learning library for PHP &lt;a href="https://php-ml.org/"&gt;https://php-ml.org/&lt;/a&gt;&lt;/p&gt;
 &lt;hr&gt;
-&lt;h2 id="深度学习"&gt;
- 深度学习
- 
- &lt;a class="anchor" href="#%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
+&lt;h2 id="深度学习"&gt;深度学习&lt;a class="anchor" href="#%e6%b7%b1%e5%ba%a6%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/pytorch/pytorch"&gt;pytorch/pytorch&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/pytorch/pytorch.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/pytorch/pytorch.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/pytorch/pytorch.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/pytorch/pytorch.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/pytorch/pytorch.svg" alt="Last commit" /&gt;
 &lt;ul&gt;
@@ -116,17 +36,7 @@
 &lt;li&gt;&lt;a href="https://github.com/Oneflow-Inc/oneflow"&gt;Oneflow-Inc/oneflow&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Oneflow-Inc/oneflow.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Oneflow-Inc/oneflow.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Oneflow-Inc/oneflow.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Oneflow-Inc/oneflow.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Oneflow-Inc/oneflow.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
-&lt;h2 id="机器人"&gt;
- 机器人
- 
- &lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e4%ba%ba"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
-&lt;h3 id="gunthercoxchatterbot-github-stars-language-last-tag-last-commit"&gt;
- &lt;a href="https://github.com/gunthercox/ChatterBot"&gt;gunthercox/ChatterBot&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/gunthercox/ChatterBot.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/gunthercox/ChatterBot.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/gunthercox/ChatterBot.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/gunthercox/ChatterBot.svg" alt="Last commit" /&gt;
- 
- &lt;a class="anchor" href="#gunthercoxchatterbot-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
+&lt;h2 id="机器人"&gt;机器人&lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e4%ba%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;h3 id="gunthercoxchatterbot-github-stars-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/gunthercox/ChatterBot"&gt;gunthercox/ChatterBot&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/gunthercox/ChatterBot.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/gunthercox/ChatterBot.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/gunthercox/ChatterBot.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/gunthercox/ChatterBot.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#gunthercoxchatterbot-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;ChatterBot is a machine learning, conversational dialog engine for creating chat bots
 &lt;a href="https://chatterbot.readthedocs.io"&gt;https://chatterbot.readthedocs.io&lt;/a&gt;&lt;/p&gt;</description></item></channel></rss>

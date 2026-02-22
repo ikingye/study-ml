@@ -1,29 +1,14 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>LM on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/basic/llm/</link><description>Recent content in LM on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/basic/llm/index.xml" rel="self" type="application/rss+xml"/><item><title>AI Agent</title><link>https://kingye.me/study-ml/docs/basic/llm/agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/agent/</guid><description>&lt;h1 id="ai-agent"&gt;
- AI Agent
- 
- &lt;a class="anchor" href="#ai-agent"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>LM on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/basic/llm/</link><description>Recent content in LM on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/basic/llm/index.xml" rel="self" type="application/rss+xml"/><item><title>AI Agent</title><link>https://kingye.me/study-ml/docs/basic/llm/agent/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/agent/</guid><description>&lt;h1 id="ai-agent"&gt;AI Agent&lt;a class="anchor" href="#ai-agent"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/Significant-Gravitas/Auto-GPT"&gt;Significant-Gravitas/Auto-GPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Significant-Gravitas/Auto-GPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Significant-Gravitas/Auto-GPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Significant-Gravitas/Auto-GPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Significant-Gravitas/Auto-GPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Significant-Gravitas/Auto-GPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/geekan/MetaGPT"&gt;geekan/MetaGPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/geekan/MetaGPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/geekan/MetaGPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/geekan/MetaGPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/geekan/MetaGPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/geekan/MetaGPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/reworkd/AgentGPT"&gt;reworkd/AgentGPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/reworkd/AgentGPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/reworkd/AgentGPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/reworkd/AgentGPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/reworkd/AgentGPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/reworkd/AgentGPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/TransformerOptimus/SuperAGI"&gt;TransformerOptimus/SuperAGI&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/TransformerOptimus/SuperAGI.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/TransformerOptimus/SuperAGI.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/TransformerOptimus/SuperAGI.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/TransformerOptimus/SuperAGI.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/TransformerOptimus/SuperAGI.svg" alt="Last commit" /&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/llm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/llm/</guid><description>&lt;h1 id="llm大型语言模型"&gt;
- LLM（大型语言模型）
- 
- &lt;a class="anchor" href="#llm%e5%a4%a7%e5%9e%8b%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
+&lt;/ul&gt;</description></item><item><title>LLM</title><link>https://kingye.me/study-ml/docs/basic/llm/llm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/llm/</guid><description>&lt;h1 id="llm大型语言模型"&gt;LLM（大型语言模型）&lt;a class="anchor" href="#llm%e5%a4%a7%e5%9e%8b%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;大语言模型 (英语：large language model，LLM) 是一种语言模型，由具有许多参数（通常数十亿个权重或更多）的人工神经网络组成，使用自监督学习或半监督学习对大量未标记文本进行训练。大型语言模型在 2018 年左右出现，并在各种任务中表现出色。&lt;/p&gt;
 &lt;p&gt;&lt;img src="https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20231106164621.png" alt="" /&gt;&lt;/p&gt;
 &lt;p&gt;图片来自：&lt;a href="https://cobusgreyling.medium.com/foundation-large-language-model-stack-8de4de00671f"&gt;Foundation Large Language Model Stack&lt;/a&gt;&lt;/p&gt;
-&lt;h2 id="开源大语言模型"&gt;
- 开源大语言模型
- 
- &lt;a class="anchor" href="#%e5%bc%80%e6%ba%90%e5%a4%a7%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
+&lt;h2 id="开源大语言模型"&gt;开源大语言模型&lt;a class="anchor" href="#%e5%bc%80%e6%ba%90%e5%a4%a7%e8%af%ad%e8%a8%80%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://huggingface.co/meta-llama"&gt;meta-LLaMa&lt;/a&gt;
 &lt;ul&gt;
@@ -154,12 +139,7 @@
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
-&lt;h2 id="大模型应用工具"&gt;
- 大模型应用工具
- 
- &lt;a class="anchor" href="#%e5%a4%a7%e6%a8%a1%e5%9e%8b%e5%ba%94%e7%94%a8%e5%b7%a5%e5%85%b7"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
+&lt;h2 id="大模型应用工具"&gt;大模型应用工具&lt;a class="anchor" href="#%e5%a4%a7%e6%a8%a1%e5%9e%8b%e5%ba%94%e7%94%a8%e5%b7%a5%e5%85%b7"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/langchain-ai/langchain"&gt;langchain-ai/langchain&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/langchain-ai/langchain.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/langchain-ai/langchain.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/langchain-ai/langchain.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/langchain-ai/langchain.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/langchain-ai/langchain.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/run-llama/llama_index"&gt;run-llama/llama_index&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/run-llama/llama_index.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/run-llama/llama_index.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/run-llama/llama_index.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/run-llama/llama_index.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/run-llama/llama_index.svg" alt="Last commit" /&gt;&lt;/li&gt;
@@ -168,30 +148,15 @@
 &lt;li&gt;&lt;a href="https://github.com/microsoft/TaskMatrix"&gt;microsoft/TaskMatrix&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/microsoft/TaskMatrix.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/microsoft/TaskMatrix.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/microsoft/TaskMatrix.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/microsoft/TaskMatrix.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/microsoft/TaskMatrix.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
-&lt;h3 id="ai-agent"&gt;
- AI Agent
- 
- &lt;a class="anchor" href="#ai-agent"&gt;#&lt;/a&gt;
- 
-&lt;/h3&gt;
+&lt;h3 id="ai-agent"&gt;AI Agent&lt;a class="anchor" href="#ai-agent"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/Significant-Gravitas/AutoGPT"&gt;Significant-Gravitas/AutoGPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Significant-Gravitas/AutoGPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Significant-Gravitas/AutoGPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Significant-Gravitas/AutoGPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Significant-Gravitas/AutoGPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Significant-Gravitas/AutoGPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/microsoft/autogen"&gt;microsoft/autogen&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/microsoft/autogen.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/microsoft/autogen.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/microsoft/autogen.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/microsoft/autogen.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/microsoft/autogen.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/yoheinakajima/babyagi"&gt;yoheinakajima/babyagi&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/yoheinakajima/babyagi.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/yoheinakajima/babyagi.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/yoheinakajima/babyagi.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/yoheinakajima/babyagi.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/yoheinakajima/babyagi.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;/ul&gt;
 &lt;hr&gt;
-&lt;h2 id="bert"&gt;
- BERT
- 
- &lt;a class="anchor" href="#bert"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;Bidirectional Encoder Representations from Transformers&lt;/code&gt;&lt;/p&gt;</description></item><item><title>RAG</title><link>https://kingye.me/study-ml/docs/basic/llm/rag/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/rag/</guid><description>&lt;h1 id="rag"&gt;
- RAG
- 
- &lt;a class="anchor" href="#rag"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
+&lt;h2 id="bert"&gt;BERT&lt;a class="anchor" href="#bert"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;Bidirectional Encoder Representations from Transformers&lt;/code&gt;&lt;/p&gt;</description></item><item><title>RAG</title><link>https://kingye.me/study-ml/docs/basic/llm/rag/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/rag/</guid><description>&lt;h1 id="rag"&gt;RAG&lt;a class="anchor" href="#rag"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;RAG (&lt;code&gt;Retrieval-Augmented Generation&lt;/code&gt;) 框架：&lt;/p&gt;
 &lt;p&gt;是一种结合才信息检索 &lt;code&gt;Retrieval&lt;/code&gt; 和生成 &lt;code&gt;Generation&lt;/code&gt; 的语言模型架构。&lt;/p&gt;
 &lt;p&gt;可以动态地从外部知识源检索信息，使用检索到的数据作为参考来组织答案。来提高模型在回答复杂问题时的准确性和深度。&lt;/p&gt;
@@ -217,24 +182,14 @@
 &lt;li&gt;硬件资源（GPU）不是太充足的（即使用 RAG 也需要微调，但一次微调处处可用，远比每个企业私有库微调一个模型成本低的多）；&lt;/li&gt;
 &lt;/ol&gt;
 &lt;hr&gt;
-&lt;h2 id="开源框架"&gt;
- 开源框架
- 
- &lt;a class="anchor" href="#%e5%bc%80%e6%ba%90%e6%a1%86%e6%9e%b6"&gt;#&lt;/a&gt;
- 
-&lt;/h2&gt;
+&lt;h2 id="开源框架"&gt;开源框架&lt;a class="anchor" href="#%e5%bc%80%e6%ba%90%e6%a1%86%e6%9e%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/infiniflow/ragflow"&gt;infiniflow/ragflow&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/infiniflow/ragflow.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/infiniflow/ragflow.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/infiniflow/ragflow.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/infiniflow/ragflow.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/infiniflow/ragflow.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/langgenius/dify"&gt;langgenius/dify&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/langgenius/dify.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/langgenius/dify.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/langgenius/dify.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/langgenius/dify.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/langgenius/dify.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/labring/FastGPT"&gt;labring/FastGPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/labring/FastGPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/labring/FastGPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/labring/FastGPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/labring/FastGPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/labring/FastGPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/netease-youdao/QAnything"&gt;netease-youdao/QAnything&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/netease-youdao/QAnything.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/netease-youdao/QAnything.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/netease-youdao/QAnything.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/netease-youdao/QAnything.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/netease-youdao/QAnything.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/eosphoros-ai/DB-GPT"&gt;eosphoros-ai/DB-GPT&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/eosphoros-ai/DB-GPT.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/eosphoros-ai/DB-GPT.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/eosphoros-ai/DB-GPT.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/eosphoros-ai/DB-GPT.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/eosphoros-ai/DB-GPT.svg" alt="Last commit" /&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>教程</title><link>https://kingye.me/study-ml/docs/basic/llm/tutorials/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/tutorials/</guid><description>&lt;h1 id="教程"&gt;
- 教程
- 
- &lt;a class="anchor" href="#%e6%95%99%e7%a8%8b"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
+&lt;/ul&gt;</description></item><item><title>教程</title><link>https://kingye.me/study-ml/docs/basic/llm/tutorials/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/tutorials/</guid><description>&lt;h1 id="教程"&gt;教程&lt;a class="anchor" href="#%e6%95%99%e7%a8%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/jingyaogong/minimind"&gt;jingyaogong/minimind&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/jingyaogong/minimind.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/jingyaogong/minimind.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/jingyaogong/minimind.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/jingyaogong/minimind.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/jingyaogong/minimind.svg" alt="Last commit" /&gt;
 &lt;ul&gt;
@@ -247,12 +202,7 @@
 &lt;li&gt;&lt;a href="https://github.com/wdndev/tiny-llm-zh"&gt;wdndev/tiny-llm-zh&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/wdndev/tiny-llm-zh.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/wdndev/tiny-llm-zh.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/wdndev/tiny-llm-zh.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/wdndev/tiny-llm-zh.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/wdndev/tiny-llm-zh.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/Tongjilibo/build_MiniLLM_from_scratch"&gt;Tongjilibo/build_MiniLLM_from_scratch&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Tongjilibo/build_MiniLLM_from_scratch.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/AI-Study-Han/Zero-Chatgpt"&gt;AI-Study-Han/Zero-Chatgpt&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/AI-Study-Han/Zero-Chatgpt.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/AI-Study-Han/Zero-Chatgpt.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/AI-Study-Han/Zero-Chatgpt.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/AI-Study-Han/Zero-Chatgpt.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/AI-Study-Han/Zero-Chatgpt.svg" alt="Last commit" /&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;
- Stable Diffusion
- 
- &lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;
- 
-&lt;/h1&gt;
+&lt;/ul&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;Stable Diffusion&lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/Stability-AI/stablediffusion"&gt;Stability-AI/stablediffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Stability-AI/stablediffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Stability-AI/stablediffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Stability-AI/stablediffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Stability-AI/stablediffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Stability-AI/stablediffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/CompVis/stable-diffusion"&gt;CompVis/stable-diffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/CompVis/stable-diffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/CompVis/stable-diffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/CompVis/stable-diffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/CompVis/stable-diffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/CompVis/stable-diffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
