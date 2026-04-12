@@ -11,7 +11,54 @@
 &lt;p&gt;Azure Cloud Advocates at Microsoft are pleased to offer a 12-week, 26-lesson curriculum all about Machine Learning.&lt;/p&gt;
 &lt;h3 id="avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/Avik-Jain/100-Days-Of-ML-Code"&gt;Avik-Jain/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Avik-Jain/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Avik-Jain/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#avik-jain100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;h4 id="mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/MLEveryday/100-Days-Of-ML-Code"&gt;MLEveryday/100-Days-Of-ML-Code&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/MLEveryday/100-Days-Of-ML-Code.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/MLEveryday/100-Days-Of-ML-Code.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/MLEveryday/100-Days-Of-ML-Code.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/MLEveryday/100-Days-Of-ML-Code.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#mleveryday100-days-of-ml-code-github-stars-github-forks-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h4&gt;
-&lt;p&gt;机器学习 100 天&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;关注项目&lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;机器学习 100 天&lt;/p&gt;</description></item><item><title>1.1 第一版范围与阅读地图</title><link>https://kingye.me/study-ml/docs/book/sglang/overview/scope-and-reading-map/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/overview/scope-and-reading-map/</guid><description>&lt;h1 id="第一版范围与阅读地图"&gt;第一版范围与阅读地图&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e7%89%88%e8%8c%83%e5%9b%b4%e4%b8%8e%e9%98%85%e8%af%bb%e5%9c%b0%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这本书第一版解决什么问题"&gt;这本书第一版解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e6%9c%ac%e4%b9%a6%e7%ac%ac%e4%b8%80%e7%89%88%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第一版首先解决的是“如何建立一套不走偏的阅读顺序”。面对 SGLang 这样同时包含 language API、server entrypoint、runtime orchestration、memory cache、sampling、structured output 和 observability 的项目，直接从目录深处切入，很容易只看到局部机制，看不到系统为什么被组织成现在这样。&lt;/p&gt;
+&lt;p&gt;因此，第一版先追求一条稳定的主线，而不是面面俱到。它优先覆盖产品定位、frontend 心智模型、请求主链路、Serving 与 SRT 的边界，以及调度与 KV Cache 的基本配合关系。这样做的结果，是读者能先获得一张可靠的地图，再决定往哪个局部深挖。&lt;/p&gt;
+&lt;h2 id="为什么这样设计第一版范围"&gt;为什么这样设计第一版范围&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a0%b7%e8%ae%be%e8%ae%a1%e7%ac%ac%e4%b8%80%e7%89%88%e8%8c%83%e5%9b%b4"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从仓库约束看，这本书必须遵守“从外到内”的写法：先概览，再请求生命周期，再运行时架构，再调度与内存，再执行模型和结构化生成，最后才进入代码导读、扩展与调试。这不是形式要求，而是为了把“产品表面”和“内部实现”分层讲清楚。&lt;/p&gt;
+&lt;p&gt;同样重要的是，第一版必须控制非目标。它不会试图覆盖完整 API 手册、全部实验特性、所有硬件与后端适配细节，也不会把整个上游仓库写成逐文件百科。这里的基本判断是：一本能够发布的第一版，应该先把主干讲稳，而不是把枝叶都列出来。&lt;/p&gt;
+&lt;h2 id="阅读地图"&gt;阅读地图&lt;a class="anchor" href="#%e9%98%85%e8%af%bb%e5%9c%b0%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;推荐阅读顺序是：先读 &lt;a href="./why-sglang-and-frontend-model/"&gt;1.2 为什么是 SGLang：Frontend Language 与 Runtime 心智模型&lt;/a&gt;，确认系统的外部形态；再读 &lt;a href="../request-lifecycle/request-path/"&gt;2.1 一次请求如何穿过 SGLang&lt;/a&gt;，把请求主链路走一遍；然后进入 &lt;a href="../runtime-architecture/serving-and-srt-layering/"&gt;3.1 Serving 层与 SRT 分层&lt;/a&gt;，理解控制面、入口层和核心执行层的边界。&lt;/p&gt;
+&lt;p&gt;如果你更关注实现性能与资源管理，可以在上述三章之后继续看 &lt;a href="../scheduling-and-memory/"&gt;4. 调度与内存&lt;/a&gt; 和 &lt;a href="../execution-model/"&gt;5. 执行模型&lt;/a&gt;。再往后是 &lt;a href="../structured-generation-and-api/"&gt;6. 结构化生成与 API&lt;/a&gt;，它把约束生成和对外接口表面接回主链路；最后进入 &lt;a href="../codebase-walkthrough/"&gt;7. 代码导读&lt;/a&gt; 与 &lt;a href="../extension-and-debugging/"&gt;8. 扩展与调试&lt;/a&gt;，把阅读路径落回仓库和维护操作层。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章本身不是源码细节章，所以代码路径映射只要求到目录级和模块级。第一版的主要锚点包括上游仓库顶层目录、README 中对“Backend Tutorial / Frontend Tutorial”的公开入口，以及 &lt;code&gt;python/sglang/__init__.py&lt;/code&gt; 暴露的 public surface。&lt;/p&gt;
+&lt;p&gt;换句话说，这一章的功能不是带你读实现细节，而是告诉你后面读代码时该把哪些入口当成“地图坐标”。后续进入请求生命周期和运行时架构之后，代码路径才会进一步落到 &lt;code&gt;launch_server&lt;/code&gt;、&lt;code&gt;entrypoints&lt;/code&gt;、&lt;code&gt;managers&lt;/code&gt;、&lt;code&gt;mem_cache&lt;/code&gt; 等更具体的位置。&lt;/p&gt;</description></item><item><title>1.2 为什么是 SGLang：Frontend Language 与 Runtime 心智模型</title><link>https://kingye.me/study-ml/docs/book/sglang/overview/why-sglang-and-frontend-model/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/overview/why-sglang-and-frontend-model/</guid><description>&lt;h1 id="为什么是-sglangfrontend-language-与-runtime-心智模型"&gt;为什么是 SGLang：Frontend Language 与 Runtime 心智模型&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af-sglangfrontend-language-%e4%b8%8e-runtime-%e5%bf%83%e6%99%ba%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="它解决什么问题"&gt;它解决什么问题&lt;a class="anchor" href="#%e5%ae%83%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人第一次接触 SGLang，会先把它归类成一个“高性能推理服务框架”。这个理解并不算错，但不完整。因为从上游 README 和 public API 看，SGLang 同时把自己呈现成两类东西：一类是对外服务的运行时入口，另一类是直接被程序调用的 language-level API。&lt;/p&gt;
+&lt;p&gt;这个双重形态，正是本章要先讲清楚的问题。如果不先把它讲清楚，读者后面看到 &lt;code&gt;sglang serve&lt;/code&gt;、&lt;code&gt;python -m sglang.launch_server&lt;/code&gt;、&lt;code&gt;Engine(...)&lt;/code&gt;、&lt;code&gt;Runtime(...)&lt;/code&gt;、&lt;code&gt;gen(...)&lt;/code&gt;、&lt;code&gt;user(...)&lt;/code&gt;、&lt;code&gt;assistant(...)&lt;/code&gt; 这些入口时，很容易把它们当成风格不同但本质相同的调用方式，而忽略它们其实落在不同抽象层。&lt;/p&gt;
+&lt;h2 id="为什么说它不只是一个-serving-engine"&gt;为什么说它不只是一个 serving engine&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%af%b4%e5%ae%83%e4%b8%8d%e5%8f%aa%e6%98%af%e4%b8%80%e4%b8%aa-serving-engine"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;事实层面，上游 README 当前把 “Backend Tutorial” 与 “Frontend Tutorial” 分开列出；而 &lt;code&gt;python/sglang/__init__.py&lt;/code&gt; 则同时导出 &lt;code&gt;function&lt;/code&gt;、&lt;code&gt;gen&lt;/code&gt;、&lt;code&gt;system&lt;/code&gt;、&lt;code&gt;user&lt;/code&gt;、&lt;code&gt;assistant&lt;/code&gt; 这类语言层 API，以及 &lt;code&gt;RuntimeEndpoint&lt;/code&gt;、&lt;code&gt;ServerArgs&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt; 这类运行时入口。这说明 public surface 本身就已经分成了“描述生成流程的语言层”与“承载执行的运行时层”。&lt;/p&gt;
+&lt;p&gt;推断层面，这意味着 SGLang 的核心价值不只在“跑得快”，还在“把 prompt program、structured generation 与 runtime execution 接到一套统一表面上”。第一版在这里不会展开所有机制细节，但会先把这套双层心智模型钉住：语言层负责描述，运行时层负责承载，服务层负责暴露。&lt;/p&gt;
+&lt;h2 id="这套心智模型如何帮助后续阅读"&gt;这套心智模型如何帮助后续阅读&lt;a class="anchor" href="#%e8%bf%99%e5%a5%97%e5%bf%83%e6%99%ba%e6%a8%a1%e5%9e%8b%e5%a6%82%e4%bd%95%e5%b8%ae%e5%8a%a9%e5%90%8e%e7%bb%ad%e9%98%85%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;有了这个框架，后面的章节角色会清楚很多。&lt;a href="../request-lifecycle/request-path/"&gt;2.1 一次请求如何穿过 SGLang&lt;/a&gt; 讲的是请求如何进入系统并跨过这些层之间的 handoff；&lt;a href="../runtime-architecture/serving-and-srt-layering/"&gt;3.1 Serving 层与 SRT 分层&lt;/a&gt; 讲的是这些层各自负责什么，不负责什么。&lt;/p&gt;
+&lt;p&gt;同时，这套心智模型也约束了我们后面对源码的阅读方式。比如 &lt;code&gt;python/sglang/lang/api.py&lt;/code&gt; 更适合被当作语言层入口来读，而 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 与 &lt;code&gt;python/sglang/srt/entrypoints/*&lt;/code&gt; 更适合被当作服务化入口与运行时入口来读。把这些入口混在一起，会让读者失去方向感。&lt;/p&gt;</description></item><item><title>2.1 一次请求如何穿过 SGLang</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</guid><description>&lt;h1 id="一次请求如何穿过-sglang"&gt;一次请求如何穿过 SGLang&lt;a class="anchor" href="#%e4%b8%80%e6%ac%a1%e8%af%b7%e6%b1%82%e5%a6%82%e4%bd%95%e7%a9%bf%e8%bf%87-sglang"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“请求主链路在哪里开始，又在哪里发生关键 handoff”。如果只从零散模块出发阅读源码，你会看到 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;grpc_server.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;tokenizer_manager.py&lt;/code&gt; 这些名字，却不知道它们是按什么顺序被接上的。生命周期章节的任务，就是先把这条主线画出来。&lt;/p&gt;
+&lt;p&gt;第一版在这里刻意控制范围。它会讲清入口、模式分支、进入运行时的 handoff，以及后续要去哪几类模块找实现；但不会在这一章里深入 sampling、speculative decoding 或 &lt;code&gt;KV cache&lt;/code&gt; 的局部机制。那些问题会留给后面的执行模型和调度与内存章节。&lt;/p&gt;
+&lt;h2 id="请求先从哪一个入口进来"&gt;请求先从哪一个入口进来&lt;a class="anchor" href="#%e8%af%b7%e6%b1%82%e5%85%88%e4%bb%8e%e5%93%aa%e4%b8%80%e4%b8%aa%e5%85%a5%e5%8f%a3%e8%bf%9b%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 看，服务化入口首先会调用 &lt;code&gt;prepare_server_args(...)&lt;/code&gt; 解析参数，然后交给 &lt;code&gt;run_server(server_args)&lt;/code&gt; 做模式选择。这里的分支不是装饰性的：&lt;code&gt;encoder_only&lt;/code&gt;、&lt;code&gt;grpc_mode&lt;/code&gt;、&lt;code&gt;use_ray&lt;/code&gt; 和默认 HTTP 模式分别导向不同实现，默认路径才会导入 &lt;code&gt;sglang.srt.entrypoints.http_server.launch_server&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这一步最关键的结论是：&lt;code&gt;launch_server.py&lt;/code&gt; 负责“选入口”，不负责“跑生成”。你可以把它理解成总调度台。它决定请求应该进入 HTTP、gRPC、Ray，还是 encoder disaggregation path；但一旦分支确定，真正接收请求、维护请求状态、驱动 batch 的逻辑就进入 &lt;code&gt;srt&lt;/code&gt; 内部了。&lt;/p&gt;
+&lt;p&gt;如果只靠段落描述，这条主链路仍然有点抽象。下面这张时序图解决的障碍是：把“入口选路”“请求进入 runtime”“调度器推进 batch”“detokenizer 回包”放到同一时间轴上，让你能一眼区分谁在接请求、谁在编排、谁在收尾。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;sequenceDiagram
+ participant Client as Client / SDK
+ participant Entry as launch_server.py
+ participant HTTP as http_server.py
+ participant TM as TokenizerManager
+ participant SCH as Scheduler
+ participant DET as DetokenizerManager
+
+ Client-&amp;gt;&amp;gt;Entry: CLI / HTTP / OpenAI-compatible request
+ Entry-&amp;gt;&amp;gt;HTTP: select HTTP / gRPC / Ray path
+ HTTP-&amp;gt;&amp;gt;TM: generate_request(...)
+ TM-&amp;gt;&amp;gt;TM: normalize, tokenize, build request state
+ TM-&amp;gt;&amp;gt;SCH: send_to_scheduler.send_pyobj(...)
+ SCH-&amp;gt;&amp;gt;SCH: build / update batch
+ SCH-&amp;gt;&amp;gt;DET: send_to_detokenizer.send_output(...)
+ DET-&amp;gt;&amp;gt;DET: detokenize / assemble text
+ DET-&amp;gt;&amp;gt;TM: send_to_tokenizer.send_pyobj(...)
+ TM-&amp;gt;&amp;gt;HTTP: streaming / final response
+ HTTP-&amp;gt;&amp;gt;Client: chunks or completed result&lt;/pre&gt;&lt;p&gt;这张图多解释了一件纯文字不容易稳定表达的事：&lt;code&gt;TokenizerManager&lt;/code&gt; 在链路里既是请求进入 runtime 的第一站，也是结果回到调用方之前的收敛点。后面你在架构章节里看到 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt; 被并列成 engine 组件时，就更容易理解它们为什么不是随意拆成三个进程。&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;关注项目&lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="机器学习"&gt;机器学习&lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;h3 id="scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/scikit-learn/scikit-learn"&gt;scikit-learn/scikit-learn&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;scikit-learn: machine learning in Python &lt;a href="https://scikit-learn.org"&gt;https://scikit-learn.org&lt;/a&gt;&lt;/p&gt;
@@ -302,7 +349,82 @@
 &lt;li&gt;&lt;a href="https://github.com/wdndev/tiny-llm-zh"&gt;wdndev/tiny-llm-zh&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/wdndev/tiny-llm-zh.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/wdndev/tiny-llm-zh.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/wdndev/tiny-llm-zh.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/wdndev/tiny-llm-zh.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/wdndev/tiny-llm-zh.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/Tongjilibo/build_MiniLLM_from_scratch"&gt;Tongjilibo/build_MiniLLM_from_scratch&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Tongjilibo/build_MiniLLM_from_scratch.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Tongjilibo/build_MiniLLM_from_scratch.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/AI-Study-Han/Zero-Chatgpt"&gt;AI-Study-Han/Zero-Chatgpt&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/AI-Study-Han/Zero-Chatgpt.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/AI-Study-Han/Zero-Chatgpt.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/AI-Study-Han/Zero-Chatgpt.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/AI-Study-Han/Zero-Chatgpt.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/AI-Study-Han/Zero-Chatgpt.svg" alt="Last commit" /&gt;&lt;/li&gt;
-&lt;/ul&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;Stable Diffusion&lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/ul&gt;</description></item><item><title>3.1 Serving 层与 SRT 分层</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/serving-and-srt-layering/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/serving-and-srt-layering/</guid><description>&lt;h1 id="serving-层与-srt-分层"&gt;Serving 层与 SRT 分层&lt;a class="anchor" href="#serving-%e5%b1%82%e4%b8%8e-srt-%e5%88%86%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章要解决的问题不是“请求怎样一步步流动”，而是“为什么 SGLang 要把入口、编排、执行和观测拆成不同层”。如果没有这层理解，读者看到 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;model_executor&lt;/code&gt;、&lt;code&gt;observability&lt;/code&gt; 这些区域时，会误以为它们只是按开发习惯分目录，而不是在划定真正的职责边界。&lt;/p&gt;
+&lt;p&gt;第一版在这里坚持一个保守原则：目录名和公开入口是事实，基于目录职责推断“分层意图”时，会明确说明这是工作性划分，而不是把目录结构直接等同于架构真相。这样可以避免过度解读源码布局。&lt;/p&gt;
+&lt;h2 id="事实锚点进程边界本来就写在入口里"&gt;事实锚点：进程边界本来就写在入口里&lt;a class="anchor" href="#%e4%ba%8b%e5%ae%9e%e9%94%9a%e7%82%b9%e8%bf%9b%e7%a8%8b%e8%be%b9%e7%95%8c%e6%9c%ac%e6%9d%a5%e5%b0%b1%e5%86%99%e5%9c%a8%e5%85%a5%e5%8f%a3%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 与 &lt;code&gt;python/sglang/srt/entrypoints/*&lt;/code&gt; 看，SGLang 至少存在一层很明确的入口面：它负责接参数、选运行模式、接住 HTTP 或 gRPC 请求，并把后续工作交给 runtime path。这个层次更接近 serving surface，而不是底层生成机制本身。&lt;/p&gt;
+&lt;p&gt;更关键的是，&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt; 的 &lt;code&gt;launch_server(...)&lt;/code&gt; 文档字符串已经把运行时拆分说得非常直接：HTTP server 负责路由请求；engine 由 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt; 和 &lt;code&gt;DetokenizerManager&lt;/code&gt; 三个组件构成；HTTP server、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;TokenizerManager&lt;/code&gt; 在主进程里，而另外两个 manager 是子进程，并通过 ZMQ 做 IPC。&lt;code&gt;python/sglang/srt/entrypoints/engine.py&lt;/code&gt; 的 &lt;code&gt;Engine&lt;/code&gt; 类文档字符串重复了同样的描述，这不是推断，而是源码作者自己给出的结构说明。&lt;/p&gt;
+&lt;p&gt;如果只用文字，这里最容易混淆的点是“入口层、编排层、执行层、观测层到底怎么分”。下面这张组件图承担的职责，就是把这些层次放到一张边界图里，并明确哪些是 runtime 主线、哪些是横切能力。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ subgraph Serving[&amp;#34;Serving Surface&amp;#34;]
+ A[&amp;#34;launch_server.py&amp;#34;]
+ B[&amp;#34;entrypoints/http_server.py&amp;#34;]
+ C[&amp;#34;entrypoints/grpc_server.py&amp;#34;]
+ D[&amp;#34;entrypoints/engine.py&amp;#34;]
+ end
+
+ subgraph Managers[&amp;#34;Runtime Orchestration&amp;#34;]
+ E[&amp;#34;TokenizerManager&amp;#34;]
+ F[&amp;#34;Scheduler&amp;#34;]
+ G[&amp;#34;DetokenizerManager&amp;#34;]
+ H[&amp;#34;ScheduleBatch / ModelWorkerBatch&amp;#34;]
+ end
+
+ subgraph Executor[&amp;#34;Execution Layer&amp;#34;]
+ I[&amp;#34;model_executor / ModelRunner&amp;#34;]
+ J[&amp;#34;models / tokenizer&amp;#34;]
+ end
+
+ subgraph Cache[&amp;#34;State &amp;amp; Cache&amp;#34;]
+ K[&amp;#34;mem_cache / ReqToTokenPool&amp;#34;]
+ L[&amp;#34;TokenToKVPoolAllocator / KVCache&amp;#34;]
+ end
+
+ subgraph Obs[&amp;#34;Observability&amp;#34;]
+ M[&amp;#34;observability / req_time_stats.py&amp;#34;]
+ end
+
+ A --&amp;gt; B
+ A --&amp;gt; C
+ B --&amp;gt; D
+ C --&amp;gt; D
+ D --&amp;gt; E
+ E --&amp;gt; F
+ F --&amp;gt; H
+ H --&amp;gt; I
+ I --&amp;gt; J
+ F --&amp;gt; K
+ K --&amp;gt; L
+ E -. stage / request stats .-&amp;gt; M
+ F -. batch / phase stats .-&amp;gt; M
+ I -. execution metrics .-&amp;gt; M&lt;/pre&gt;&lt;p&gt;这张图比纯目录描述多解释了一点：&lt;code&gt;observability&lt;/code&gt; 不是沿着主数据流串联的“下一跳”，而是覆盖多个层的横切面。理解这一点之后，后面的调试章节就不会再显得像附录，而会自然成为这张架构图的一个外侧切面。&lt;/p&gt;</description></item><item><title>4.1 Scheduler、批次与 KV Cache</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</guid><description>&lt;h1 id="scheduler批次与-kv-cache"&gt;Scheduler、批次与 KV Cache&lt;a class="anchor" href="#scheduler%e6%89%b9%e6%ac%a1%e4%b8%8e-kv-cache"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的不是“请求从哪进来”，而是“请求已经进来之后，系统怎样决定谁先跑、谁继续跑，以及这些请求占用的 &lt;code&gt;KV cache&lt;/code&gt; 怎样被映射、复用和回收”。如果没有这层理解，你读 &lt;code&gt;scheduler.py&lt;/code&gt; 时会只看到大量条件分支；读 &lt;code&gt;memory_pool.py&lt;/code&gt; 时会只看到张量分配；两边都看了，仍然不知道它们为什么必须一起工作。&lt;/p&gt;
+&lt;p&gt;这里最值得先抓住的事实，是 &lt;code&gt;python/sglang/srt/managers/schedule_batch.py&lt;/code&gt; 文件头写出的那条数据流：&lt;code&gt;ScheduleBatch -&amp;gt; ModelWorkerBatch -&amp;gt; ForwardBatch&lt;/code&gt;。这条注释说明调度阶段并不是直接操作 GPU forward 所需的最低层张量，而是先构造一个更高层的 batch 表示，再逐步降到执行层。调度与内存的配合，也正是围绕这条转换链组织的。&lt;/p&gt;
+&lt;h2 id="scheduler-看的不是单个请求而是当前批次状态"&gt;&lt;code&gt;Scheduler&lt;/code&gt; 看的不是单个请求，而是“当前批次状态”&lt;a class="anchor" href="#scheduler-%e7%9c%8b%e7%9a%84%e4%b8%8d%e6%98%af%e5%8d%95%e4%b8%aa%e8%af%b7%e6%b1%82%e8%80%8c%e6%98%af%e5%bd%93%e5%89%8d%e6%89%b9%e6%ac%a1%e7%8a%b6%e6%80%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/managers/scheduler.py&lt;/code&gt; 里的 &lt;code&gt;Scheduler&lt;/code&gt; 初始化时会建立等待队列、&lt;code&gt;running_batch&lt;/code&gt;、&lt;code&gt;last_batch&lt;/code&gt;、&lt;code&gt;tree_cache&lt;/code&gt;、&lt;code&gt;req_to_token_pool&lt;/code&gt; 等状态。它不是简单地从队列里拿一个请求就调用模型，而是持续维护“现在已经在跑什么、下一轮还能塞什么、哪些请求应该进入 prefill、哪些请求应该继续 decode”。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 很适合当作阅读入口。这个方法先处理 timeout、过滤完成请求、把上一轮 prefill batch 合并进 &lt;code&gt;running_batch&lt;/code&gt;，然后决定本轮是取新的 prefill batch，还是推进已有 decode batch。也就是说，调度器真正管理的是 batch 生命周期，而不是单个 request 生命周期。&lt;/p&gt;
+&lt;p&gt;继续往下看 &lt;code&gt;get_new_batch_prefill()&lt;/code&gt; 和 &lt;code&gt;_get_new_batch_prefill_raw()&lt;/code&gt;，你会看到 &lt;code&gt;PrefillAdder&lt;/code&gt; 被用来在 token 预算、batch 大小、LoRA 约束、priority scheduling 与 chunked prefill 之间做折中。这里的重点不是把每个条件背下来，而是理解：SGLang 把“能不能接新请求”建模成一次 batch 构造问题，而不是某个全局开关。&lt;/p&gt;
+&lt;p&gt;这部分如果只靠文字，很容易把 &lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt; 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。&lt;/p&gt;</description></item><item><title>5.1 Token 生成循环与执行模型</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</guid><description>&lt;h1 id="token-生成循环与执行模型"&gt;Token 生成循环与执行模型&lt;a class="anchor" href="#token-%e7%94%9f%e6%88%90%e5%be%aa%e7%8e%af%e4%b8%8e%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的不是“请求怎样进入系统”，而是“一个 batch 已经准备好之后，模型前向、logits 处理、sampling 和 decode 怎样接起来”。如果没有这层理解，前面的生命周期和架构章节会告诉你请求经过了哪些模块，但你仍然不知道真正生成 token 的那一轮循环是如何推进的。&lt;/p&gt;
+&lt;p&gt;这里最重要的切分是：调度器决定“这轮应该跑谁”，执行模型决定“这一轮怎样跑”。也正因为这样，本章不再讨论请求排队和 KV 复用策略，而是把注意力放在 &lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;ModelRunner.forward(...)&lt;/code&gt;、&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;、&lt;code&gt;sample(...)&lt;/code&gt; 和 speculative decoding 的关系上。&lt;/p&gt;
+&lt;h2 id="为什么执行模型要单独成章"&gt;为什么执行模型要单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b%e8%a6%81%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;源码已经明确把调度层和执行层拆开了。&lt;code&gt;python/sglang/srt/model_executor/forward_batch_info.py&lt;/code&gt; 文件头直接写出数据流：&lt;code&gt;ScheduleBatch -&amp;gt; ModelWorkerBatch -&amp;gt; ForwardBatch&lt;/code&gt;。这说明调度器并不直接操作模型前向所需的低层 tensor，而是先把请求集合组织成更高层的 batch，再逐步降到执行层。&lt;/p&gt;
+&lt;p&gt;这类设计有很强的工程理由。调度器关心的是 waiting queue、running batch、prefill / decode 切换与 token 预算；执行层关心的是当前轮 forward 需要哪些 tensor、哪些 logits 要被处理、下一步 sample 该如何产生 next token。如果把这两层揉在一起，调度逻辑会污染执行细节，执行细节又会反向拖慢调度路径。&lt;/p&gt;
+&lt;p&gt;下面这张图专门解决“调度结束后，执行模型内部到底怎样推进”的理解障碍。它比纯文字多解释了两个关键点：一是 &lt;code&gt;ForwardBatch&lt;/code&gt; 在循环里的位置，二是 speculative decoding 并不是另一条完全独立的 pipeline，而是嵌在同一执行链里的模式分支。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;ScheduleBatch&amp;#34;] --&amp;gt; B[&amp;#34;ModelWorkerBatch&amp;#34;]
+ B --&amp;gt; C[&amp;#34;ForwardBatch.init_new(...)&amp;#34;]
+ C --&amp;gt; D[&amp;#34;ModelRunner.forward(...)&amp;#34;]
+ D --&amp;gt; E[&amp;#34;LogitsProcessorOutput&amp;#34;]
+ E --&amp;gt; F[&amp;#34;sample(...) / next token&amp;#34;]
+ F --&amp;gt; G[&amp;#34;decode continuation&amp;#34;]
+ G --&amp;gt; C
+ C -. TARGET_VERIFY / DRAFT_EXTEND .-&amp;gt; H[&amp;#34;speculative decoding path&amp;#34;]
+ H -. verify / accept / reject .-&amp;gt; F&lt;/pre&gt;&lt;p&gt;读这张图时，最重要的是看清闭环：batch 进入 &lt;code&gt;ForwardBatch&lt;/code&gt;，前向产生 logits，sampling 选出 next token，随后又回到下一轮 decode。speculative decoding 并没有打破这个环，而是把 “verify / draft extend” 插进了 &lt;code&gt;ForwardBatch -&amp;gt; sample&lt;/code&gt; 之间。&lt;/p&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;Stable Diffusion&lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/Stability-AI/stablediffusion"&gt;Stability-AI/stablediffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Stability-AI/stablediffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Stability-AI/stablediffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Stability-AI/stablediffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Stability-AI/stablediffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Stability-AI/stablediffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/CompVis/stable-diffusion"&gt;CompVis/stable-diffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/CompVis/stable-diffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/CompVis/stable-diffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/CompVis/stable-diffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/CompVis/stable-diffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/CompVis/stable-diffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
@@ -319,4 +441,69 @@
 &lt;p&gt;Python for《Deep Learning》，该书为《深度学习》(花书) 数学推导、原理剖析与源码级别代码实现&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id="进阶"&gt;进阶&lt;a class="anchor" href="#%e8%bf%9b%e9%98%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;hr&gt;</description></item></channel></rss>
+&lt;hr&gt;</description></item><item><title>6.1 结构化生成与约束解码</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/structured-generation/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/structured-generation/</guid><description>&lt;h1 id="结构化生成与约束解码"&gt;结构化生成与约束解码&lt;a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e7%94%9f%e6%88%90%e4%b8%8e%e7%ba%a6%e6%9d%9f%e8%a7%a3%e7%a0%81"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“模型输出怎样被约束成目标格式”。如果不单独讲这一层，读者很容易把结构化生成误读成“API 层的附加能力”，而忽略它其实直接插在 generation path 里，和 sampling、logits 选择、tool parser 一起工作。&lt;/p&gt;
+&lt;p&gt;从官方文档看，SGLang 把 structured outputs 定义得很直接：你可以为请求指定 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt; 或 &lt;code&gt;ebnf&lt;/code&gt;，并且这三种约束参数是互斥的，只能选一种。这不是外围包装，而是 generation 过程本身的一部分。&lt;/p&gt;
+&lt;h2 id="为什么它属于执行链而不是纯-api-功能"&gt;为什么它属于执行链，而不是纯 API 功能&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ae%83%e5%b1%9e%e4%ba%8e%e6%89%a7%e8%a1%8c%e9%93%be%e8%80%8c%e4%b8%8d%e6%98%af%e7%ba%af-api-%e5%8a%9f%e8%83%bd"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/sampling/sampling_params.py&lt;/code&gt; 里，&lt;code&gt;SamplingParams&lt;/code&gt; 直接包含 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;ebnf&lt;/code&gt; 和 &lt;code&gt;structural_tag&lt;/code&gt; 字段，并在 &lt;code&gt;verify(...)&lt;/code&gt; 里明确检查 “Only one of regex, json_schema, or ebnf can be set.”。这说明约束解码不是协议层的装饰，而是采样参数对象的一部分。&lt;/p&gt;
+&lt;p&gt;这也是本章和上一章衔接的原因。执行模型章节已经解释了 sampling 参数怎样参与 token 选择；这里进一步说明，当这些参数变成 grammar constraint 时，输出就不再只是“按概率采样”，而是“在满足约束的前提下继续生成”。从系统设计上看，这比单纯在最终文本上做后处理要更稳，因为约束是在生成过程中被满足，而不是生成后再去修正。&lt;/p&gt;
+&lt;p&gt;这里最适合补图，因为“约束到底插在哪里”很难靠一两段话稳稳说清。下面这张图回答的是：Frontend / HTTP 两侧传入的 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、tool parser 配置，最终怎样汇入 sampling / generation path。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ A[&amp;#34;Frontend gen(...)\nregex / json_schema&amp;#34;] --&amp;gt; C[&amp;#34;SamplingParams&amp;#34;]
+ B[&amp;#34;HTTP / OpenAI-compatible request\nresponse_format / extra body&amp;#34;] --&amp;gt; C
+ C --&amp;gt; D[&amp;#34;Grammar backend\nXGrammar / Outlines / llguidance&amp;#34;]
+ C --&amp;gt; E[&amp;#34;tool parser / function calling parser&amp;#34;]
+ D --&amp;gt; F[&amp;#34;generation path\nconstrained token selection&amp;#34;]
+ E --&amp;gt; F
+ F --&amp;gt; G[&amp;#34;structured output / tool call payload&amp;#34;]&lt;/pre&gt;&lt;p&gt;相对于纯文字，这张图多解释了“参数对象是汇合点”这一层。调用方可能从不同表面进入系统，但只要最后落到 &lt;code&gt;SamplingParams&lt;/code&gt; 和对应 parser / grammar backend，结构化生成就不是外围技巧，而是 runtime 能力。&lt;/p&gt;</description></item><item><title>6.2 API 表面与协议集成</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/api-and-protocol-integration/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/api-and-protocol-integration/</guid><description>&lt;h1 id="api-表面与协议集成"&gt;API 表面与协议集成&lt;a class="anchor" href="#api-%e8%a1%a8%e9%9d%a2%e4%b8%8e%e5%8d%8f%e8%ae%ae%e9%9b%86%e6%88%90"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“调用方到底通过哪些表面进入 SGLang，以及这些表面怎样回到同一条 runtime path”。如果不单独讲这一层，容易把 &lt;code&gt;OpenAI-compatible API&lt;/code&gt;、native APIs、offline engine 和 frontend language 当成互相独立的产品，而不是同一套系统暴露出的不同入口。&lt;/p&gt;
+&lt;p&gt;对工程读者来说，这个问题很实际。因为你在排查行为差异、设计接口迁移方案，或者把某条业务流从 OpenAI 托管迁到自托管时，真正关心的不是“这个接口像不像”，而是“它最后落到同一套 runtime 了吗”。&lt;/p&gt;
+&lt;h2 id="为什么要把协议表面单独拎出来"&gt;为什么要把协议表面单独拎出来&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e6%8a%8a%e5%8d%8f%e8%ae%ae%e8%a1%a8%e9%9d%a2%e5%8d%95%e7%8b%ac%e6%8b%8e%e5%87%ba%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从官方 docs 可以看到，SGLang 明确把 OpenAI-compatible APIs、native APIs 和 offline engine 分开写。&lt;code&gt;docs/basic_usage/openai_api.rst&lt;/code&gt; 聚合的是 OpenAI-compatible usage；&lt;code&gt;docs/basic_usage/native_api.ipynb&lt;/code&gt; 则罗列 &lt;code&gt;/generate&lt;/code&gt;、&lt;code&gt;/server_info&lt;/code&gt;、&lt;code&gt;/flush_cache&lt;/code&gt;、&lt;code&gt;/tokenize&lt;/code&gt;、&lt;code&gt;/detokenize&lt;/code&gt; 等 native endpoints；&lt;code&gt;docs/basic_usage/offline_engine_api.ipynb&lt;/code&gt; 则直接讨论不经过 HTTP server 的 inference engine。&lt;/p&gt;
+&lt;p&gt;这说明协议表面本身就是系统的一层设计，而不是文档编排巧合。SGLang 一方面希望让调用方能平滑迁移到 OpenAI-compatible 表面，另一方面又保留自己的 native surface 和 offline engine path，让内部能力不被单一协议形状限制住。&lt;/p&gt;
+&lt;h2 id="openai-compatible-api-在这套系统里的位置"&gt;OpenAI-compatible API 在这套系统里的位置&lt;a class="anchor" href="#openai-compatible-api-%e5%9c%a8%e8%bf%99%e5%a5%97%e7%b3%bb%e7%bb%9f%e9%87%8c%e7%9a%84%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;OpenAI-compatible API 的价值在于降低迁移成本。官方 &lt;code&gt;openai_api_completions.ipynb&lt;/code&gt; 和相关 basic usage 文档都在强调这一点：你可以用接近 OpenAI 的请求格式对接本地模型服务。对于多数应用接入者来说，这是最容易上手的一层。&lt;/p&gt;
+&lt;p&gt;但从运行时角度看，重要的不是“长得像 OpenAI”，而是它最终怎样落进 &lt;code&gt;http_server.py&lt;/code&gt; 和 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 这条路径。也正因为如此，OpenAI-compatible 层更适合作为“协议适配面”来理解，而不是当作独立 runtime。&lt;/p&gt;</description></item><item><title>7.1 从仓库入口回到请求主线</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/repo-reading-order/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/repo-reading-order/</guid><description>&lt;h1 id="从仓库入口回到请求主线"&gt;从仓库入口回到请求主线&lt;a class="anchor" href="#%e4%bb%8e%e4%bb%93%e5%ba%93%e5%85%a5%e5%8f%a3%e5%9b%9e%e5%88%b0%e8%af%b7%e6%b1%82%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你第一次进入 SGLang 仓库，最容易犯的错误是直接钻进 &lt;code&gt;python/sglang/srt&lt;/code&gt;。这样当然能看到大量核心实现，但你会很快失去“哪些入口是给用户的，哪些入口是给 runtime 的”这层方位感。更稳的读法，是先看四个文件：&lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/__init__.py&lt;/code&gt;、&lt;code&gt;python/sglang/lang/api.py&lt;/code&gt; 和 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;README.md&lt;/code&gt; 的价值不是介绍所有内部细节，而是告诉你项目怎样向外描述自己。当前 README 直接把 “Backend Tutorial” 和 “Frontend Tutorial” 分开列出，这能帮助你先建立“双表面”认知。&lt;code&gt;python/sglang/__init__.py&lt;/code&gt; 则把 public surface 展开成 import 入口：一边是 &lt;code&gt;function&lt;/code&gt;、&lt;code&gt;gen&lt;/code&gt;、&lt;code&gt;system&lt;/code&gt;、&lt;code&gt;user&lt;/code&gt;、&lt;code&gt;assistant&lt;/code&gt; 等语言层 API，另一边是 &lt;code&gt;RuntimeEndpoint&lt;/code&gt;、&lt;code&gt;ServerArgs&lt;/code&gt; 与 &lt;code&gt;Engine&lt;/code&gt; 这类运行时入口。&lt;/p&gt;
+&lt;p&gt;接着读 &lt;code&gt;python/sglang/lang/api.py&lt;/code&gt;，你会看到 &lt;code&gt;Runtime(...)&lt;/code&gt; 与 &lt;code&gt;Engine(...)&lt;/code&gt; 都只是懒导入包装，而 &lt;code&gt;gen(...)&lt;/code&gt; 则把 &lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;json_schema&lt;/code&gt;、sampling 参数等语言层能力显式暴露出来。最后再看 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;，你就能把“language API”“offline engine”“server entrypoint”三类入口区分开，而不是把它们混成一个抽象的“调用 SGLang”。&lt;/p&gt;
+&lt;h2 id="为什么按这条顺序读仓库"&gt;为什么按这条顺序读仓库&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%8c%89%e8%bf%99%e6%9d%a1%e9%a1%ba%e5%ba%8f%e8%af%bb%e4%bb%93%e5%ba%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这样安排顺序，不是为了显得系统化，而是为了减少误读。仓库顶层目录天然混合了“对外表面”“核心 runtime”“示例与测试”“性能与扩展”四类材料。如果你没有先用几个稳定入口把外层地图建立起来，后面看到 &lt;code&gt;entrypoints&lt;/code&gt;、&lt;code&gt;managers&lt;/code&gt;、&lt;code&gt;mem_cache&lt;/code&gt;、&lt;code&gt;benchmark&lt;/code&gt;、&lt;code&gt;sgl-kernel&lt;/code&gt; 时，就很难判断它们在整体叙事里分别扮演什么角色。&lt;/p&gt;
+&lt;p&gt;因此，这一章的真正设计理由，是先建立阅读顺序，再建立目录认识。你不是在背一个文件系统，而是在学习一套“从公开入口走回主链路，再从主链路走向扩展材料”的路径。只有这样，代码导读章节才和前面的 request lifecycle、runtime architecture、scheduling/memory 构成同一本书，而不是一组平行笔记。&lt;/p&gt;
+&lt;h2 id="回到-pythonsglangsrt-时先找五个目录"&gt;回到 &lt;code&gt;python/sglang/srt&lt;/code&gt; 时，先找五个目录&lt;a class="anchor" href="#%e5%9b%9e%e5%88%b0-pythonsglangsrt-%e6%97%b6%e5%85%88%e6%89%be%e4%ba%94%e4%b8%aa%e7%9b%ae%e5%bd%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;带着入口感再回到 &lt;code&gt;python/sglang/srt&lt;/code&gt;，阅读顺序会清楚很多。第一站看 &lt;code&gt;entrypoints/&lt;/code&gt;，因为这里定义了 HTTP、gRPC、engine 等真正进入 runtime 的门。第二站看 &lt;code&gt;managers/&lt;/code&gt;，因为请求状态、队列、批次、流式输出和大量运行时编排都在这里。第三站看 &lt;code&gt;model_executor/&lt;/code&gt;，这里更接近模型前向与设备执行。第四站看 &lt;code&gt;mem_cache/&lt;/code&gt;，这里解释请求状态如何映射到可复用的 KV 存储。第五站看 &lt;code&gt;observability/&lt;/code&gt;，这里提供 metrics、trace 与 request stage 观测能力。&lt;/p&gt;</description></item><item><title>8.1 观测、Tracing 与调试抓手</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/observability-and-debugging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/observability-and-debugging/</guid><description>&lt;h1 id="观测tracing-与调试抓手"&gt;观测、Tracing 与调试抓手&lt;a class="anchor" href="#%e8%a7%82%e6%b5%8btracing-%e4%b8%8e%e8%b0%83%e8%af%95%e6%8a%93%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“当系统已经跑起来之后，出了问题先看哪里”。如果前面章节主要回答“系统怎样设计、代码在哪里”，这一章则回答“当请求异常、延迟波动、输出不稳定，或者你要定位瓶颈时，哪些 observability 和 debug 入口最值得先抓”。&lt;/p&gt;
+&lt;p&gt;这类内容不能混进前面的主线章节里讲。因为它们更多是操作层，而不是结构层。但如果完全不单独成章，读者又会在真正出问题时不知道该从 metrics、logging、trace、request dump 还是 crash dump 开始。&lt;/p&gt;
+&lt;h2 id="为什么-observability-需要独立章节"&gt;为什么 observability 需要独立章节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-observability-%e9%9c%80%e8%a6%81%e7%8b%ac%e7%ab%8b%e7%ab%a0%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;官方 &lt;code&gt;docs/advanced_features/observability.md&lt;/code&gt; 已经把 observability 分成三块：Production Metrics、Logging、Request Dump and Replay / Crash Dump and Replay。这种划分很有代表性，因为它说明 SGLang 并没有把“观测”理解成只有 Prometheus 指标，而是把 metrics、logs 和可复现材料都纳入观测体系。&lt;/p&gt;
+&lt;p&gt;更进一步，&lt;code&gt;docs/references/production_request_trace.md&lt;/code&gt; 明确说 request trace 的实现落在 &lt;code&gt;python/sglang/srt/observability/req_time_stats.py&lt;/code&gt;。这很重要，因为它把“文档层讲 tracing”与“源码层定义 request stage”连到了一起。也就是说，观测不是外围运营面板，而是 runtime 自己的一部分。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，是把 metrics、trace 和 dump / replay 这三种抓手放进同一条排障路径里。这样读者不必再靠记忆去猜“到底先看哪个”，而是能直接看出从轻量观测到重型复现的升级顺序。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;异常 / 延迟 / 输出不稳定&amp;#34;] --&amp;gt; B[&amp;#34;Metrics\n--enable-metrics / /metrics&amp;#34;]
+ B --&amp;gt; C{&amp;#34;问题是整体性的\n还是个别请求?&amp;#34;}
+ C --&amp;gt;|整体趋势| D[&amp;#34;Prometheus / production_metrics&amp;#34;]
+ C --&amp;gt;|单请求 / 阶段性| E[&amp;#34;Trace\n--enable-trace / OTLP / Jaeger&amp;#34;]
+ E --&amp;gt; F[&amp;#34;req_time_stats.py\nRequestStage slices&amp;#34;]
+ D --&amp;gt; G[&amp;#34;需要更具体样本?&amp;#34;]
+ F --&amp;gt; G
+ G --&amp;gt;|是| H[&amp;#34;Request dump / crash dump&amp;#34;]
+ H --&amp;gt; I[&amp;#34;scripts/playground/replay_request_dump.py&amp;#34;]
+ G --&amp;gt;|否| J[&amp;#34;回到对应 runtime 模块定位&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图相对于段落的增量，是把“趋势问题”“阶段问题”“复现问题”拆成三个不同层次。后文再谈具体 flags 和文件路径时，读者就不会把所有调试手段混成一个平面列表。&lt;/p&gt;</description></item><item><title>8.2 扩展点与维护路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/extension-points/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/extension-points/</guid><description>&lt;h1 id="扩展点与维护路径"&gt;扩展点与维护路径&lt;a class="anchor" href="#%e6%89%a9%e5%b1%95%e7%82%b9%e4%b8%8e%e7%bb%b4%e6%8a%a4%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“如果你不只是阅读 SGLang，而是准备修改它，应该从哪里下手”。这包括两类常见需求：一类是功能扩展，例如支持新模型、调整 parser、增加协议适配；另一类是维护性工作，例如加测试、跑回归、按贡献流程提交变更。&lt;/p&gt;
+&lt;p&gt;如果没有这一章，前面的章节会把系统讲清楚，但读者仍然会缺少一个问题的答案：知道系统怎么工作之后，下一步怎样安全地改它。这也是为什么本章要放在最后，它更像“把理解转成可操作路径”的收束章。&lt;/p&gt;
+&lt;h2 id="为什么扩展点不能只靠目录猜"&gt;为什么扩展点不能只靠目录猜&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%89%a9%e5%b1%95%e7%82%b9%e4%b8%8d%e8%83%bd%e5%8f%aa%e9%9d%a0%e7%9b%ae%e5%bd%95%e7%8c%9c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;目录当然能给提示，但真正的扩展点最好看官方维护文档。&lt;code&gt;docs/supported_models/extending/support_new_models.md&lt;/code&gt; 明确说明：支持新的语言模型，通常只需要在 &lt;code&gt;python/sglang/srt/models&lt;/code&gt; 下增加一个文件；如果是多模态模型，还要额外考虑 &lt;code&gt;model_config.py&lt;/code&gt;、&lt;code&gt;conversation.py&lt;/code&gt;、multimodal processor、image feature extraction 和 multimodal token 处理等组件。&lt;/p&gt;
+&lt;p&gt;这比简单说“去 models 目录改”更有价值，因为它告诉你：扩展点不仅是文件位置，还包括一组必须一起成立的适配面。也正因为这样，本章不会把“支持新模型”简化成单点改动，而会把它当作一条跨模块路径来讲。&lt;/p&gt;
+&lt;p&gt;扩展路径本身也适合用图来收束，因为它横跨文档、源码和测试。下面这张图回答的是：一个“想改 SGLang”的工程任务，通常会穿过哪些入口，而不是停留在哪个单独目录。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;扩展目标\n新模型 / 新协议 / 新 parser / 新 hook&amp;#34;] --&amp;gt; B[&amp;#34;阅读入口\nsupport_new_models.md\ncontribution_guide.md\ntest/README.md&amp;#34;]
+ B --&amp;gt; C[&amp;#34;源码扩展面\nmodels / entrypoints / parser / multimodal&amp;#34;]
+ C --&amp;gt; D[&amp;#34;验证路径\nunit tests / server tests / bench_one_batch / benchmark&amp;#34;]
+ D --&amp;gt; E[&amp;#34;贡献路径\npre-commit / CI / PR / review&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释了一点：扩展并不是“改完源码再说”，而是一条从设计入口到验证入口再到贡献入口的闭环。也正因为这样，本章会把测试和贡献流程看成扩展点的一部分，而不是附录。&lt;/p&gt;
+&lt;h2 id="模型扩展与协议扩展分别落在哪里"&gt;模型扩展与协议扩展分别落在哪里&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e6%89%a9%e5%b1%95%e4%b8%8e%e5%8d%8f%e8%ae%ae%e6%89%a9%e5%b1%95%e5%88%86%e5%88%ab%e8%90%bd%e5%9c%a8%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item></channel></rss>

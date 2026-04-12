@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>8. 扩展与调试 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/</link><description>Recent content in 8. 扩展与调试 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/index.xml" rel="self" type="application/rss+xml"/><item><title>8.1 观测、Tracing 与调试抓手</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/observability-and-debugging/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/observability-and-debugging/</guid><description>&lt;h1 id="观测tracing-与调试抓手"&gt;观测、Tracing 与调试抓手&lt;a class="anchor" href="#%e8%a7%82%e6%b5%8btracing-%e4%b8%8e%e8%b0%83%e8%af%95%e6%8a%93%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“当系统已经跑起来之后，出了问题先看哪里”。如果前面章节主要回答“系统怎样设计、代码在哪里”，这一章则回答“当请求异常、延迟波动、输出不稳定，或者你要定位瓶颈时，哪些 observability 和 debug 入口最值得先抓”。&lt;/p&gt;
+&lt;p&gt;这类内容不能混进前面的主线章节里讲。因为它们更多是操作层，而不是结构层。但如果完全不单独成章，读者又会在真正出问题时不知道该从 metrics、logging、trace、request dump 还是 crash dump 开始。&lt;/p&gt;
+&lt;h2 id="为什么-observability-需要独立章节"&gt;为什么 observability 需要独立章节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-observability-%e9%9c%80%e8%a6%81%e7%8b%ac%e7%ab%8b%e7%ab%a0%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;官方 &lt;code&gt;docs/advanced_features/observability.md&lt;/code&gt; 已经把 observability 分成三块：Production Metrics、Logging、Request Dump and Replay / Crash Dump and Replay。这种划分很有代表性，因为它说明 SGLang 并没有把“观测”理解成只有 Prometheus 指标，而是把 metrics、logs 和可复现材料都纳入观测体系。&lt;/p&gt;
+&lt;p&gt;更进一步，&lt;code&gt;docs/references/production_request_trace.md&lt;/code&gt; 明确说 request trace 的实现落在 &lt;code&gt;python/sglang/srt/observability/req_time_stats.py&lt;/code&gt;。这很重要，因为它把“文档层讲 tracing”与“源码层定义 request stage”连到了一起。也就是说，观测不是外围运营面板，而是 runtime 自己的一部分。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，是把 metrics、trace 和 dump / replay 这三种抓手放进同一条排障路径里。这样读者不必再靠记忆去猜“到底先看哪个”，而是能直接看出从轻量观测到重型复现的升级顺序。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;异常 / 延迟 / 输出不稳定&amp;#34;] --&amp;gt; B[&amp;#34;Metrics\n--enable-metrics / /metrics&amp;#34;]
+ B --&amp;gt; C{&amp;#34;问题是整体性的\n还是个别请求?&amp;#34;}
+ C --&amp;gt;|整体趋势| D[&amp;#34;Prometheus / production_metrics&amp;#34;]
+ C --&amp;gt;|单请求 / 阶段性| E[&amp;#34;Trace\n--enable-trace / OTLP / Jaeger&amp;#34;]
+ E --&amp;gt; F[&amp;#34;req_time_stats.py\nRequestStage slices&amp;#34;]
+ D --&amp;gt; G[&amp;#34;需要更具体样本?&amp;#34;]
+ F --&amp;gt; G
+ G --&amp;gt;|是| H[&amp;#34;Request dump / crash dump&amp;#34;]
+ H --&amp;gt; I[&amp;#34;scripts/playground/replay_request_dump.py&amp;#34;]
+ G --&amp;gt;|否| J[&amp;#34;回到对应 runtime 模块定位&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图相对于段落的增量，是把“趋势问题”“阶段问题”“复现问题”拆成三个不同层次。后文再谈具体 flags 和文件路径时，读者就不会把所有调试手段混成一个平面列表。&lt;/p&gt;</description></item><item><title>8.2 扩展点与维护路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/extension-points/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/extension-points/</guid><description>&lt;h1 id="扩展点与维护路径"&gt;扩展点与维护路径&lt;a class="anchor" href="#%e6%89%a9%e5%b1%95%e7%82%b9%e4%b8%8e%e7%bb%b4%e6%8a%a4%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“如果你不只是阅读 SGLang，而是准备修改它，应该从哪里下手”。这包括两类常见需求：一类是功能扩展，例如支持新模型、调整 parser、增加协议适配；另一类是维护性工作，例如加测试、跑回归、按贡献流程提交变更。&lt;/p&gt;
+&lt;p&gt;如果没有这一章，前面的章节会把系统讲清楚，但读者仍然会缺少一个问题的答案：知道系统怎么工作之后，下一步怎样安全地改它。这也是为什么本章要放在最后，它更像“把理解转成可操作路径”的收束章。&lt;/p&gt;
+&lt;h2 id="为什么扩展点不能只靠目录猜"&gt;为什么扩展点不能只靠目录猜&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%89%a9%e5%b1%95%e7%82%b9%e4%b8%8d%e8%83%bd%e5%8f%aa%e9%9d%a0%e7%9b%ae%e5%bd%95%e7%8c%9c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;目录当然能给提示，但真正的扩展点最好看官方维护文档。&lt;code&gt;docs/supported_models/extending/support_new_models.md&lt;/code&gt; 明确说明：支持新的语言模型，通常只需要在 &lt;code&gt;python/sglang/srt/models&lt;/code&gt; 下增加一个文件；如果是多模态模型，还要额外考虑 &lt;code&gt;model_config.py&lt;/code&gt;、&lt;code&gt;conversation.py&lt;/code&gt;、multimodal processor、image feature extraction 和 multimodal token 处理等组件。&lt;/p&gt;
+&lt;p&gt;这比简单说“去 models 目录改”更有价值，因为它告诉你：扩展点不仅是文件位置，还包括一组必须一起成立的适配面。也正因为这样，本章不会把“支持新模型”简化成单点改动，而会把它当作一条跨模块路径来讲。&lt;/p&gt;
+&lt;p&gt;扩展路径本身也适合用图来收束，因为它横跨文档、源码和测试。下面这张图回答的是：一个“想改 SGLang”的工程任务，通常会穿过哪些入口，而不是停留在哪个单独目录。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;扩展目标\n新模型 / 新协议 / 新 parser / 新 hook&amp;#34;] --&amp;gt; B[&amp;#34;阅读入口\nsupport_new_models.md\ncontribution_guide.md\ntest/README.md&amp;#34;]
+ B --&amp;gt; C[&amp;#34;源码扩展面\nmodels / entrypoints / parser / multimodal&amp;#34;]
+ C --&amp;gt; D[&amp;#34;验证路径\nunit tests / server tests / bench_one_batch / benchmark&amp;#34;]
+ D --&amp;gt; E[&amp;#34;贡献路径\npre-commit / CI / PR / review&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释了一点：扩展并不是“改完源码再说”，而是一条从设计入口到验证入口再到贡献入口的闭环。也正因为这样，本章会把测试和贡献流程看成扩展点的一部分，而不是附录。&lt;/p&gt;
+&lt;h2 id="模型扩展与协议扩展分别落在哪里"&gt;模型扩展与协议扩展分别落在哪里&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e6%89%a9%e5%b1%95%e4%b8%8e%e5%8d%8f%e8%ae%ae%e6%89%a9%e5%b1%95%e5%88%86%e5%88%ab%e8%90%bd%e5%9c%a8%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item></channel></rss>

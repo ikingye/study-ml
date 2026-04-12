@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>2. 请求生命周期 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/</link><description>Recent content in 2. 请求生命周期 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/index.xml" rel="self" type="application/rss+xml"/><item><title>2.1 一次请求如何穿过 SGLang</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</guid><description>&lt;h1 id="一次请求如何穿过-sglang"&gt;一次请求如何穿过 SGLang&lt;a class="anchor" href="#%e4%b8%80%e6%ac%a1%e8%af%b7%e6%b1%82%e5%a6%82%e4%bd%95%e7%a9%bf%e8%bf%87-sglang"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的是“请求主链路在哪里开始，又在哪里发生关键 handoff”。如果只从零散模块出发阅读源码，你会看到 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;grpc_server.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;tokenizer_manager.py&lt;/code&gt; 这些名字，却不知道它们是按什么顺序被接上的。生命周期章节的任务，就是先把这条主线画出来。&lt;/p&gt;
+&lt;p&gt;第一版在这里刻意控制范围。它会讲清入口、模式分支、进入运行时的 handoff，以及后续要去哪几类模块找实现；但不会在这一章里深入 sampling、speculative decoding 或 &lt;code&gt;KV cache&lt;/code&gt; 的局部机制。那些问题会留给后面的执行模型和调度与内存章节。&lt;/p&gt;
+&lt;h2 id="请求先从哪一个入口进来"&gt;请求先从哪一个入口进来&lt;a class="anchor" href="#%e8%af%b7%e6%b1%82%e5%85%88%e4%bb%8e%e5%93%aa%e4%b8%80%e4%b8%aa%e5%85%a5%e5%8f%a3%e8%bf%9b%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 看，服务化入口首先会调用 &lt;code&gt;prepare_server_args(...)&lt;/code&gt; 解析参数，然后交给 &lt;code&gt;run_server(server_args)&lt;/code&gt; 做模式选择。这里的分支不是装饰性的：&lt;code&gt;encoder_only&lt;/code&gt;、&lt;code&gt;grpc_mode&lt;/code&gt;、&lt;code&gt;use_ray&lt;/code&gt; 和默认 HTTP 模式分别导向不同实现，默认路径才会导入 &lt;code&gt;sglang.srt.entrypoints.http_server.launch_server&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这一步最关键的结论是：&lt;code&gt;launch_server.py&lt;/code&gt; 负责“选入口”，不负责“跑生成”。你可以把它理解成总调度台。它决定请求应该进入 HTTP、gRPC、Ray，还是 encoder disaggregation path；但一旦分支确定，真正接收请求、维护请求状态、驱动 batch 的逻辑就进入 &lt;code&gt;srt&lt;/code&gt; 内部了。&lt;/p&gt;
+&lt;p&gt;如果只靠段落描述，这条主链路仍然有点抽象。下面这张时序图解决的障碍是：把“入口选路”“请求进入 runtime”“调度器推进 batch”“detokenizer 回包”放到同一时间轴上，让你能一眼区分谁在接请求、谁在编排、谁在收尾。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;sequenceDiagram
+ participant Client as Client / SDK
+ participant Entry as launch_server.py
+ participant HTTP as http_server.py
+ participant TM as TokenizerManager
+ participant SCH as Scheduler
+ participant DET as DetokenizerManager
+
+ Client-&amp;gt;&amp;gt;Entry: CLI / HTTP / OpenAI-compatible request
+ Entry-&amp;gt;&amp;gt;HTTP: select HTTP / gRPC / Ray path
+ HTTP-&amp;gt;&amp;gt;TM: generate_request(...)
+ TM-&amp;gt;&amp;gt;TM: normalize, tokenize, build request state
+ TM-&amp;gt;&amp;gt;SCH: send_to_scheduler.send_pyobj(...)
+ SCH-&amp;gt;&amp;gt;SCH: build / update batch
+ SCH-&amp;gt;&amp;gt;DET: send_to_detokenizer.send_output(...)
+ DET-&amp;gt;&amp;gt;DET: detokenize / assemble text
+ DET-&amp;gt;&amp;gt;TM: send_to_tokenizer.send_pyobj(...)
+ TM-&amp;gt;&amp;gt;HTTP: streaming / final response
+ HTTP-&amp;gt;&amp;gt;Client: chunks or completed result&lt;/pre&gt;&lt;p&gt;这张图多解释了一件纯文字不容易稳定表达的事：&lt;code&gt;TokenizerManager&lt;/code&gt; 在链路里既是请求进入 runtime 的第一站，也是结果回到调用方之前的收敛点。后面你在架构章节里看到 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt; 被并列成 engine 组件时，就更容易理解它们为什么不是随意拆成三个进程。&lt;/p&gt;</description></item></channel></rss>

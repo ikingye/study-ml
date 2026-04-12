@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>5. 执行模型 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/</link><description>Recent content in 5. 执行模型 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang/execution-model/index.xml" rel="self" type="application/rss+xml"/><item><title>5.1 Token 生成循环与执行模型</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</guid><description>&lt;h1 id="token-生成循环与执行模型"&gt;Token 生成循环与执行模型&lt;a class="anchor" href="#token-%e7%94%9f%e6%88%90%e5%be%aa%e7%8e%af%e4%b8%8e%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章解决的不是“请求怎样进入系统”，而是“一个 batch 已经准备好之后，模型前向、logits 处理、sampling 和 decode 怎样接起来”。如果没有这层理解，前面的生命周期和架构章节会告诉你请求经过了哪些模块，但你仍然不知道真正生成 token 的那一轮循环是如何推进的。&lt;/p&gt;
+&lt;p&gt;这里最重要的切分是：调度器决定“这轮应该跑谁”，执行模型决定“这一轮怎样跑”。也正因为这样，本章不再讨论请求排队和 KV 复用策略，而是把注意力放在 &lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;ModelRunner.forward(...)&lt;/code&gt;、&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;、&lt;code&gt;sample(...)&lt;/code&gt; 和 speculative decoding 的关系上。&lt;/p&gt;
+&lt;h2 id="为什么执行模型要单独成章"&gt;为什么执行模型要单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b%e8%a6%81%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;源码已经明确把调度层和执行层拆开了。&lt;code&gt;python/sglang/srt/model_executor/forward_batch_info.py&lt;/code&gt; 文件头直接写出数据流：&lt;code&gt;ScheduleBatch -&amp;gt; ModelWorkerBatch -&amp;gt; ForwardBatch&lt;/code&gt;。这说明调度器并不直接操作模型前向所需的低层 tensor，而是先把请求集合组织成更高层的 batch，再逐步降到执行层。&lt;/p&gt;
+&lt;p&gt;这类设计有很强的工程理由。调度器关心的是 waiting queue、running batch、prefill / decode 切换与 token 预算；执行层关心的是当前轮 forward 需要哪些 tensor、哪些 logits 要被处理、下一步 sample 该如何产生 next token。如果把这两层揉在一起，调度逻辑会污染执行细节，执行细节又会反向拖慢调度路径。&lt;/p&gt;
+&lt;p&gt;下面这张图专门解决“调度结束后，执行模型内部到底怎样推进”的理解障碍。它比纯文字多解释了两个关键点：一是 &lt;code&gt;ForwardBatch&lt;/code&gt; 在循环里的位置，二是 speculative decoding 并不是另一条完全独立的 pipeline，而是嵌在同一执行链里的模式分支。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;ScheduleBatch&amp;#34;] --&amp;gt; B[&amp;#34;ModelWorkerBatch&amp;#34;]
+ B --&amp;gt; C[&amp;#34;ForwardBatch.init_new(...)&amp;#34;]
+ C --&amp;gt; D[&amp;#34;ModelRunner.forward(...)&amp;#34;]
+ D --&amp;gt; E[&amp;#34;LogitsProcessorOutput&amp;#34;]
+ E --&amp;gt; F[&amp;#34;sample(...) / next token&amp;#34;]
+ F --&amp;gt; G[&amp;#34;decode continuation&amp;#34;]
+ G --&amp;gt; C
+ C -. TARGET_VERIFY / DRAFT_EXTEND .-&amp;gt; H[&amp;#34;speculative decoding path&amp;#34;]
+ H -. verify / accept / reject .-&amp;gt; F&lt;/pre&gt;&lt;p&gt;读这张图时，最重要的是看清闭环：batch 进入 &lt;code&gt;ForwardBatch&lt;/code&gt;，前向产生 logits，sampling 选出 next token，随后又回到下一轮 decode。speculative decoding 并没有打破这个环，而是把 “verify / draft extend” 插进了 &lt;code&gt;ForwardBatch -&amp;gt; sample&lt;/code&gt; 之间。&lt;/p&gt;</description></item></channel></rss>

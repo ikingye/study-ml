@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>3. 运行时架构 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/</link><description>Recent content in 3. 运行时架构 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/index.xml" rel="self" type="application/rss+xml"/><item><title>3.1 Serving 层与 SRT 分层</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/serving-and-srt-layering/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/serving-and-srt-layering/</guid><description>&lt;h1 id="serving-层与-srt-分层"&gt;Serving 层与 SRT 分层&lt;a class="anchor" href="#serving-%e5%b1%82%e4%b8%8e-srt-%e5%88%86%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章要解决的问题不是“请求怎样一步步流动”，而是“为什么 SGLang 要把入口、编排、执行和观测拆成不同层”。如果没有这层理解，读者看到 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;model_executor&lt;/code&gt;、&lt;code&gt;observability&lt;/code&gt; 这些区域时，会误以为它们只是按开发习惯分目录，而不是在划定真正的职责边界。&lt;/p&gt;
+&lt;p&gt;第一版在这里坚持一个保守原则：目录名和公开入口是事实，基于目录职责推断“分层意图”时，会明确说明这是工作性划分，而不是把目录结构直接等同于架构真相。这样可以避免过度解读源码布局。&lt;/p&gt;
+&lt;h2 id="事实锚点进程边界本来就写在入口里"&gt;事实锚点：进程边界本来就写在入口里&lt;a class="anchor" href="#%e4%ba%8b%e5%ae%9e%e9%94%9a%e7%82%b9%e8%bf%9b%e7%a8%8b%e8%be%b9%e7%95%8c%e6%9c%ac%e6%9d%a5%e5%b0%b1%e5%86%99%e5%9c%a8%e5%85%a5%e5%8f%a3%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 与 &lt;code&gt;python/sglang/srt/entrypoints/*&lt;/code&gt; 看，SGLang 至少存在一层很明确的入口面：它负责接参数、选运行模式、接住 HTTP 或 gRPC 请求，并把后续工作交给 runtime path。这个层次更接近 serving surface，而不是底层生成机制本身。&lt;/p&gt;
+&lt;p&gt;更关键的是，&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt; 的 &lt;code&gt;launch_server(...)&lt;/code&gt; 文档字符串已经把运行时拆分说得非常直接：HTTP server 负责路由请求；engine 由 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt; 和 &lt;code&gt;DetokenizerManager&lt;/code&gt; 三个组件构成；HTTP server、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;TokenizerManager&lt;/code&gt; 在主进程里，而另外两个 manager 是子进程，并通过 ZMQ 做 IPC。&lt;code&gt;python/sglang/srt/entrypoints/engine.py&lt;/code&gt; 的 &lt;code&gt;Engine&lt;/code&gt; 类文档字符串重复了同样的描述，这不是推断，而是源码作者自己给出的结构说明。&lt;/p&gt;
+&lt;p&gt;如果只用文字，这里最容易混淆的点是“入口层、编排层、执行层、观测层到底怎么分”。下面这张组件图承担的职责，就是把这些层次放到一张边界图里，并明确哪些是 runtime 主线、哪些是横切能力。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ subgraph Serving[&amp;#34;Serving Surface&amp;#34;]
+ A[&amp;#34;launch_server.py&amp;#34;]
+ B[&amp;#34;entrypoints/http_server.py&amp;#34;]
+ C[&amp;#34;entrypoints/grpc_server.py&amp;#34;]
+ D[&amp;#34;entrypoints/engine.py&amp;#34;]
+ end
+
+ subgraph Managers[&amp;#34;Runtime Orchestration&amp;#34;]
+ E[&amp;#34;TokenizerManager&amp;#34;]
+ F[&amp;#34;Scheduler&amp;#34;]
+ G[&amp;#34;DetokenizerManager&amp;#34;]
+ H[&amp;#34;ScheduleBatch / ModelWorkerBatch&amp;#34;]
+ end
+
+ subgraph Executor[&amp;#34;Execution Layer&amp;#34;]
+ I[&amp;#34;model_executor / ModelRunner&amp;#34;]
+ J[&amp;#34;models / tokenizer&amp;#34;]
+ end
+
+ subgraph Cache[&amp;#34;State &amp;amp; Cache&amp;#34;]
+ K[&amp;#34;mem_cache / ReqToTokenPool&amp;#34;]
+ L[&amp;#34;TokenToKVPoolAllocator / KVCache&amp;#34;]
+ end
+
+ subgraph Obs[&amp;#34;Observability&amp;#34;]
+ M[&amp;#34;observability / req_time_stats.py&amp;#34;]
+ end
+
+ A --&amp;gt; B
+ A --&amp;gt; C
+ B --&amp;gt; D
+ C --&amp;gt; D
+ D --&amp;gt; E
+ E --&amp;gt; F
+ F --&amp;gt; H
+ H --&amp;gt; I
+ I --&amp;gt; J
+ F --&amp;gt; K
+ K --&amp;gt; L
+ E -. stage / request stats .-&amp;gt; M
+ F -. batch / phase stats .-&amp;gt; M
+ I -. execution metrics .-&amp;gt; M&lt;/pre&gt;&lt;p&gt;这张图比纯目录描述多解释了一点：&lt;code&gt;observability&lt;/code&gt; 不是沿着主数据流串联的“下一跳”，而是覆盖多个层的横切面。理解这一点之后，后面的调试章节就不会再显得像附录，而会自然成为这张架构图的一个外侧切面。&lt;/p&gt;</description></item></channel></rss>
