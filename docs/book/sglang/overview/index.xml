@@ -24,4 +24,34 @@
 &lt;p&gt;推断层面，这意味着 SGLang 的核心价值不只在“跑得快”，还在“把 prompt program、structured generation 与 runtime execution 接到一套统一表面上”。第一版在这里不会展开所有机制细节，但会先把这套双层心智模型钉住：语言层负责描述，运行时层负责承载，服务层负责暴露。&lt;/p&gt;
 &lt;h2 id="这套心智模型如何帮助后续阅读"&gt;这套心智模型如何帮助后续阅读&lt;a class="anchor" href="#%e8%bf%99%e5%a5%97%e5%bf%83%e6%99%ba%e6%a8%a1%e5%9e%8b%e5%a6%82%e4%bd%95%e5%b8%ae%e5%8a%a9%e5%90%8e%e7%bb%ad%e9%98%85%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;有了这个框架，后面的章节角色会清楚很多。&lt;a href="../request-lifecycle/request-path/"&gt;2.1 一次请求如何穿过 SGLang&lt;/a&gt; 讲的是请求如何进入系统并跨过这些层之间的 handoff；&lt;a href="../runtime-architecture/serving-and-srt-layering/"&gt;3.1 Serving 层与 SRT 分层&lt;/a&gt; 讲的是这些层各自负责什么，不负责什么。&lt;/p&gt;
-&lt;p&gt;同时，这套心智模型也约束了我们后面对源码的阅读方式。比如 &lt;code&gt;python/sglang/lang/api.py&lt;/code&gt; 更适合被当作语言层入口来读，而 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 与 &lt;code&gt;python/sglang/srt/entrypoints/*&lt;/code&gt; 更适合被当作服务化入口与运行时入口来读。把这些入口混在一起，会让读者失去方向感。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;同时，这套心智模型也约束了我们后面对源码的阅读方式。比如 &lt;code&gt;python/sglang/lang/api.py&lt;/code&gt; 更适合被当作语言层入口来读，而 &lt;code&gt;python/sglang/launch_server.py&lt;/code&gt; 与 &lt;code&gt;python/sglang/srt/entrypoints/*&lt;/code&gt; 更适合被当作服务化入口与运行时入口来读。把这些入口混在一起，会让读者失去方向感。&lt;/p&gt;</description></item><item><title>1.3 如何带着问题读这本书与上游源码</title><link>https://kingye.me/study-ml/docs/book/sglang/overview/how-to-read-the-book-and-source/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/overview/how-to-read-the-book-and-source/</guid><description>&lt;h1 id="如何带着问题读这本书与上游源码"&gt;如何带着问题读这本书与上游源码&lt;a class="anchor" href="#%e5%a6%82%e4%bd%95%e5%b8%a6%e7%9d%80%e9%97%ae%e9%a2%98%e8%af%bb%e8%bf%99%e6%9c%ac%e4%b9%a6%e4%b8%8e%e4%b8%8a%e6%b8%b8%e6%ba%90%e7%a0%81"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;优秀技术书和普通资料的一个差别，在于它不只是给你答案，还会教你“用什么问题去读后面的材料”。对 SGLang 这种系统尤其如此：如果读者只是顺序往下翻，很容易把后面的章节当成一堆信息更多的页面；但如果带着正确的问题去读，同样的章节会变成一条逐层加深的主线。&lt;/p&gt;
+&lt;p&gt;这一章要解决的，就是把整本书的阅读姿势说清楚。它不引入新的技术主题，但会决定后面每一章到底是“被动看完”还是“主动建立判断框架”。&lt;/p&gt;
+&lt;h2 id="读这本书时最好一直带着的三个问题"&gt;读这本书时最好一直带着的三个问题&lt;a class="anchor" href="#%e8%af%bb%e8%bf%99%e6%9c%ac%e4%b9%a6%e6%97%b6%e6%9c%80%e5%a5%bd%e4%b8%80%e7%9b%b4%e5%b8%a6%e7%9d%80%e7%9a%84%e4%b8%89%e4%b8%aa%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第一，这一层到底在解决什么系统难题。第二，SGLang 为什么把这件事设计成现在这样，而不是揉进别的层。第三，这个解释最终落回了哪些源码路径、对象或运行时行为。&lt;/p&gt;
+&lt;p&gt;这三个问题看起来简单，但它们几乎能覆盖整本书的脊梁。只要读者持续带着它们往下走，后面章节里的图、代码路径、tradeoff 和调试入口都会自动连起来；如果丢掉它们，章节就很容易退化成“知道一些模块名”。&lt;/p&gt;
+&lt;h2 id="怎样把书内主线映射回源码阅读"&gt;怎样把书内主线映射回源码阅读&lt;a class="anchor" href="#%e6%80%8e%e6%a0%b7%e6%8a%8a%e4%b9%a6%e5%86%85%e4%b8%bb%e7%ba%bf%e6%98%a0%e5%b0%84%e5%9b%9e%e6%ba%90%e7%a0%81%e9%98%85%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这本书不是源码旁白，因此最有效的读法不是“读一段正文就去追几十个文件”，而是按主线层级去看源码。更稳的顺序通常是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先通过 overview 确认系统形状和阅读边界。&lt;/li&gt;
+&lt;li&gt;再通过 request lifecycle 理解请求怎样穿过系统。&lt;/li&gt;
+&lt;li&gt;然后通过 runtime architecture 区分入口、编排、执行、缓存和观测。&lt;/li&gt;
+&lt;li&gt;之后再进入调度、执行模型、结构化生成和代码导读，把前面的抽象一层层压回文件。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;换句话说，源码阅读不应该随机开始，而应该带着章节顺序提供的上下文进入。技术书的价值，恰恰在于替读者提前安排好了这条顺序。&lt;/p&gt;
+&lt;h2 id="不同读者怎样调整阅读顺序"&gt;不同读者怎样调整阅读顺序&lt;a class="anchor" href="#%e4%b8%8d%e5%90%8c%e8%af%bb%e8%80%85%e6%80%8e%e6%a0%b7%e8%b0%83%e6%95%b4%e9%98%85%e8%af%bb%e9%a1%ba%e5%ba%8f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你是第一次接触 SGLang，最稳的做法是沿书的主顺序读。这样会慢一点，但更容易在脑中建立完整地图。&lt;br&gt;
+如果你已经在做 inference runtime 或平台工程，更高效的做法通常是先看 overview，再跳到 request lifecycle、runtime architecture 和 scheduling/memory，把和工程判断最相关的层先读透。&lt;br&gt;
+如果你的目标是改代码，那么建议在读完 execution model、structured generation 和 codebase walkthrough 之后，直接进入扩展与调试部分，把“怎么改”和“怎么验证”一起补上。&lt;/p&gt;
+&lt;p&gt;这不是“不同人随便挑着看”，而是对不同起点给出不同的进入顺序。好的技术书不是强迫所有读者走同一路，而是保证不同进入方式最后都能回到同一条主线。&lt;/p&gt;
+&lt;h2 id="一种更像技术书读法的最小练习"&gt;一种更像技术书读法的最小练习&lt;a class="anchor" href="#%e4%b8%80%e7%a7%8d%e6%9b%b4%e5%83%8f%e6%8a%80%e6%9c%af%e4%b9%a6%e8%af%bb%e6%b3%95%e7%9a%84%e6%9c%80%e5%b0%8f%e7%bb%83%e4%b9%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;读完 overview 三章之后，可以先试着回答下面三个问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;SGLang 为什么不能只被看成一个 HTTP server？&lt;/li&gt;
+&lt;li&gt;为什么 request lifecycle 和 runtime architecture 需要分成两章？&lt;/li&gt;
+&lt;li&gt;如果后面要去追源码，第一轮应该追的是入口、状态、执行，还是 benchmark？&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果这三个问题已经能回答清楚，说明你不是只读了“介绍”，而是已经拿到了整本书后面最重要的阅读框架。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章仍然主要回指外部入口：&lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/__init__.py&lt;/code&gt;、&lt;code&gt;python/sglang/lang/api.py&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;，以及本书其余章节中逐步展开的 &lt;code&gt;python/sglang/srt/*&lt;/code&gt; 主链路。这一章不负责深入某个内部实现，而是负责教读者怎样带着问题进入这些实现。&lt;/p&gt;</description></item></channel></rss>

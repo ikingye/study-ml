@@ -48,4 +48,83 @@
  K --&amp;gt; L
  E -. stage / request stats .-&amp;gt; M
  F -. batch / phase stats .-&amp;gt; M
- I -. execution metrics .-&amp;gt; M&lt;/pre&gt;&lt;p&gt;这张图比纯目录描述多解释了一点：&lt;code&gt;observability&lt;/code&gt; 不是沿着主数据流串联的“下一跳”，而是覆盖多个层的横切面。理解这一点之后，后面的调试章节就不会再显得像附录，而会自然成为这张架构图的一个外侧切面。&lt;/p&gt;</description></item></channel></rss>
+ I -. execution metrics .-&amp;gt; M&lt;/pre&gt;&lt;p&gt;这张图比纯目录描述多解释了一点：&lt;code&gt;observability&lt;/code&gt; 不是沿着主数据流串联的“下一跳”，而是覆盖多个层的横切面。理解这一点之后，后面的调试章节就不会再显得像附录，而会自然成为这张架构图的一个外侧切面。&lt;/p&gt;</description></item><item><title>3.2 进程边界、IPC 与运行时控制面</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/process-boundaries-and-ipc/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/process-boundaries-and-ipc/</guid><description>&lt;h1 id="进程边界ipc-与运行时控制面"&gt;进程边界、IPC 与运行时控制面&lt;a class="anchor" href="#%e8%bf%9b%e7%a8%8b%e8%be%b9%e7%95%8cipc-%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%97%b6%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;上一章已经解释了 serving surface、managers、execution layer、cache 和 observability 的分层关系，但还有一个很实际的问题没有展开：这些组件为什么要拆成不同进程，它们之间又靠什么通信。如果不理解这一层，运行时架构就仍然像一张静态分层图，而不是一个真实运行的系统。&lt;/p&gt;
+&lt;p&gt;这一章要解决的就是“边界为什么不是逻辑边界而已，而是真正的进程边界”。这件事直接关系到性能、稳定性、调试路径和部署复杂度，也会影响你如何理解后面的 trace、回包和 batch 管理。&lt;/p&gt;
+&lt;h2 id="为什么要把关键组件拆进不同进程"&gt;为什么要把关键组件拆进不同进程&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e6%8a%8a%e5%85%b3%e9%94%ae%e7%bb%84%e4%bb%b6%e6%8b%86%e8%bf%9b%e4%b8%8d%e5%90%8c%e8%bf%9b%e7%a8%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt; 与 &lt;code&gt;engine.py&lt;/code&gt; 的文档字符串已经给出非常明确的结构说明：HTTP server、&lt;code&gt;Engine&lt;/code&gt; 和 &lt;code&gt;TokenizerManager&lt;/code&gt; 在主进程里，而 &lt;code&gt;Scheduler&lt;/code&gt; 与 &lt;code&gt;DetokenizerManager&lt;/code&gt; 是子进程，并通过 IPC 通信。这里最重要的，不是“谁在主进程”，而是这种拆分在工程上意味着什么。&lt;/p&gt;
+&lt;p&gt;一个合理的工作性理解是：HTTP server 与 &lt;code&gt;TokenizerManager&lt;/code&gt; 更接近调用表面和请求首尾收敛，因此保留在主进程更有利于对外接口控制；&lt;code&gt;Scheduler&lt;/code&gt; 与 &lt;code&gt;DetokenizerManager&lt;/code&gt; 则承担更持续、更偏运行时的工作，把它们拆出去有助于隔离状态推进和输出处理。这样做的代价当然是 IPC 带来的复杂度，但换来的是更清晰的运行时控制面。&lt;/p&gt;
+&lt;h2 id="ipc-为什么是理解运行时的关键"&gt;IPC 为什么是理解运行时的关键&lt;a class="anchor" href="#ipc-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e7%90%86%e8%a7%a3%e8%bf%90%e8%a1%8c%e6%97%b6%e7%9a%84%e5%85%b3%e9%94%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多时候，读者会把 IPC 当成实现细节，觉得“反正就是几个进程传消息”。但对 SGLang，这恰恰是运行时架构最值得重视的部分之一。因为请求一旦跨过 &lt;code&gt;TokenizerManager -&amp;gt; Scheduler -&amp;gt; DetokenizerManager&lt;/code&gt; 这条链，它就不再只是函数调用，而是状态在多个进程里的接力。&lt;/p&gt;
+&lt;p&gt;这意味着排障思路也会随之变化。你不能只看某个函数有没有执行，还要看消息有没有真正送出去、有没有被下游进程接住、有没有沿着正确方向回来。因此，这一章的重点不是“IPC 使用了哪个库”，而是“边界一旦变成进程边界，系统的行为理解方式就跟单进程逻辑完全不同”。&lt;/p&gt;
+&lt;h2 id="一个更贴近真实运行时的进程图"&gt;一个更贴近真实运行时的进程图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e8%b4%b4%e8%bf%91%e7%9c%9f%e5%ae%9e%e8%bf%90%e8%a1%8c%e6%97%b6%e7%9a%84%e8%bf%9b%e7%a8%8b%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;下面这张图的职责，是把前一章里的组件图压到进程层。相比单纯的模块分层，它多解释了“哪条边是真正的跨进程通信”。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ subgraph Main[&amp;#34;Main process&amp;#34;]
+ A[&amp;#34;HTTP server&amp;#34;]
+ B[&amp;#34;Engine&amp;#34;]
+ C[&amp;#34;TokenizerManager&amp;#34;]
+ end
+
+ subgraph Worker1[&amp;#34;Scheduler process&amp;#34;]
+ D[&amp;#34;Scheduler&amp;#34;]
+ end
+
+ subgraph Worker2[&amp;#34;Detokenizer process&amp;#34;]
+ E[&amp;#34;DetokenizerManager&amp;#34;]
+ end
+
+ A --&amp;gt; B
+ B --&amp;gt; C
+ C --&amp;gt;|IPC send_to_scheduler| D
+ D --&amp;gt;|IPC send_to_detokenizer| E
+ E --&amp;gt;|IPC send_to_tokenizer| C&lt;/pre&gt;&lt;p&gt;这张图比前一章的组件图多解释了一点：&lt;code&gt;TokenizerManager&lt;/code&gt; 既在主进程，又横跨了两条最关键的 IPC 回路。也就是说，它不是一个普通组件，而是运行时控制面和回包路径的桥。&lt;/p&gt;</description></item><item><title>3.3 请求状态对象与运行时抽象边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/request-state-and-abstractions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/request-state-and-abstractions/</guid><description>&lt;h1 id="请求状态对象与运行时抽象边界"&gt;请求状态对象与运行时抽象边界&lt;a class="anchor" href="#%e8%af%b7%e6%b1%82%e7%8a%b6%e6%80%81%e5%af%b9%e8%b1%a1%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%97%b6%e6%8a%bd%e8%b1%a1%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多系统在“模块分层”讲完之后，读者仍然会有一种模糊感：虽然知道有哪些目录和组件，但不知道贯穿这些层的核心对象到底有哪些。在 SGLang 里，这种模糊特别容易出现在 &lt;code&gt;ReqState&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt;、&lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;RequestStage&lt;/code&gt; 这些对象周围，因为它们分别站在请求状态、批次状态、执行状态和观测状态上。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这些对象放在一起看。这样做不是为了列术语，而是为了让读者看到：不同章节虽然各自关注不同问题，但它们实际都是围绕一组核心抽象在展开。&lt;/p&gt;
+&lt;h2 id="为什么要抓对象而不是只抓模块"&gt;为什么要抓“对象”而不是只抓“模块”&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e6%8a%93%e5%af%b9%e8%b1%a1%e8%80%8c%e4%b8%8d%e6%98%af%e5%8f%aa%e6%8a%93%e6%a8%a1%e5%9d%97"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;模块告诉你“代码放在哪”；抽象对象告诉你“状态怎样流动”。如果只抓模块，你会知道 &lt;code&gt;tokenizer_manager.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;forward_batch_info.py&lt;/code&gt; 都很重要；但如果不抓对象，你还是很难说清它们之间到底传递了什么。&lt;/p&gt;
+&lt;p&gt;优秀技术书之所以喜欢反复回到几个关键抽象，就是因为它们比目录更稳定。目录会变，文件会拆，但“请求状态”“批次状态”“前向状态”“观测切片”这几类抽象往往会长期存在。把这一层抓稳，整本书的复用价值也会更高。&lt;/p&gt;
+&lt;h2 id="reqstate请求视角的连续性"&gt;&lt;code&gt;ReqState&lt;/code&gt;：请求视角的连续性&lt;a class="anchor" href="#reqstate%e8%af%b7%e6%b1%82%e8%a7%86%e8%a7%92%e7%9a%84%e8%bf%9e%e7%bb%ad%e6%80%a7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;TokenizerManager&lt;/code&gt; 一侧看，&lt;code&gt;ReqState&lt;/code&gt; 更像调用方视角的状态容器。它帮助系统记住一条请求的流式结果、finish 情况、文本缓冲和其他与“这条请求现在处于什么状态”相关的信息。因此它更接近 request lifecycle，而不是底层执行。&lt;/p&gt;
+&lt;p&gt;这也是为什么 &lt;code&gt;ReqState&lt;/code&gt; 很适合拿来当全书的第一组核心抽象。只要你还在从“单条请求”角度理解系统，它几乎都会出现。&lt;/p&gt;
+&lt;h2 id="schedulebatch调度视角的中间层对象"&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt;：调度视角的中间层对象&lt;a class="anchor" href="#schedulebatch%e8%b0%83%e5%ba%a6%e8%a7%86%e8%a7%92%e7%9a%84%e4%b8%ad%e9%97%b4%e5%b1%82%e5%af%b9%e8%b1%a1"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;当请求进入 scheduler 之后，单条请求已经不再是 runtime 的唯一视角。系统开始更关心“当前批次怎样被组织、下一轮如何推进、哪些请求能一起进入 prefill / decode”。&lt;code&gt;ScheduleBatch&lt;/code&gt; 正是调度层用来管理这些问题的中间层对象。&lt;/p&gt;
+&lt;p&gt;你可以把它理解成“调度器真正思考问题时使用的形状”。它比 request 更高层，又比 &lt;code&gt;ForwardBatch&lt;/code&gt; 更贴近策略层。也正因为这样，&lt;code&gt;ScheduleBatch&lt;/code&gt; 是调度章节的关键抽象，而不是 execution 章节的附属名词。&lt;/p&gt;
+&lt;h2 id="forwardbatch执行视角的最低层状态"&gt;&lt;code&gt;ForwardBatch&lt;/code&gt;：执行视角的最低层状态&lt;a class="anchor" href="#forwardbatch%e6%89%a7%e8%a1%8c%e8%a7%86%e8%a7%92%e7%9a%84%e6%9c%80%e4%bd%8e%e5%b1%82%e7%8a%b6%e6%80%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;一旦进入 execution model，真正承载前向运行的是 &lt;code&gt;ForwardBatch&lt;/code&gt;。相比 &lt;code&gt;ScheduleBatch&lt;/code&gt;，它更接近低层 tensor 状态和 &lt;code&gt;ForwardMode&lt;/code&gt;。如果说 &lt;code&gt;ScheduleBatch&lt;/code&gt; 回答的是“这轮想跑什么”，那么 &lt;code&gt;ForwardBatch&lt;/code&gt; 回答的就是“这一轮已经准备好怎样跑了”。&lt;/p&gt;
+&lt;p&gt;这正是 execution model 章节一定要单独讲 &lt;code&gt;ForwardBatch&lt;/code&gt; 的原因。因为从这一层开始，系统已经不再主要关心请求叙事，而开始关心执行模式、logits 和 sampling。&lt;/p&gt;
+&lt;h2 id="requeststage把运行时行为外显出来"&gt;&lt;code&gt;RequestStage&lt;/code&gt;：把运行时行为外显出来&lt;a class="anchor" href="#requeststage%e6%8a%8a%e8%bf%90%e8%a1%8c%e6%97%b6%e8%a1%8c%e4%b8%ba%e5%a4%96%e6%98%be%e5%87%ba%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;RequestStage&lt;/code&gt; 站在另一条轴上。它不是请求对象、也不是 batch 对象，而是观测对象。它把 &lt;code&gt;TOKENIZE&lt;/code&gt;、&lt;code&gt;REQUEST_PROCESS&lt;/code&gt;、&lt;code&gt;PREFILL_FORWARD&lt;/code&gt;、&lt;code&gt;DECODE_LOOP&lt;/code&gt; 等阶段抽成了可见标签，让系统的内部行为能够被 trace 和 metrics 消费。&lt;/p&gt;</description></item><item><title>3.4 控制面、数据面与跨层耦合点</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/control-plane-and-data-plane/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/control-plane-and-data-plane/</guid><description>&lt;h1 id="控制面数据面与跨层耦合点"&gt;控制面、数据面与跨层耦合点&lt;a class="anchor" href="#%e6%8e%a7%e5%88%b6%e9%9d%a2%e6%95%b0%e6%8d%ae%e9%9d%a2%e4%b8%8e%e8%b7%a8%e5%b1%82%e8%80%a6%e5%90%88%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;分层讲到一定程度之后，读者通常会再问一个问题：哪些部分更像控制面，哪些部分更像数据面？如果不回答这件事，运行时架构虽然看起来分得很清楚，但在实际排障和改造时仍然容易把“控制逻辑问题”和“数据路径问题”混在一起。&lt;/p&gt;
+&lt;p&gt;这一章的目标，不是引入全新抽象，而是把前面已经出现的 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt;、&lt;code&gt;mem_cache&lt;/code&gt;、&lt;code&gt;observability&lt;/code&gt; 重新放到“控制面 / 数据面”这张图里。这样做的好处是，读者不只知道边界，还知道不同边界上的变化为什么会产生不同类型的后果。&lt;/p&gt;
+&lt;h2 id="什么更接近控制面"&gt;什么更接近控制面&lt;a class="anchor" href="#%e4%bb%80%e4%b9%88%e6%9b%b4%e6%8e%a5%e8%bf%91%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从当前主线看，控制面更接近“决定事情如何发生”的部分，而不是“承载事情真正发生”的部分。&lt;code&gt;launch_server.py&lt;/code&gt; 的 mode 选择、&lt;code&gt;http_server.py&lt;/code&gt; 的路由折叠、&lt;code&gt;TokenizerManager&lt;/code&gt; 对请求和 &lt;code&gt;ReqState&lt;/code&gt; 的维护、&lt;code&gt;Scheduler&lt;/code&gt; 对 batch 的推进，以及 &lt;code&gt;session_controller.py&lt;/code&gt; 里的 session / abort / timeout 约束，都更偏控制面。&lt;/p&gt;
+&lt;p&gt;这些逻辑的共同点，是它们主要在做决策、编排、状态维护和流程约束。它们当然也会操作数据，但它们的第一职责不是算出 token，而是决定 token 生成过程能不能、该不该、按什么条件继续推进。&lt;/p&gt;
+&lt;h2 id="什么更接近数据面"&gt;什么更接近数据面&lt;a class="anchor" href="#%e4%bb%80%e4%b9%88%e6%9b%b4%e6%8e%a5%e8%bf%91%e6%95%b0%e6%8d%ae%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;数据面更接近“真正承载运行状态和执行负载”的部分。&lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;ModelRunner.forward(...)&lt;/code&gt;、不同 attention backend、&lt;code&gt;ReqToTokenPool&lt;/code&gt;、&lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt;、&lt;code&gt;KVCache&lt;/code&gt; 以及 detokenizer 回包中携带的 token / text 结果，都更像数据面上的对象与路径。&lt;/p&gt;
+&lt;p&gt;这些路径不是不需要决策，而是它们的重心放在“真正处理这轮数据”。一旦你用这种方式看 execution model 和 mem_cache，很多“为什么这里更容易出性能问题、那里更容易出协议问题”的判断就会自然成立。&lt;/p&gt;
+&lt;h2 id="为什么这两层很难完全切开"&gt;为什么这两层很难完全切开&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e5%b1%82%e5%be%88%e9%9a%be%e5%ae%8c%e5%85%a8%e5%88%87%e5%bc%80"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;优秀技术书不会把“控制面 / 数据面”讲成一个绝对静态的二分法，因为真实系统里总有跨层耦合点。比如 &lt;code&gt;Scheduler&lt;/code&gt; 明明是控制面，但它必须了解当前 cache 和 batch 的现实状态；&lt;code&gt;ModelRunner&lt;/code&gt; 明明更像数据面，但它也会受到 &lt;code&gt;ForwardMode&lt;/code&gt;、graph runner 和 backend 选择的影响。&lt;/p&gt;
+&lt;p&gt;换句话说，这一章最想提醒读者的是：分层是为了帮助判断，不是为了否认耦合。只有同时看到层次和耦合点，技术书里的架构图才不会变成“看上去很整齐，但一碰实现就失效”的示意图。&lt;/p&gt;
+&lt;h2 id="一个更适合维护者的图"&gt;一个更适合维护者的图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e9%80%82%e5%90%88%e7%bb%b4%e6%8a%a4%e8%80%85%e7%9a%84%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ subgraph Control[&amp;#34;控制面&amp;#34;]
+ A[&amp;#34;launch_server / entrypoints&amp;#34;]
+ B[&amp;#34;TokenizerManager / ReqState&amp;#34;]
+ C[&amp;#34;Scheduler / session_controller&amp;#34;]
+ end
+
+ subgraph Data[&amp;#34;数据面&amp;#34;]
+ D[&amp;#34;ScheduleBatch / ForwardBatch&amp;#34;]
+ E[&amp;#34;ModelRunner / attention backend&amp;#34;]
+ F[&amp;#34;ReqToTokenPool / KVCache&amp;#34;]
+ G[&amp;#34;Detokenized output&amp;#34;]
+ end
+
+ A --&amp;gt; B --&amp;gt; C --&amp;gt; D --&amp;gt; E --&amp;gt; G
+ C --&amp;gt; F
+ F --&amp;gt; E
+ B -. trace / request stage .-&amp;gt; G&lt;/pre&gt;&lt;p&gt;这张图的重点不是给每个对象贴标签，而是告诉读者：当你在排障时看到“行为不对”，优先先判断自己碰到的是控制面问题，还是数据面问题。前者更可能在入口、状态、约束和 batch 策略；后者更可能在执行、cache、backend 或结果组装。&lt;/p&gt;</description></item></channel></rss>

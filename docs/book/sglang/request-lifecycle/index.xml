@@ -24,4 +24,55 @@
  DET-&amp;gt;&amp;gt;DET: detokenize / assemble text
  DET-&amp;gt;&amp;gt;TM: send_to_tokenizer.send_pyobj(...)
  TM-&amp;gt;&amp;gt;HTTP: streaming / final response
- HTTP-&amp;gt;&amp;gt;Client: chunks or completed result&lt;/pre&gt;&lt;p&gt;这张图多解释了一件纯文字不容易稳定表达的事：&lt;code&gt;TokenizerManager&lt;/code&gt; 在链路里既是请求进入 runtime 的第一站，也是结果回到调用方之前的收敛点。后面你在架构章节里看到 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt; 被并列成 engine 组件时，就更容易理解它们为什么不是随意拆成三个进程。&lt;/p&gt;</description></item></channel></rss>
+ HTTP-&amp;gt;&amp;gt;Client: chunks or completed result&lt;/pre&gt;&lt;p&gt;这张图多解释了一件纯文字不容易稳定表达的事：&lt;code&gt;TokenizerManager&lt;/code&gt; 在链路里既是请求进入 runtime 的第一站，也是结果回到调用方之前的收敛点。后面你在架构章节里看到 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt; 被并列成 engine 组件时，就更容易理解它们为什么不是随意拆成三个进程。&lt;/p&gt;</description></item><item><title>2.2 Streaming、状态回收与结果组装</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/streaming-and-response-assembly/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/streaming-and-response-assembly/</guid><description>&lt;h1 id="streaming状态回收与结果组装"&gt;Streaming、状态回收与结果组装&lt;a class="anchor" href="#streaming%e7%8a%b6%e6%80%81%e5%9b%9e%e6%94%b6%e4%b8%8e%e7%bb%93%e6%9e%9c%e7%bb%84%e8%a3%85"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;上一章把请求怎样进入 runtime 讲清楚了，但还留了一个很重要的问题：为什么响应能够一边生成、一边回流给调用方，而且在请求完成之后状态还能被正确收尾。如果不补这一层，请求生命周期仍然只是一条“单向路径”，而不是一个完整闭环。&lt;/p&gt;
+&lt;p&gt;这一章专门回答“结果怎样回来”以及“请求完成后状态怎样被回收”。这不是小补丁，而是理解 runtime 是否真正闭环的关键。如果一个系统只能解释请求怎样进去，却说不清结果怎样回来，它更像半张流程图，而不是一本完整技术书。&lt;/p&gt;
+&lt;h2 id="为什么-tokenizermanager-既在入口也在回包路径上"&gt;为什么 &lt;code&gt;TokenizerManager&lt;/code&gt; 既在入口也在回包路径上&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-tokenizermanager-%e6%97%a2%e5%9c%a8%e5%85%a5%e5%8f%a3%e4%b9%9f%e5%9c%a8%e5%9b%9e%e5%8c%85%e8%b7%af%e5%be%84%e4%b8%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/srt/managers/tokenizer_manager.py&lt;/code&gt; 的职责看，&lt;code&gt;TokenizerManager&lt;/code&gt; 不只是把文本变成 token。它还维护请求状态、等待 detokenizer 回传的输出、把 streaming chunk 重组给调用方，并在完成时更新 &lt;code&gt;ReqState&lt;/code&gt;。这说明它在 request lifecycle 里扮演的是“首尾收敛点”，而不是单向入口。&lt;/p&gt;
+&lt;p&gt;这类设计很容易被误读。很多读者第一次看到 &lt;code&gt;TokenizerManager&lt;/code&gt; 这个名字，会自然把它归类成“前处理组件”；但真正的源码路径表明，它同时站在入口和回包两端。也正因为这样，请求生命周期章节需要单独拿一章讲它，而不是把它只写进入口图里就算完。&lt;/p&gt;
+&lt;h2 id="streaming-不是边生成边-print这么简单"&gt;streaming 不是“边生成边 print”这么简单&lt;a class="anchor" href="#streaming-%e4%b8%8d%e6%98%af%e8%be%b9%e7%94%9f%e6%88%90%e8%be%b9-print%e8%bf%99%e4%b9%88%e7%ae%80%e5%8d%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从调用方视角看，streaming 好像只是把最终结果拆成多个 chunk；但在 runtime 里，streaming 其实要求系统持续维护一组中间状态。请求必须先被 tokenized、送入 scheduler、产出中间 token id，再经过 detokenize，最后由 &lt;code&gt;TokenizerManager._wait_one_response(...)&lt;/code&gt; 把这些中间结果不断组装成调用方真正能消费的输出。&lt;/p&gt;
+&lt;p&gt;换句话说，streaming 的难点不是“能不能马上发一点字出去”，而是“这条回程链每一轮都要保持状态一致”。如果这里任何一个环节丢了阶段信息，调用方看到的就不是平滑输出，而是乱序 chunk、缺失 finish signal 或状态收尾不干净。&lt;/p&gt;
+&lt;h2 id="为什么状态回收属于请求生命周期而不是调度细节"&gt;为什么状态回收属于请求生命周期而不是调度细节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e7%8a%b6%e6%80%81%e5%9b%9e%e6%94%b6%e5%b1%9e%e4%ba%8e%e8%af%b7%e6%b1%82%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e8%80%8c%e4%b8%8d%e6%98%af%e8%b0%83%e5%ba%a6%e7%bb%86%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;一个常见误解是把“请求结束后的回收”全都归给 scheduler 或 cache。其实从调用体验上看，请求什么时候真正结束、何时可以认为 &lt;code&gt;finished&lt;/code&gt;、何时该释放对应的 request state，这些都仍然属于生命周期问题。因为它们直接决定调用方何时拿到完整结果，也决定 runtime 是否会把一条已完成请求继续当成活跃状态。&lt;/p&gt;
+&lt;p&gt;调度与缓存当然也会参与回收，但这里的出发点不同。请求生命周期关注的是“这条请求是否从调用方视角真正完成”；调度与缓存关注的是“资源是否可以复用”。这两件事相关，但不完全重合，所以本章只把重点放在前者。&lt;/p&gt;
+&lt;h2 id="一个更像运行时行为的闭环图"&gt;一个更像运行时行为的闭环图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e8%bf%90%e8%a1%8c%e6%97%b6%e8%a1%8c%e4%b8%ba%e7%9a%84%e9%97%ad%e7%8e%af%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图专门解决“请求结束时到底发生了哪些收尾动作”的理解障碍。相比上一章的主时序图，它更强调回包和状态收敛，而不是入口选路。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;sequenceDiagram
+ participant TM as TokenizerManager
+ participant SCH as Scheduler
+ participant DET as DetokenizerManager
+ participant Client as Client
+
+ TM-&amp;gt;&amp;gt;SCH: tokenized request / batch input
+ SCH-&amp;gt;&amp;gt;DET: BatchTokenIDOutput / token ids
+ DET-&amp;gt;&amp;gt;TM: detokenized chunks / finish status
+ TM-&amp;gt;&amp;gt;TM: _wait_one_response(...) / ReqState update
+ TM-&amp;gt;&amp;gt;Client: streaming chunks or final response
+ TM-&amp;gt;&amp;gt;TM: mark finished / release request-local state&lt;/pre&gt;&lt;p&gt;这张图比文字多解释了一点：对调用方来说，“收到最后一个 chunk”和“runtime 内部状态已经真正完成回收”并不是同一层动作。&lt;code&gt;TokenizerManager&lt;/code&gt; 正是连接这两层动作的地方。&lt;/p&gt;</description></item><item><title>2.3 会话、超时与中止路径</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/session-state-timeouts-and-aborts/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/session-state-timeouts-and-aborts/</guid><description>&lt;h1 id="会话超时与中止路径"&gt;会话、超时与中止路径&lt;a class="anchor" href="#%e4%bc%9a%e8%af%9d%e8%b6%85%e6%97%b6%e4%b8%8e%e4%b8%ad%e6%ad%a2%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前两章把一条请求怎样进入系统、怎样回包和怎样收尾讲清楚了，但还留下一个很现实的问题：如果请求不是一次性的，而是 session 里的连续交互，或者它超时、被替换、被 abort，会发生什么？这部分如果不补，request lifecycle 仍然只覆盖了“理想路径”，而没有覆盖工程系统真正必须面对的异常与控制路径。&lt;/p&gt;
+&lt;p&gt;因此，这一章不是附加边角料，而是 request lifecycle 的第三层厚度。因为一个真正可用的 runtime，不只要能处理正常请求，还要能处理“不该继续跑的请求”。&lt;/p&gt;
+&lt;h2 id="session-让请求不再是彼此独立"&gt;session 让请求不再是彼此独立&lt;a class="anchor" href="#session-%e8%ae%a9%e8%af%b7%e6%b1%82%e4%b8%8d%e5%86%8d%e6%98%af%e5%bd%bc%e6%ad%a4%e7%8b%ac%e7%ab%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/managers/session_controller.py&lt;/code&gt; 暴露出一个很明确的事实：一旦引入 session，系统就不能再把每条请求都当成完全独立个体。&lt;code&gt;Session&lt;/code&gt;、&lt;code&gt;RequestSessionConfig&lt;/code&gt;、append / replace 相关逻辑，意味着后来的请求可能会依赖前面的状态，也可能试图覆盖它。&lt;/p&gt;
+&lt;p&gt;这也是为什么 session 逻辑值得单独成章。它改变的不是某个局部 API，而是 request lifecycle 的假设：一条请求不再总是“独立进入、独立完成”，而可能站在已有会话链上继续推进。&lt;/p&gt;
+&lt;h2 id="为什么-streaming-session-的约束更严格"&gt;为什么 streaming session 的约束更严格&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-streaming-session-%e7%9a%84%e7%ba%a6%e6%9d%9f%e6%9b%b4%e4%b8%a5%e6%a0%bc"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;session_controller.py&lt;/code&gt; 里有一组很值得注意的 abort 条件，例如 streaming session 不支持 replace，不支持 offset 等。这类限制说明：当系统已经在持续向调用方输出时，再去修改这条请求的“语义位置”会显著增加一致性成本。&lt;/p&gt;
+&lt;p&gt;从工程角度看，这种限制并不奇怪。因为 streaming 本来就要求状态持续向外部暴露，一旦中途再允许大幅改写 session 上下文，系统不仅要更新内部 request chain，还要重新解释调用方已经看到的那部分输出。很多看似“为什么不支持”的限制，背后其实都是为了让请求状态和外部观察保持一致。&lt;/p&gt;
+&lt;h2 id="timeout-和-abort-为什么属于生命周期问题"&gt;timeout 和 abort 为什么属于生命周期问题&lt;a class="anchor" href="#timeout-%e5%92%8c-abort-%e4%b8%ba%e4%bb%80%e4%b9%88%e5%b1%9e%e4%ba%8e%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;timeout 和 abort 经常被误写成“服务治理细节”，但它们其实直接定义了一条请求何时算真正结束。比如 &lt;code&gt;PrefillDelayer&lt;/code&gt; 会产生 &lt;code&gt;wait_timeout&lt;/code&gt; 一类理由；&lt;code&gt;SessionController&lt;/code&gt; 也会在某些条件下直接把新请求标记为 abort。只要这些路径存在，request lifecycle 就不再只是“从入口到输出”的线性流程，而是一张带分叉的状态图。&lt;/p&gt;
+&lt;p&gt;这类分叉之所以值得读者关心，是因为它们常常决定最难排查的问题：为什么请求没有结果、为什么会话 append 失败、为什么某条请求被系统提前终止。只要你脑子里还只有正常路径，遇到这些现象时就会极其难查。&lt;/p&gt;
+&lt;h2 id="一个更贴近异常路径的图"&gt;一个更贴近异常路径的图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e8%b4%b4%e8%bf%91%e5%bc%82%e5%b8%b8%e8%b7%af%e5%be%84%e7%9a%84%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;新请求 / 会话请求&amp;#34;] --&amp;gt; B[&amp;#34;SessionController / TokenizerManager&amp;#34;]
+ B --&amp;gt; C{&amp;#34;合法 session 状态?&amp;#34;}
+ C --&amp;gt;|否| D[&amp;#34;abort / reject request&amp;#34;]
+ C --&amp;gt;|是| E[&amp;#34;送入 scheduler&amp;#34;]
+ E --&amp;gt; F{&amp;#34;等待中超时?&amp;#34;}
+ F --&amp;gt;|是| G[&amp;#34;wait_timeout / output_reason&amp;#34;]
+ F --&amp;gt;|否| H[&amp;#34;正常进入 batch&amp;#34;]
+ H --&amp;gt; I[&amp;#34;detokenize / response assembly&amp;#34;]
+ I --&amp;gt; J{&amp;#34;streaming session still valid?&amp;#34;}
+ J --&amp;gt;|否| D
+ J --&amp;gt;|是| K[&amp;#34;finished / state cleanup&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“主链之外的合法分叉”。和前面那张请求时序图相比，它多解释了两件事：session 让请求会受到已有状态约束，而 timeout / abort 会把生命周期提前截断。&lt;/p&gt;</description></item></channel></rss>

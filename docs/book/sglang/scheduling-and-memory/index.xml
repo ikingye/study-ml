@@ -6,4 +6,61 @@
 &lt;p&gt;&lt;code&gt;python/sglang/srt/managers/scheduler.py&lt;/code&gt; 里的 &lt;code&gt;Scheduler&lt;/code&gt; 初始化时会建立等待队列、&lt;code&gt;running_batch&lt;/code&gt;、&lt;code&gt;last_batch&lt;/code&gt;、&lt;code&gt;tree_cache&lt;/code&gt;、&lt;code&gt;req_to_token_pool&lt;/code&gt; 等状态。它不是简单地从队列里拿一个请求就调用模型，而是持续维护“现在已经在跑什么、下一轮还能塞什么、哪些请求应该进入 prefill、哪些请求应该继续 decode”。&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 很适合当作阅读入口。这个方法先处理 timeout、过滤完成请求、把上一轮 prefill batch 合并进 &lt;code&gt;running_batch&lt;/code&gt;，然后决定本轮是取新的 prefill batch，还是推进已有 decode batch。也就是说，调度器真正管理的是 batch 生命周期，而不是单个 request 生命周期。&lt;/p&gt;
 &lt;p&gt;继续往下看 &lt;code&gt;get_new_batch_prefill()&lt;/code&gt; 和 &lt;code&gt;_get_new_batch_prefill_raw()&lt;/code&gt;，你会看到 &lt;code&gt;PrefillAdder&lt;/code&gt; 被用来在 token 预算、batch 大小、LoRA 约束、priority scheduling 与 chunked prefill 之间做折中。这里的重点不是把每个条件背下来，而是理解：SGLang 把“能不能接新请求”建模成一次 batch 构造问题，而不是某个全局开关。&lt;/p&gt;
-&lt;p&gt;这部分如果只靠文字，很容易把 &lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt; 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这部分如果只靠文字，很容易把 &lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt; 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。&lt;/p&gt;</description></item><item><title>4.2 前缀复用、回收与退化路径</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</guid><description>&lt;h1 id="前缀复用回收与退化路径"&gt;前缀复用、回收与退化路径&lt;a class="anchor" href="#%e5%89%8d%e7%bc%80%e5%a4%8d%e7%94%a8%e5%9b%9e%e6%94%b6%e4%b8%8e%e9%80%80%e5%8c%96%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;上一章已经解释了 scheduler、batch 和 KV cache 怎样一起工作，但还有一个更接近真实性能与资源行为的问题：为什么有时 prefix reuse 很有效，有时又会明显退化？为什么有时缓存看起来还在，却仍然要重新做大量计算？这些问题决定了调度与内存章节能不能真正落到运行时行为上。&lt;/p&gt;
+&lt;p&gt;这一章要补的，正是“缓存不是只会存在，还会失效、退化、被回收”这一层。没有这一层，读者很容易把 cache 理解成一个总是带来收益的静态结构，而不是一个持续参与权衡的动态机制。&lt;/p&gt;
+&lt;h2 id="为什么前缀复用不是命中就结束"&gt;为什么前缀复用不是“命中就结束”&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%89%8d%e7%bc%80%e5%a4%8d%e7%94%a8%e4%b8%8d%e6%98%af%e5%91%bd%e4%b8%ad%e5%b0%b1%e7%bb%93%e6%9d%9f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;RadixCache&lt;/code&gt;、&lt;code&gt;ChunkCache&lt;/code&gt; 以及相关 &lt;code&gt;tree_cache&lt;/code&gt; 路径看，prefix reuse 本质上依赖的是“请求前缀与已有状态能否以当前策略被匹配并继续复用”。这意味着缓存收益不仅取决于是否有相同前缀，还取决于当前缓存策略、page 对齐、allocator 状态以及 batch 形成方式。&lt;/p&gt;
+&lt;p&gt;换句话说，“前缀相同”并不自动等于“运行时表现就好”。对读者来说，这一层很重要，因为它把“缓存命中”从一个二元判断变成了一个运行时条件组合问题。&lt;/p&gt;
+&lt;h2 id="radixcachechunkcache-与策略切换"&gt;&lt;code&gt;RadixCache&lt;/code&gt;、&lt;code&gt;ChunkCache&lt;/code&gt; 与策略切换&lt;a class="anchor" href="#radixcachechunkcache-%e4%b8%8e%e7%ad%96%e7%95%a5%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前一章已经提到 &lt;code&gt;scheduler.py&lt;/code&gt; 会根据配置在 &lt;code&gt;ChunkCache&lt;/code&gt;、&lt;code&gt;RadixCache&lt;/code&gt;、&lt;code&gt;SWARadixCache&lt;/code&gt;、&lt;code&gt;MambaRadixCache&lt;/code&gt; 以及其他变体之间做选择。这里再往前走一步，需要解释为什么这件事本身就意味着“缓存策略”不是固定的。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;chunk_cache.py&lt;/code&gt; 的注释强调它用于 chunked prefill 且在 &lt;code&gt;RadixCache&lt;/code&gt; 关闭时使用；&lt;code&gt;radix_cache.py&lt;/code&gt; 的注释则明确它是管理 KV cache 的 radix tree 数据结构。两者共同说明：不同缓存实现不是“同一层的不同名字”，而是对复用方式、匹配粒度和状态维护方式做出的不同选择。&lt;/p&gt;
+&lt;h2 id="回收为什么会成为第一层问题"&gt;回收为什么会成为第一层问题&lt;a class="anchor" href="#%e5%9b%9e%e6%94%b6%e4%b8%ba%e4%bb%80%e4%b9%88%e4%bc%9a%e6%88%90%e4%b8%ba%e7%ac%ac%e4%b8%80%e5%b1%82%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;一旦 cache 被真正用于运行中的请求，系统迟早要面对回收问题。回收之所以重要，不只是为了节省内存，还因为它直接决定“下一批请求还能不能继续享受既有状态”。也就是说，回收并不是 cache 章节末尾的 housekeeping，而是 runtime 收益能否持续的核心组成部分。&lt;/p&gt;
+&lt;p&gt;这也是为什么这一章要和前一章连着看。前一章讲的是“状态怎样被放进去”，这一章讲的是“状态怎样被保住、怎样被丢掉、丢掉之后会表现成什么”。把两者合起来，调度与内存这一节才真正完整。&lt;/p&gt;
+&lt;h2 id="一个更贴近运行时表现的图"&gt;一个更贴近运行时表现的图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e8%b4%b4%e8%bf%91%e8%bf%90%e8%a1%8c%e6%97%b6%e8%a1%a8%e7%8e%b0%e7%9a%84%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;下面这张图专门解释“缓存收益如何形成，又怎样退化”。它不是另一张结构图，而是把复用、回收和退化放在同一条状态线上。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;新请求到达&amp;#34;] --&amp;gt; B[&amp;#34;前缀匹配&amp;#34;]
+ B --&amp;gt;|命中| C[&amp;#34;复用已有 cache state&amp;#34;]
+ B --&amp;gt;|未命中| D[&amp;#34;重新 prefill / 追加计算&amp;#34;]
+ C --&amp;gt; E[&amp;#34;进入 batch 继续 decode&amp;#34;]
+ D --&amp;gt; E
+ E --&amp;gt; F[&amp;#34;状态继续驻留&amp;#34;]
+ F --&amp;gt; G{&amp;#34;是否需要回收 / 退化&amp;#34;}
+ G --&amp;gt;|否| H[&amp;#34;后续请求继续受益&amp;#34;]
+ G --&amp;gt;|是| I[&amp;#34;eviction / fallback / reuse 下降&amp;#34;]
+ I --&amp;gt; J[&amp;#34;后续请求重新承担更多计算&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比前一章的调度/KV 流图多解释了“收益并不是静态的”。只要缓存进入回收和退化区间，后续请求就会重新承担更多 prefill 或状态构建成本。&lt;/p&gt;</description></item><item><title>4.3 Memory Pool、allocator 与页级状态管理</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</guid><description>&lt;h1 id="memory-poolallocator-与页级状态管理"&gt;Memory Pool、allocator 与页级状态管理&lt;a class="anchor" href="#memory-poolallocator-%e4%b8%8e%e9%a1%b5%e7%ba%a7%e7%8a%b6%e6%80%81%e7%ae%a1%e7%90%86"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前两章已经把 scheduler、cache reuse 和 eviction 讲清楚了一大半，但还缺少一个很关键的中间层：逻辑请求状态到底怎样落到物理缓存槽位上。没有这一层，读者会知道 &lt;code&gt;ReqToTokenPool&lt;/code&gt;、&lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt; 很重要，却仍然不清楚它们为什么会被拆开，以及 allocator 真正在管理什么。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把“逻辑请求状态”和“物理 cache 布局”之间的映射关系补实。这样一来，调度与内存这一节才不会只剩“策略”和“树结构”，而会真正接上底层状态承载层。&lt;/p&gt;
+&lt;h2 id="为什么-reqtotokenpool-和-tokentokvpoolallocator-要分开"&gt;为什么 &lt;code&gt;ReqToTokenPool&lt;/code&gt; 和 &lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt; 要分开&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-reqtotokenpool-%e5%92%8c-tokentokvpoolallocator-%e8%a6%81%e5%88%86%e5%bc%80"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;memory_pool.py&lt;/code&gt; 和 &lt;code&gt;model_runner_kv_cache_mixin.py&lt;/code&gt; 共同揭示了这件事：系统并不想用一个结构同时承担“请求级状态索引”和“物理缓存分配”。因为前者更像逻辑映射，后者更像设备级资源管理。如果把它们混在一起，调度器很难一边按请求推进，一边按页级状态复用。&lt;/p&gt;
+&lt;p&gt;这种拆分并不是形式主义。它直接决定了 system 在 request / batch / allocator 三个层之间是否能保持清晰边界。对读者来说，这一章的重点就是看到：逻辑索引层和物理分配层为什么都不可少。&lt;/p&gt;
+&lt;h2 id="allocator-在-runtime-里真正回答什么问题"&gt;allocator 在 runtime 里真正回答什么问题&lt;a class="anchor" href="#allocator-%e5%9c%a8-runtime-%e9%87%8c%e7%9c%9f%e6%ad%a3%e5%9b%9e%e7%ad%94%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;allocator 的问题不是“有没有空位”这么简单，而是“这些空位怎样以当前 page 模型被组织起来，是否还能支持接下来的 batch / reuse / speculative 路径”。这也是为什么项目里会存在 &lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt;、&lt;code&gt;PagedTokenToKVPoolAllocator&lt;/code&gt;、SWA 相关 allocator，以及一系列和 KV cache 实现配套的分配器。&lt;/p&gt;
+&lt;p&gt;也就是说，allocator 不是 &lt;code&gt;memory_pool.py&lt;/code&gt; 里的配角，而是决定缓存状态怎样真正落地的关键层。只要 allocator 模型理解错了，读者就会把 cache 行为误读成“树结构的命中问题”，而忽略物理布局本身也会限制系统行为。&lt;/p&gt;
+&lt;h2 id="一张把映射关系讲清楚的图"&gt;一张把映射关系讲清楚的图&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e6%8a%8a%e6%98%a0%e5%b0%84%e5%85%b3%e7%b3%bb%e8%ae%b2%e6%b8%85%e6%a5%9a%e7%9a%84%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;逻辑请求状态&amp;#34;] --&amp;gt; B[&amp;#34;ReqToTokenPool&amp;#34;]
+ B --&amp;gt; C[&amp;#34;token slots / request-local positions&amp;#34;]
+ C --&amp;gt; D[&amp;#34;TokenToKVPoolAllocator&amp;#34;]
+ D --&amp;gt; E[&amp;#34;paged / physical KV layout&amp;#34;]
+ E --&amp;gt; F[&amp;#34;KVCache buffers used by execution&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“从逻辑到物理”的那一层。前两章更强调 batch 和 cache 策略，而这张图让读者看到：中间还有一个 allocator 层，负责把逻辑请求真正落成设备上可消费的状态布局。&lt;/p&gt;</description></item><item><title>4.4 调度策略、延迟控制与 batch 成形</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</guid><description>&lt;h1 id="调度策略延迟控制与-batch-成形"&gt;调度策略、延迟控制与 batch 成形&lt;a class="anchor" href="#%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e5%bb%b6%e8%bf%9f%e6%8e%a7%e5%88%b6%e4%b8%8e-batch-%e6%88%90%e5%bd%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;Scheduler&lt;/code&gt; 的主循环回答的是“这一轮怎么推进”，但这仍然没有完全解释“为什么某些请求会先进去、某些请求要等等、为什么 batch 长成了现在这个形状”。这部分真正属于调度策略，而不只是 scheduler 的主流程。&lt;/p&gt;
+&lt;p&gt;这一章要解决的，就是“batch 是怎样被政策性塑形的”。只有把这一层讲出来，读者才会知道 runtime 行为不只是由实现逻辑决定，也受调度策略、timeout、priority 和 prefill 延迟控制影响。&lt;/p&gt;
+&lt;h2 id="为什么调度策略不等于-scheduler-主函数"&gt;为什么调度策略不等于 scheduler 主函数&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e4%b8%8d%e7%ad%89%e4%ba%8e-scheduler-%e4%b8%bb%e5%87%bd%e6%95%b0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人一看到 &lt;code&gt;Scheduler&lt;/code&gt;，就会把所有调度问题都压到 &lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 上。但从源码组织看，&lt;code&gt;schedule_policy.py&lt;/code&gt;、&lt;code&gt;prefill_delayer.py&lt;/code&gt;、runtime checker mixin 等路径都在参与塑造最终 batch。换句话说，主函数负责“推进”，策略层负责“如何推进更合适”。&lt;/p&gt;
+&lt;p&gt;这也是为什么好技术书不会满足于解释一个主流程函数。真正的运行时行为往往来自主流程和策略层共同作用，而不是某个 central function 单独决定。&lt;/p&gt;
+&lt;h2 id="timeoutpriority-与延迟控制的角色"&gt;timeout、priority 与延迟控制的角色&lt;a class="anchor" href="#timeoutpriority-%e4%b8%8e%e5%bb%b6%e8%bf%9f%e6%8e%a7%e5%88%b6%e7%9a%84%e8%a7%92%e8%89%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;像 &lt;code&gt;prefill_delayer.py&lt;/code&gt; 里 &lt;code&gt;wait_timeout&lt;/code&gt; 一类输出理由，说明系统会把“是否延迟某类 prefill”显式变成策略问题。priority scheduling、queue shaping 和超时窗口同样如此。它们都在回答一个更高层的问题：系统应该为谁的延迟负责，又该在什么条件下牺牲一点等待时间来换取更好的 batch 组织。&lt;/p&gt;
+&lt;p&gt;这类策略没有永远正确的答案，所以尤其适合技术书去讲 tradeoff。因为读者真正需要的不是“默认值是什么”，而是“为什么会有这些策略，它们会把系统推向哪种行为”。&lt;/p&gt;
+&lt;h2 id="一个更像运行时策略图的图示"&gt;一个更像运行时策略图的图示&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e8%bf%90%e8%a1%8c%e6%97%b6%e7%ad%96%e7%95%a5%e5%9b%be%e7%9a%84%e5%9b%be%e7%a4%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;waiting queue&amp;#34;] --&amp;gt; B[&amp;#34;priority / routing / policy filter&amp;#34;]
+ B --&amp;gt; C[&amp;#34;PrefillDelayer / timeout window&amp;#34;]
+ C --&amp;gt; D[&amp;#34;PrefillAdder / admission&amp;#34;]
+ D --&amp;gt; E[&amp;#34;ScheduleBatch shape&amp;#34;]
+ E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item></channel></rss>

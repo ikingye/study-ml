@@ -22,4 +22,49 @@
 &lt;p&gt;这说明协议表面本身就是系统的一层设计，而不是文档编排巧合。SGLang 一方面希望让调用方能平滑迁移到 OpenAI-compatible 表面，另一方面又保留自己的 native surface 和 offline engine path，让内部能力不被单一协议形状限制住。&lt;/p&gt;
 &lt;h2 id="openai-compatible-api-在这套系统里的位置"&gt;OpenAI-compatible API 在这套系统里的位置&lt;a class="anchor" href="#openai-compatible-api-%e5%9c%a8%e8%bf%99%e5%a5%97%e7%b3%bb%e7%bb%9f%e9%87%8c%e7%9a%84%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;OpenAI-compatible API 的价值在于降低迁移成本。官方 &lt;code&gt;openai_api_completions.ipynb&lt;/code&gt; 和相关 basic usage 文档都在强调这一点：你可以用接近 OpenAI 的请求格式对接本地模型服务。对于多数应用接入者来说，这是最容易上手的一层。&lt;/p&gt;
-&lt;p&gt;但从运行时角度看，重要的不是“长得像 OpenAI”，而是它最终怎样落进 &lt;code&gt;http_server.py&lt;/code&gt; 和 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 这条路径。也正因为如此，OpenAI-compatible 层更适合作为“协议适配面”来理解，而不是当作独立 runtime。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;但从运行时角度看，重要的不是“长得像 OpenAI”，而是它最终怎样落进 &lt;code&gt;http_server.py&lt;/code&gt; 和 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 这条路径。也正因为如此，OpenAI-compatible 层更适合作为“协议适配面”来理解，而不是当作独立 runtime。&lt;/p&gt;</description></item><item><title>6.3 Tool Parser、Function Calling 与结构化结果回路</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</guid><description>&lt;h1 id="tool-parserfunction-calling-与结构化结果回路"&gt;Tool Parser、Function Calling 与结构化结果回路&lt;a class="anchor" href="#tool-parserfunction-calling-%e4%b8%8e%e7%bb%93%e6%9e%84%e5%8c%96%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只讲 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt; 和 API 表面，结构化生成这一节仍然会缺一块很重要的内容：当模型输出不只是“结构化文本”，而是“可执行工具调用”时，系统怎样把它解释、拼接、校验并送回调用方。这一层正是 tool parser 和 function calling 的职责。&lt;/p&gt;
+&lt;p&gt;这一章要解决的问题就是：为什么 tool parser 既不像纯 grammar backend，也不像纯 API 协议层。它更像一条把“模型输出”转成“可执行结果结构”的中间回路。&lt;/p&gt;
+&lt;h2 id="parser-在这里到底扮演什么角色"&gt;parser 在这里到底扮演什么角色&lt;a class="anchor" href="#parser-%e5%9c%a8%e8%bf%99%e9%87%8c%e5%88%b0%e5%ba%95%e6%89%ae%e6%bc%94%e4%bb%80%e4%b9%88%e8%a7%92%e8%89%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;官方 &lt;code&gt;docs/advanced_features/tool_parser.ipynb&lt;/code&gt; 列出了多个 parser，例如 &lt;code&gt;deepseekv3&lt;/code&gt;、&lt;code&gt;glm&lt;/code&gt;、&lt;code&gt;qwen&lt;/code&gt;、&lt;code&gt;pythonic&lt;/code&gt; 等。最值得抓住的不是模型名单，而是 parser 的存在本身说明：不同模型输出 function call 的方式并不天然统一，系统必须提供一层解释器把这些输出重新整理成调用方可消费的结构。&lt;/p&gt;
+&lt;p&gt;这意味着 parser 不是可有可无的附属物。它是结构化结果回路的一部分：模型先输出某种格式，parser 再把它还原成工具调用对象、参数片段或完整函数调用结构。没有这一层，很多“模型看起来已经输出了工具调用”的情况，在工程上其实还是不可用的。&lt;/p&gt;
+&lt;h2 id="为什么它不等于-grammar-backend"&gt;为什么它不等于 grammar backend&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ae%83%e4%b8%8d%e7%ad%89%e4%ba%8e-grammar-backend"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;grammar backend 解决的是“输出空间怎样被限制”；tool parser 解决的是“输出结构怎样被解释”。这两件事经常一起出现，所以容易被混为一谈，但它们不应该写成同一个概念。一个简单判断是：只要问题在问“模型是否被限制在某种结构空间里”，那更接近 grammar backend；只要问题在问“这一段结果是不是已经能被当作工具调用消费”，那更接近 parser。&lt;/p&gt;
+&lt;p&gt;这也是为什么本章要单独立出来。否则，结构化生成一章会被迫同时讲“约束如何进入 generation path”和“结果如何被解释成工具调用”，读者会很难看清各自的边界。&lt;/p&gt;
+&lt;h2 id="function-calling-的工程价值在哪里"&gt;function calling 的工程价值在哪里&lt;a class="anchor" href="#function-calling-%e7%9a%84%e5%b7%a5%e7%a8%8b%e4%bb%b7%e5%80%bc%e5%9c%a8%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从工程视角看，function calling 并不只是“模型多了个花哨能力”。它真正有价值的地方，是把原本需要人类去猜的“模型到底想调用什么工具、传了什么参数”，变成一条更稳定的结构化路径。只要 parser 能可靠地把这些结果解释出来，调用方就更容易把大模型嵌入工具系统。&lt;/p&gt;
+&lt;p&gt;但这条路径也有明显代价：模型输出格式、chat template、parser 行为和下游工具接口之间都必须保持一致。也就是说，tool parser 把系统的可用性提高了，但同时也增加了“接口必须对齐”的复杂度。&lt;/p&gt;
+&lt;h2 id="一个最小的理解框架"&gt;一个最小的理解框架&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9c%80%e5%b0%8f%e7%9a%84%e7%90%86%e8%a7%a3%e6%a1%86%e6%9e%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;模型输出
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; parser 解释
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 函数名 / 参数结构
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 调用方执行工具
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 工具结果回填
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 模型继续生成或收尾&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链路的意义，是把 function calling 从“输出格式问题”推进成“结果回路问题”。一旦把它看成回路，你就会更自然地把它和 request lifecycle、runtime path、structured output 放到一起理解。&lt;/p&gt;</description></item><item><title>6.4 结构化响应设计：从 schema 到可消费结果</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</guid><description>&lt;h1 id="结构化响应设计从-schema-到可消费结果"&gt;结构化响应设计：从 schema 到可消费结果&lt;a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e5%93%8d%e5%ba%94%e8%ae%be%e8%ae%a1%e4%bb%8e-schema-%e5%88%b0%e5%8f%af%e6%b6%88%e8%b4%b9%e7%bb%93%e6%9e%9c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;即使读者已经知道 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、tool parser 和 API 表面怎样工作，仍然可能缺少一个更实用的问题答案：怎样设计一个真正适合被模型稳定生成、又适合下游系统消费的响应结构？如果没有这一层，结构化生成章节仍然更像能力介绍，而不像工程书。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把“schema 能不能写出来”推进到“schema 应不应该这样写”。这是很多好技术书都会额外补上的层次：不仅讲功能，还讲怎样把功能设计成更稳的工程接口。&lt;/p&gt;
+&lt;h2 id="为什么-schema-设计本身就是工程决策"&gt;为什么 schema 设计本身就是工程决策&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-schema-%e8%ae%be%e8%ae%a1%e6%9c%ac%e8%ba%ab%e5%b0%b1%e6%98%af%e5%b7%a5%e7%a8%8b%e5%86%b3%e7%ad%96"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;structured_outputs.ipynb&lt;/code&gt; 和 &lt;code&gt;sampling_params.md&lt;/code&gt; 看，系统允许调用方传入 schema、regex 或其他约束。但这并不等于任何 schema 设计都同样稳定。过深的嵌套、含糊的字段语义、过多自由文本空间，都会让结构虽然“合法”，却仍然难以稳定消费。&lt;/p&gt;
+&lt;p&gt;这说明结构化响应设计不是“用哪种语法”这么简单，而是一个工程问题：你究竟想让模型输出什么形状，后续系统怎样消费它，以及错误时是更容易在生成侧、解析侧还是业务侧暴露问题。&lt;/p&gt;
+&lt;h2 id="一个更稳的-schema-设计思路"&gt;一个更稳的 schema 设计思路&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e7%a8%b3%e7%9a%84-schema-%e8%ae%be%e8%ae%a1%e6%80%9d%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对第一版读者来说，最稳的设计顺序通常是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先定义最小可消费结构，而不是一次性追求完整业务对象&lt;/li&gt;
+&lt;li&gt;把高自由度文本字段尽量往外缘推，不要让所有字段都可自由发挥&lt;/li&gt;
+&lt;li&gt;优先设计“容易被 parser 和下游程序消费”的字段，而不是“人类看着舒服”的字段&lt;/li&gt;
+&lt;li&gt;对 tool call 或 reasoning 结果，尽量让结构能和后续结果回填流程对上&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这种写法看起来更保守，但它更适合真实工程环境。因为结构化输出一旦进入程序链路，稳定性比表面优雅更重要。&lt;/p&gt;
+&lt;h2 id="一个更像实践建议的最小对照"&gt;一个更像实践建议的最小对照&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e5%ae%9e%e8%b7%b5%e5%bb%ba%e8%ae%ae%e7%9a%84%e6%9c%80%e5%b0%8f%e5%af%b9%e7%85%a7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;更稳：
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &amp;#34;city&amp;#34;: &amp;#34;Qingdao&amp;#34;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &amp;#34;unit&amp;#34;: &amp;#34;celsius&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;更脆弱：
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &amp;#34;request&amp;#34;: &amp;#34;Please tell me the full weather situation in a rich natural language paragraph&amp;#34;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个对照不是说自由文本没价值，而是提醒你：如果目标是“可消费”，结构应该尽量先把机器需要的部分固定下来，再把解释性文本放在外围。&lt;/p&gt;</description></item></channel></rss>

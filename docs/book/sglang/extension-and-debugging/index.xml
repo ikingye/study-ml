@@ -30,4 +30,80 @@
  C --&amp;gt; D[&amp;#34;验证路径\nunit tests / server tests / bench_one_batch / benchmark&amp;#34;]
  D --&amp;gt; E[&amp;#34;贡献路径\npre-commit / CI / PR / review&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释了一点：扩展并不是“改完源码再说”，而是一条从设计入口到验证入口再到贡献入口的闭环。也正因为这样，本章会把测试和贡献流程看成扩展点的一部分，而不是附录。&lt;/p&gt;
 &lt;h2 id="模型扩展与协议扩展分别落在哪里"&gt;模型扩展与协议扩展分别落在哪里&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e6%89%a9%e5%b1%95%e4%b8%8e%e5%8d%8f%e8%ae%ae%e6%89%a9%e5%b1%95%e5%88%86%e5%88%ab%e8%90%bd%e5%9c%a8%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item><item><title>8.3 一线排障与发布前检查清单</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</guid><description>&lt;h1 id="一线排障与发布前检查清单"&gt;一线排障与发布前检查清单&lt;a class="anchor" href="#%e4%b8%80%e7%ba%bf%e6%8e%92%e9%9a%9c%e4%b8%8e%e5%8f%91%e5%b8%83%e5%89%8d%e6%a3%80%e6%9f%a5%e6%b8%85%e5%8d%95"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前两章已经把 observability、trace、dump / replay、扩展点与维护路径讲清楚了，但对很多读者来说，最后仍然缺一件东西：当问题真的发生在生产或交付节点时，应该按什么顺序检查，才能避免在大量路径之间来回切换。&lt;/p&gt;
+&lt;p&gt;这一章就是把前面所有理解压成更像“值班清单”或“发布清单”的形式。它不替代前文原理，而是把原理收束成可执行顺序。&lt;/p&gt;
+&lt;h2 id="一个更像一线排障的最小顺序"&gt;一个更像一线排障的最小顺序&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e4%b8%80%e7%ba%bf%e6%8e%92%e9%9a%9c%e7%9a%84%e6%9c%80%e5%b0%8f%e9%a1%ba%e5%ba%8f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;1. 先判断是整体退化、个别请求异常，还是结构化输出/协议行为异常
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;2. 整体退化：先看 metrics 与 scheduler / cache 路径
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;3. 个别请求异常：先看 trace，再看 request lifecycle 闭环
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;4. 结构化输出或 tool call 异常：先看 SamplingParams / parser / API surface
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;5. 无法稳定复现：打开 request dump / crash dump，转 replay&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条顺序的价值，在于它把整本书真正串了起来。你不是重新发明排障方法，而是在把 overview、lifecycle、runtime、scheduler、execution、structured generation 和 observability 这些章节的结论拿来组合成动作顺序。&lt;/p&gt;
+&lt;h2 id="发布前检查为什么也应该收在书里"&gt;发布前检查为什么也应该收在书里&lt;a class="anchor" href="#%e5%8f%91%e5%b8%83%e5%89%8d%e6%a3%80%e6%9f%a5%e4%b8%ba%e4%bb%80%e4%b9%88%e4%b9%9f%e5%ba%94%e8%af%a5%e6%94%b6%e5%9c%a8%e4%b9%a6%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对维护者来说，发布前检查不是“写完书以后的事”，而是系统理解的一部分。因为一旦你真的准备上线、合并或做一次大规模改动，最重要的问题就变成：哪些章节对应的检查点必须重新过一遍，才算没有把系统理解停留在纸面。&lt;/p&gt;
+&lt;p&gt;这也是为什么技术书里的最后一章常常要承担“把知识转成 checklist”这件事。否则读者离开书页之后，知道很多原理，却还是不知道下一步具体该检查什么。&lt;/p&gt;
+&lt;h2 id="一个针对当前主线的发布前检查框架"&gt;一个针对当前主线的发布前检查框架&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e9%92%88%e5%af%b9%e5%bd%93%e5%89%8d%e4%b8%bb%e7%ba%bf%e7%9a%84%e5%8f%91%e5%b8%83%e5%89%8d%e6%a3%80%e6%9f%a5%e6%a1%86%e6%9e%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Request lifecycle:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- 入口路由是否仍然回到统一 runtime path
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- streaming / 回包路径是否完整闭环
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Runtime architecture:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- 进程边界与 IPC 关系是否仍成立
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- managers / executor / cache / observability 边界是否被新改动打穿
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Scheduling &amp;amp; memory:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- batch 形成是否正常
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- reuse / eviction / memory pressure 是否有异常迹象
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Execution model:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- sampling / logits / speculative mode 是否和预期一致
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Structured generation &amp;amp; APIs:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- schema / regex / parser / API surface 是否仍对齐
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Code walkthrough / extension:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- docs / examples / tests / benchmark 是否仍能支撑当前理解&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这份框架的意义，不在于面面俱到，而在于它让读者看到：发布前检查本质上就是把前面章节各自的“关键判断”重新走一遍。&lt;/p&gt;</description></item><item><title>8.4 测试、CI 与回归路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</guid><description>&lt;h1 id="测试ci-与回归路径"&gt;测试、CI 与回归路径&lt;a class="anchor" href="#%e6%b5%8b%e8%af%95ci-%e4%b8%8e%e5%9b%9e%e5%bd%92%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果一章技术书只讲系统如何工作，却不讲“怎么证明它还工作”，那它对维护者来说仍然是不完整的。SGLang 的测试和 CI 体系之所以值得单独成章，就是因为它直接定义了哪些行为被认为是必须长期成立的。&lt;/p&gt;
+&lt;p&gt;这一章解决的问题，不是“怎样写一条测试命令”，而是“为什么测试和 CI 应该被看作系统语义的一部分”。这对 runtime 项目尤其重要，因为很多错误不是接口错误，而是性能、状态、并发或边界条件的回归。&lt;/p&gt;
+&lt;h2 id="testreadmemd-为什么比很多人想象得更重要"&gt;&lt;code&gt;test/README.md&lt;/code&gt; 为什么比很多人想象得更重要&lt;a class="anchor" href="#testreadmemd-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%af%94%e5%be%88%e5%a4%9a%e4%ba%ba%e6%83%b3%e8%b1%a1%e5%be%97%e6%9b%b4%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;test/README.md&lt;/code&gt; 不只是开发说明，它在实际上定义了测试区域、suite、CI runner、failfast 策略以及注册方式。换句话说，它告诉你维护者如何把系统行为切成一组可以长期执行的验证路径。&lt;/p&gt;
+&lt;p&gt;从技术书角度看，这类文档的价值在于：它把“哪些行为是系统承诺的一部分”显式写了出来。只要你知道测试怎么组织，很多代码路径的优先级就会重新排序，因为你能看出哪些部分被反复保护、哪些部分仍然更像实验区域。&lt;/p&gt;
+&lt;h2 id="registered--manual--unit-的差别不是目录细节"&gt;&lt;code&gt;registered / manual / unit&lt;/code&gt; 的差别不是目录细节&lt;a class="anchor" href="#registered--manual--unit-%e7%9a%84%e5%b7%ae%e5%88%ab%e4%b8%8d%e6%98%af%e7%9b%ae%e5%bd%95%e7%bb%86%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;registered/&lt;/code&gt;、&lt;code&gt;manual/&lt;/code&gt;、&lt;code&gt;unit/&lt;/code&gt; 这些目录名看上去像测试工程细节，但其实它们提供了理解系统的另一条横切线。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;unit&lt;/code&gt; 更像“组件级语义是否成立”&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;registered&lt;/code&gt; 更像“CI 认为必须长期回归的行为”&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;manual&lt;/code&gt; 更像“对环境敏感、适合本地或专项排查的路径”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;只要把这种差别看清楚，读者就不再把测试当成“代码完成后的补充材料”，而会把它看成“系统边界在维护层的投影”。&lt;/p&gt;
+&lt;h2 id="run_suitepy-和-suite-组织方式提供了什么线索"&gt;&lt;code&gt;run_suite.py&lt;/code&gt; 和 suite 组织方式提供了什么线索&lt;a class="anchor" href="#run_suitepy-%e5%92%8c-suite-%e7%bb%84%e7%bb%87%e6%96%b9%e5%bc%8f%e6%8f%90%e4%be%9b%e4%ba%86%e4%bb%80%e4%b9%88%e7%ba%bf%e7%b4%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;test/run_suite.py&lt;/code&gt; 和 &lt;code&gt;test/README.md&lt;/code&gt; 一起给出的，并不只是命令行参数，而是一套 suite 划分逻辑：哪些测试需要 CPU、哪些需要 GPU、哪些进入 nightly、哪些应该保持轻量。对理解系统而言，这很有价值，因为它告诉你：维护者认为系统最敏感的部分在哪里，哪些测试成本高，哪些路径会因为环境差异被特殊看待。&lt;/p&gt;
+&lt;p&gt;从阅读角度说，这也提供了另一种“系统地图”：不是按模块分层，而是按验证成本和验证粒度分层。优秀技术书经常会补这种第二张地图，因为它能帮助读者把“理解系统”变成“理解系统如何被守住”。&lt;/p&gt;
+&lt;h2 id="一个维护者视角的最小检查框架"&gt;一个维护者视角的最小检查框架&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e7%bb%b4%e6%8a%a4%e8%80%85%e8%a7%86%e8%a7%92%e7%9a%84%e6%9c%80%e5%b0%8f%e6%a3%80%e6%9f%a5%e6%a1%86%e6%9e%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;改动前：
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;1. 这次变更影响的是哪个抽象层？
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;2. 对应有没有 unit / registered / manual 路径？
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;改动后：
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;1. 先跑最小 unit / local test
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;2. 再跑对应 suite 或 registered 路径
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;3. 必要时补 benchmark / accuracy / nightly 验证&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这张清单的价值不在于它足够完整，而在于它能把“我改了代码”立刻转成“我应该怎么证明这次改动没有伤到主线”。这正是 maintainer 视角和普通读者视角的分水岭。&lt;/p&gt;</description></item><item><title>8.5 常见故障场景与第一反应</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</guid><description>&lt;h1 id="常见故障场景与第一反应"&gt;常见故障场景与第一反应&lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e6%95%85%e9%9a%9c%e5%9c%ba%e6%99%af%e4%b8%8e%e7%ac%ac%e4%b8%80%e5%8f%8d%e5%ba%94"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前几章已经给了调试工具、扩展路径和发布前清单，但很多读者在真正遇到问题时，仍然会卡在第一步：到底先问什么问题？优秀技术书到最后常常会补这种“现场感很强”的章节，因为它能把前面的抽象知识真正压成可执行动作。&lt;/p&gt;
+&lt;p&gt;这一章解决的，就是“问题刚发生时，先问哪几个问题，才能少走弯路”。&lt;/p&gt;
+&lt;h2 id="场景一请求能进来但就是不回包"&gt;场景一：请求能进来，但就是不回包&lt;a class="anchor" href="#%e5%9c%ba%e6%99%af%e4%b8%80%e8%af%b7%e6%b1%82%e8%83%bd%e8%bf%9b%e6%9d%a5%e4%bd%86%e5%b0%b1%e6%98%af%e4%b8%8d%e5%9b%9e%e5%8c%85"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第一问：请求有没有完成 &lt;code&gt;TokenizerManager -&amp;gt; Scheduler -&amp;gt; DetokenizerManager -&amp;gt; TokenizerManager&lt;/code&gt; 的闭环？&lt;br&gt;
+第二问：它卡在入口、调度、还是 detokenize 回程？&lt;br&gt;
+第三问：trace 或 request stage 里最后一个稳定出现的阶段是什么？&lt;/p&gt;
+&lt;p&gt;只要这三问答出来，读者通常就知道该回 lifecycle、runtime architecture 还是 observability 一章去追。&lt;/p&gt;
+&lt;h2 id="场景二吞吐明显下降但功能看起来都正常"&gt;场景二：吞吐明显下降，但功能看起来都正常&lt;a class="anchor" href="#%e5%9c%ba%e6%99%af%e4%ba%8c%e5%90%9e%e5%90%90%e6%98%8e%e6%98%be%e4%b8%8b%e9%99%8d%e4%bd%86%e5%8a%9f%e8%83%bd%e7%9c%8b%e8%b5%b7%e6%9d%a5%e9%83%bd%e6%ad%a3%e5%b8%b8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第一问：这是整体趋势问题还是特定 batch / 请求问题？&lt;br&gt;
+第二问：当前更像 scheduler / cache / backend / graph runner 的问题，还是接口层问题？&lt;br&gt;
+第三问：最近是否切了 attention backend、speculative 配置、cache 策略或 graph runner 路径？&lt;/p&gt;
+&lt;p&gt;这组问题的价值，在于它把“性能异常”拆回 execution model、scheduling/memory 和 observability 三章，而不是让人直接在 benchmark 数字里打转。&lt;/p&gt;
+&lt;h2 id="场景三结构化输出偶尔失稳"&gt;场景三：结构化输出偶尔失稳&lt;a class="anchor" href="#%e5%9c%ba%e6%99%af%e4%b8%89%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%ba%e5%81%b6%e5%b0%94%e5%a4%b1%e7%a8%b3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第一问：约束真的进入了 generation path，还是只停留在请求表面？&lt;br&gt;
+第二问：这是 grammar backend 的问题，还是 parser / tool result 回填的问题？&lt;br&gt;
+第三问：失败表现是“格式不合法”“格式合法但语义不对”，还是“tool call 回路不闭合”？&lt;/p&gt;</description></item></channel></rss>
