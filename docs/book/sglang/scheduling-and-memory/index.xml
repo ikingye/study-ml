@@ -63,4 +63,49 @@
  B --&amp;gt; C[&amp;#34;PrefillDelayer / timeout window&amp;#34;]
  C --&amp;gt; D[&amp;#34;PrefillAdder / admission&amp;#34;]
  D --&amp;gt; E[&amp;#34;ScheduleBatch shape&amp;#34;]
- E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item></channel></rss>
+ E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item><item><title>4.5 Runtime checker、SessionAwareCache 与内存不变量</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</guid><description>&lt;h1 id="runtime-checkersessionawarecache-与内存不变量"&gt;Runtime checker、SessionAwareCache 与内存不变量&lt;a class="anchor" href="#runtime-checkersessionawarecache-%e4%b8%8e%e5%86%85%e5%ad%98%e4%b8%8d%e5%8f%98%e9%87%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面四章已经把 scheduler、cache reuse、allocator 和 batch 策略讲得比较深了，但还缺一层特别像“维护者手册”的内容：系统如何确认这些复杂状态没有悄悄漂移？如果 streaming session 介入之后，prefix cache 又怎样在不改写整个调度流水线的前提下接住会话态 KV？&lt;/p&gt;
+&lt;p&gt;这一章的任务就是把两个看似分散、实际高度相关的机制放到一起：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;scheduler_runtime_checker_mixin.py&lt;/code&gt; 如何用 pool invariant 和 watchdog 给复杂调度路径兜底。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;SessionAwareCache&lt;/code&gt; 如何把 streaming session 的 KV 生命周期包装进原有 prefix cache。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;把它们放在一起的原因很简单：两者都在回答“状态复杂之后，系统怎样仍然知道自己没乱”。&lt;/p&gt;
+&lt;h2 id="为什么这一层比表面看起来更重要"&gt;为什么这一层比表面看起来更重要&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e6%af%94%e8%a1%a8%e9%9d%a2%e7%9c%8b%e8%b5%b7%e6%9d%a5%e6%9b%b4%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;调度与内存章节到了后半程，读者最容易出现的错觉是：只要主流程能跑，缓存和 allocator 迟早会对。真实系统恰恰相反。很多严重问题都不是“完全跑不起来”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内存漏了一点点，跑久了才炸。&lt;/li&gt;
+&lt;li&gt;session 状态没清干净，下一轮 streaming 复用了错误 KV。&lt;/li&gt;
+&lt;li&gt;watchdog 发现 forward 卡住，但你不知道该先怀疑 scheduler、cache 还是 detokenizer。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此，好书需要把这些兜底机制讲出来。否则读者只会得到“快乐路径”，而不是一套能带去现场的判断框架。&lt;/p&gt;
+&lt;h2 id="一张图pool-invariant-为什么是调度层的最后防线"&gt;一张图：pool invariant 为什么是调度层的最后防线&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bepool-invariant-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e8%b0%83%e5%ba%a6%e5%b1%82%e7%9a%84%e6%9c%80%e5%90%8e%e9%98%b2%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图要解决的理解障碍是：&lt;code&gt;available&lt;/code&gt;、&lt;code&gt;evictable&lt;/code&gt;、&lt;code&gt;protected&lt;/code&gt;、&lt;code&gt;session_held&lt;/code&gt;、&lt;code&gt;uncached&lt;/code&gt; 这些字段分散在不同对象里，读者不容易意识到它们最后会被压成一个守恒关系。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Avail[&amp;#34;available&amp;#34;] --&amp;gt; Eq[&amp;#34;pool invariant&amp;#34;]
+ Evict[&amp;#34;evictable&amp;#34;] --&amp;gt; Eq
+ Protect[&amp;#34;protected&amp;#34;] --&amp;gt; Eq
+ Session[&amp;#34;session_held&amp;#34;] --&amp;gt; Eq
+ Uncached[&amp;#34;uncached&amp;#34;] --&amp;gt; Eq
+ Eq --&amp;gt; Total[&amp;#34;== total&amp;#34;]
+ Eq --&amp;gt; Leak[&amp;#34;mismatch =&amp;gt; leak / warning / assert&amp;#34;]&lt;/pre&gt;&lt;p&gt;相比纯文字，这张图多解释了一层：runtime checker 不是“又写了一堆 debug function”，而是把分散在 scheduler、tree cache、allocator、session wrapper 里的状态重新收敛成少数几个守恒式。&lt;/p&gt;</description></item><item><title>4.6 Retract、decode 内存压力与请求回退</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</guid><description>&lt;h1 id="retractdecode-内存压力与请求回退"&gt;Retract、decode 内存压力与请求回退&lt;a class="anchor" href="#retractdecode-%e5%86%85%e5%ad%98%e5%8e%8b%e5%8a%9b%e4%b8%8e%e8%af%b7%e6%b1%82%e5%9b%9e%e9%80%80"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经解释了 batch 怎样形成、KV cache 怎样复用、allocator 怎样管理页和不变量怎样被检查，但还差一个真实系统里非常关键的问题：当 decode 阶段真的顶到内存压力时，系统不是立刻崩溃，而是怎样把部分请求回退、释放空间、继续把剩下的请求跑下去。&lt;/p&gt;
+&lt;p&gt;这一章专门讲 &lt;code&gt;retract&lt;/code&gt;。如果不补这一层，调度与内存章节仍然会偏“平稳运行时”的解释，而缺少“资源不够时系统怎样自救”的部分。&lt;/p&gt;
+&lt;h2 id="为什么-retract-比-eviction-更值得单独讲"&gt;为什么 retract 比 eviction 更值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-retract-%e6%af%94-eviction-%e6%9b%b4%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;eviction 讲的是缓存怎么被回收；retract 讲的是已经在 decode path 上的请求怎样被部分撤回。两者都和内存压力有关，但语义不同：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;eviction 主要作用在 cache 结构上。&lt;/li&gt;
+&lt;li&gt;retract 直接改变 running batch 里的请求集合和请求状态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从 &lt;code&gt;schedule_batch.py&lt;/code&gt; 和 &lt;code&gt;scheduler.py&lt;/code&gt; 看，retract 不只是一个内部 helper，而是 scheduler 在内存不足时主动改变运行队列的正式机制。&lt;/p&gt;
+&lt;h2 id="一张图decode-oom-时系统怎样从继续跑切到回退一部分请求"&gt;一张图：decode OOM 时，系统怎样从“继续跑”切到“回退一部分请求”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bedecode-oom-%e6%97%b6%e7%b3%bb%e7%bb%9f%e6%80%8e%e6%a0%b7%e4%bb%8e%e7%bb%a7%e7%bb%ad%e8%b7%91%e5%88%87%e5%88%b0%e5%9b%9e%e9%80%80%e4%b8%80%e9%83%a8%e5%88%86%e8%af%b7%e6%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会以为 OOM 只会导致“报错并终止”。实际上，这里存在一个有策略的回退路径。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Batch[&amp;#34;running decode batch&amp;#34;] --&amp;gt; Check[&amp;#34;check_decode_mem()&amp;#34;]
+ Check --&amp;gt;|enough| Keep[&amp;#34;continue decode&amp;#34;]
+ Check --&amp;gt;|not enough| Retract[&amp;#34;retract_decode()&amp;#34;]
+ Retract --&amp;gt; Release[&amp;#34;release_req() + release_kv_cache()&amp;#34;]
+ Release --&amp;gt; Queue[&amp;#34;re-add request to waiting/retracted queue&amp;#34;]
+ Retract --&amp;gt; Abort[&amp;#34;abort last request if still cannot fit&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：retract 不是失败后的补丁，而是 decode 调度本身内建的分支。&lt;/p&gt;</description></item></channel></rss>

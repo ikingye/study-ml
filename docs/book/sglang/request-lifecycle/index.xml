@@ -75,4 +75,73 @@
  H --&amp;gt; I[&amp;#34;detokenize / response assembly&amp;#34;]
  I --&amp;gt; J{&amp;#34;streaming session still valid?&amp;#34;}
  J --&amp;gt;|否| D
- J --&amp;gt;|是| K[&amp;#34;finished / state cleanup&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“主链之外的合法分叉”。和前面那张请求时序图相比，它多解释了两件事：session 让请求会受到已有状态约束，而 timeout / abort 会把生命周期提前截断。&lt;/p&gt;</description></item></channel></rss>
+ J --&amp;gt;|是| K[&amp;#34;finished / state cleanup&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“主链之外的合法分叉”。和前面那张请求时序图相比，它多解释了两件事：session 让请求会受到已有状态约束，而 timeout / abort 会把生命周期提前截断。&lt;/p&gt;</description></item><item><title>2.4 输入如何被规范化、分词并送入运行时</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/input-normalization-and-tokenization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/input-normalization-and-tokenization/</guid><description>&lt;h1 id="输入如何被规范化分词并送入运行时"&gt;输入如何被规范化、分词并送入运行时&lt;a class="anchor" href="#%e8%be%93%e5%85%a5%e5%a6%82%e4%bd%95%e8%a2%ab%e8%a7%84%e8%8c%83%e5%8c%96%e5%88%86%e8%af%8d%e5%b9%b6%e9%80%81%e5%85%a5%e8%bf%90%e8%a1%8c%e6%97%b6"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前几章已经把请求怎样进入系统、怎样回包、怎样处理中止与 session 边界讲清楚了，但还缺一层非常靠近“输入如何真正变成 runtime 工作单元”的细节：调用方给出来的是文本、消息、工具参数、多模态输入或 API 请求体，这些东西到底怎样被整理成 &lt;code&gt;TokenizerManager&lt;/code&gt; 和 &lt;code&gt;Scheduler&lt;/code&gt; 真正能消费的对象？&lt;/p&gt;
+&lt;p&gt;如果没有这一层，请求生命周期仍然会像一条大路线，而不是一条可执行的输入管线。&lt;/p&gt;
+&lt;h2 id="为什么输入规范化不是小细节"&gt;为什么输入规范化不是小细节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%be%93%e5%85%a5%e8%a7%84%e8%8c%83%e5%8c%96%e4%b8%8d%e6%98%af%e5%b0%8f%e7%bb%86%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多系统问题都会伪装成“模型表现不对”，但根源其实是输入对象在更早阶段就已经被变形了。例如请求体的字段是否完整、priority 是否被设置、&lt;code&gt;routed_dp_rank&lt;/code&gt; 是否合法、多模态输入是否已按预期准备、LoRA 信息是否正确附着，这些都发生在真正 forward 之前。&lt;/p&gt;
+&lt;p&gt;这也解释了为什么输入规范化值得单独成章。它不是“在真正逻辑之前做点前处理”，而是在决定一条请求会以什么形状进入 runtime。&lt;/p&gt;
+&lt;h2 id="tokenizermanagergenerate_request-前后到底在发生什么"&gt;&lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 前后到底在发生什么&lt;a class="anchor" href="#tokenizermanagergenerate_request-%e5%89%8d%e5%90%8e%e5%88%b0%e5%ba%95%e5%9c%a8%e5%8f%91%e7%94%9f%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从前面章节的锚点可以继续往前走一步：&lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 之所以重要，不只是因为它接住了请求，还因为它要把外部表面上的输入形状折叠成统一的内部对象。也就是说，这里真正发生的是一次抽象转换：从“调用方语言”到“runtime 语言”。&lt;/p&gt;
+&lt;p&gt;这层转换一旦想清楚，很多后面的行为都会更好理解。因为一条请求如果在这里已经被规范化成了另一种形状，那么后面的 scheduler、batch、cache、execution model 就都只会看到这个被整理过的形状，而不会再回头关心原始调用表面。&lt;/p&gt;
+&lt;h2 id="tokenization-为什么属于生命周期而不属于纯-tokenizer-细节"&gt;tokenization 为什么属于生命周期而不属于纯 tokenizer 细节&lt;a class="anchor" href="#tokenization-%e4%b8%ba%e4%bb%80%e4%b9%88%e5%b1%9e%e4%ba%8e%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e8%80%8c%e4%b8%8d%e5%b1%9e%e4%ba%8e%e7%ba%af-tokenizer-%e7%bb%86%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只从名字看，tokenization 好像属于 tokenizer 内部实现。但在 request lifecycle 里，它实际上承担的是“把输入送进可调度形态”的职责。这就是为什么在这里看 tokenization，比在模型内部看 tokenizer 词表更有价值。&lt;/p&gt;
+&lt;p&gt;你要抓住的不是“它怎么编码每个 token”，而是“它怎么把输入变成可被 send_to_scheduler 推进的对象”。这是两个层次的问题。&lt;/p&gt;
+&lt;h2 id="一个更像输入管线的图"&gt;一个更像输入管线的图&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e8%be%93%e5%85%a5%e7%ae%a1%e7%ba%bf%e7%9a%84%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;调用方输入\nmessages / prompt / multimodal / API body&amp;#34;] --&amp;gt; B[&amp;#34;GenerateReqInput / request object&amp;#34;]
+ B --&amp;gt; C[&amp;#34;TokenizerManager.generate_request(...)&amp;#34;]
+ C --&amp;gt; D[&amp;#34;normalize / validate / attach priority / LoRA / routing&amp;#34;]
+ D --&amp;gt; E[&amp;#34;tokenize / prepare multimodal inputs&amp;#34;]
+ E --&amp;gt; F[&amp;#34;send_to_scheduler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“从表面输入到 runtime 对象”的中间层。它比前面更大的 request lifecycle 时序图多解释了一层：进入 scheduler 之前，系统已经做了一次很重要的形状转换。&lt;/p&gt;</description></item><item><title>2.5 TokenizerManager 与 DetokenizerManager：双向缓冲、回压与首尾收敛</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/tokenizer-and-detokenizer-bridge/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/tokenizer-and-detokenizer-bridge/</guid><description>&lt;h1 id="tokenizermanager-与-detokenizermanager双向缓冲回压与首尾收敛"&gt;TokenizerManager 与 DetokenizerManager：双向缓冲、回压与首尾收敛&lt;a class="anchor" href="#tokenizermanager-%e4%b8%8e-detokenizermanager%e5%8f%8c%e5%90%91%e7%bc%93%e5%86%b2%e5%9b%9e%e5%8e%8b%e4%b8%8e%e9%a6%96%e5%b0%be%e6%94%b6%e6%95%9b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面几章已经把请求怎样进入 SGLang、怎样形成 runtime 对象、怎样处理中止与 session 讲清楚了，但还缺一个决定“这条链到底能不能稳定跑起来”的中间层：&lt;code&gt;TokenizerManager&lt;/code&gt; 和 &lt;code&gt;DetokenizerManager&lt;/code&gt; 之间到底如何形成闭环，为什么一个名字看起来像“分词器”的组件会同时站在入口和回包两端，另一个名字看起来像“后处理器”的组件又为什么要单独跑成进程。&lt;/p&gt;
+&lt;p&gt;这一章专门回答三个问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;TokenizerManager&lt;/code&gt; 为什么不是一次性的前处理器。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DetokenizerManager&lt;/code&gt; 为什么不是简单的 &lt;code&gt;tokenizer.decode(...)&lt;/code&gt; 包装器。&lt;/li&gt;
+&lt;li&gt;两者之间的缓冲、回压和 watchdog 机制怎样决定一条请求的尾延迟与故障形态。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="为什么这一层值得单独成章"&gt;为什么这一层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只看 &lt;code&gt;python/sglang/srt/managers/tokenizer_manager.py&lt;/code&gt; 的类名，最容易产生的误解是：它主要做 tokenization，剩下的工作都交给 scheduler。源码并不支持这个理解。&lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 在真正发送请求之前会做参数归一化、优先级默认值填充、LoRA 解析、request logging、暂停控制、多 tokenizer worker 信息附着，然后才会进入 &lt;code&gt;_tokenize_one_request(...)&lt;/code&gt; 并调用 &lt;code&gt;_send_one_request(...)&lt;/code&gt;。请求发出之后，它又继续进入 &lt;code&gt;_wait_one_response(...)&lt;/code&gt;，维护 &lt;code&gt;ReqState&lt;/code&gt;、等待事件、组装 streaming chunk、记录最终日志、导出 metrics，最后才把响应交给 HTTP 层。&lt;/p&gt;
+&lt;p&gt;同样地，&lt;code&gt;python/sglang/srt/managers/detokenizer_manager.py&lt;/code&gt; 也不是“拿到 token 直接 decode”的薄包装。它有独立的 IPC 通道初始化、独立的 tokenizer 初始化、独立的 decode 状态表 &lt;code&gt;decode_status&lt;/code&gt;、独立的 request dispatcher 和 soft watchdog。&lt;code&gt;event_loop()&lt;/code&gt; 会从 scheduler 持续拉取 &lt;code&gt;BatchTokenIDOutput&lt;/code&gt; 或 &lt;code&gt;BatchEmbeddingOutput&lt;/code&gt;，然后再把处理后的结果推回 tokenizer 侧。这意味着 detokenizer 不是尾部装饰，而是请求收尾路径上的常驻进程。&lt;/p&gt;</description></item><item><title>2.6 多 tokenizer worker、Router 与 HTTP 入口放大</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multi-worker-routing-and-http-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multi-worker-routing-and-http-surfaces/</guid><description>&lt;h1 id="多-tokenizer-workerrouter-与-http-入口放大"&gt;多 tokenizer worker、Router 与 HTTP 入口放大&lt;a class="anchor" href="#%e5%a4%9a-tokenizer-workerrouter-%e4%b8%8e-http-%e5%85%a5%e5%8f%a3%e6%94%be%e5%a4%a7"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面几章把单条请求如何进入 &lt;code&gt;TokenizerManager&lt;/code&gt;、穿过 scheduler、再由 detokenizer 回来的主路径讲清楚了，但还有一个很现实的入口问题没有补：当 &lt;code&gt;tokenizer_worker_num &amp;gt; 1&lt;/code&gt;，或者服务跑在 Granian / 多进程 HTTP 模式下，请求入口会发生什么变化？如果不把这层讲出来，读者会默认整本书都在描述“单 tokenizer 进程”的理想路径，而忽略了 HTTP 入口本身也会被放大成多 worker 拓扑。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把单入口主线扩成“多入口共享同一 runtime 后端”的版本，并解释为什么这不会推翻前面的主路径，只是给入口侧增加了路由与回包分发层。&lt;/p&gt;
+&lt;h2 id="为什么多-worker-不只是部署细节"&gt;为什么多 worker 不只是部署细节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%a4%9a-worker-%e4%b8%8d%e5%8f%aa%e6%98%af%e9%83%a8%e7%bd%b2%e7%bb%86%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt; 明确区分了单 tokenizer 模式与 multi-tokenizer 模式。单 worker 时，app 可以直接挂 &lt;code&gt;server_args&lt;/code&gt;、&lt;code&gt;warmup_thread_kwargs&lt;/code&gt; 并在主进程里构造 &lt;code&gt;TokenizerManager&lt;/code&gt;；多 worker 时，系统会把参数写入共享内存，worker 进程自行读取，再创建 &lt;code&gt;TokenizerWorker&lt;/code&gt;。这说明多 worker 不是“同一逻辑开多个副本”这么简单，而是入口装配与 IPC 路径都被改写了。&lt;/p&gt;
+&lt;p&gt;这件事值得成章，是因为它会直接改变排障入口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;单 worker 问题通常先看 &lt;code&gt;TokenizerManager&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;多 worker 问题往往先看共享内存初始化、worker-local IPC 名称、&lt;code&gt;MultiTokenizerRouter&lt;/code&gt; 分发和回包映射。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图多-tokenizer-worker-模式下请求怎样汇入同一-scheduler"&gt;一张图：多 tokenizer worker 模式下，请求怎样汇入同一 scheduler&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a-tokenizer-worker-%e6%a8%a1%e5%bc%8f%e4%b8%8b%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e6%b1%87%e5%85%a5%e5%90%8c%e4%b8%80-scheduler"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者知道“会有多个 HTTP worker”，但不清楚它们怎样共享后端，而不是各自偷偷维护一套 scheduler。&lt;/p&gt;</description></item><item><title>2.7 非生成请求、health_generate 与控制请求分叉</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/non-generation-and-control-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/non-generation-and-control-paths/</guid><description>&lt;h1 id="非生成请求health_generate-与控制请求分叉"&gt;非生成请求、health_generate 与控制请求分叉&lt;a class="anchor" href="#%e9%9d%9e%e7%94%9f%e6%88%90%e8%af%b7%e6%b1%82health_generate-%e4%b8%8e%e6%8e%a7%e5%88%b6%e8%af%b7%e6%b1%82%e5%88%86%e5%8f%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 基本都围绕生成请求在讲：请求进入、分词、排队、forward、detokenize、回包。但真实服务里并不是所有请求都长成这条路径。还有一类非常重要的分叉：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;embedding / classify / score / rerank 这类非生成请求&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;health_generate&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;open_session&lt;/code&gt; / &lt;code&gt;close_session&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;abort_request&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;pause_generation&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这些分叉讲出来，request lifecycle 就仍然会默认“所有请求都要穿过完整生成闭环”，这对一本文字上已经开始变厚的技术书来说是不够的。&lt;/p&gt;
+&lt;h2 id="为什么这些分叉值得单独成章"&gt;为什么这些分叉值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%ba%9b%e5%88%86%e5%8f%89%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它们不是“边缘接口”，而是在运行时里承担不同控制职责：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;embedding / classify / rerank 会把请求送进不同的内部对象或输出路径。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;health_generate&lt;/code&gt; 用来探测运行时是否还可推进。&lt;/li&gt;
+&lt;li&gt;session / abort / pause 更直接进入控制面，而不是普通生成流。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这里讨论的不是“更多接口名”，而是“请求生命周期并不只有一种形状”。&lt;/p&gt;
+&lt;h2 id="一张图主生成链之外还有哪些常见分叉"&gt;一张图：主生成链之外还有哪些常见分叉&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%bb%e7%94%9f%e6%88%90%e9%93%be%e4%b9%8b%e5%a4%96%e8%bf%98%e6%9c%89%e5%93%aa%e4%ba%9b%e5%b8%b8%e8%a7%81%e5%88%86%e5%8f%89"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者脑中只有一条 &lt;code&gt;GenerateReqInput -&amp;gt; Scheduler -&amp;gt; Detokenizer&lt;/code&gt; 主线，容易忽略非生成与控制请求的岔路。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ In[&amp;#34;HTTP / OpenAI / native request&amp;#34;] --&amp;gt; Gen[&amp;#34;GenerateReqInput&amp;#34;]
+ In --&amp;gt; Emb[&amp;#34;EmbeddingReqInput / classify / score / rerank&amp;#34;]
+ In --&amp;gt; Ctrl[&amp;#34;session / abort / pause / flush / health&amp;#34;]
+ Gen --&amp;gt; Main[&amp;#34;generate path&amp;#34;]
+ Emb --&amp;gt; Pool[&amp;#34;embedding / classify / rerank path&amp;#34;]
+ Ctrl --&amp;gt; Gate[&amp;#34;control-plane path&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这些分叉不是“额外功能”，而是共享同一入口之后沿不同运行时语义散开的主线分支。&lt;/p&gt;</description></item></channel></rss>

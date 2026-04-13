@@ -106,4 +106,158 @@
 &lt;h2 id="场景三结构化输出偶尔失稳"&gt;场景三：结构化输出偶尔失稳&lt;a class="anchor" href="#%e5%9c%ba%e6%99%af%e4%b8%89%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%ba%e5%81%b6%e5%b0%94%e5%a4%b1%e7%a8%b3"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;第一问：约束真的进入了 generation path，还是只停留在请求表面？&lt;br&gt;
 第二问：这是 grammar backend 的问题，还是 parser / tool result 回填的问题？&lt;br&gt;
-第三问：失败表现是“格式不合法”“格式合法但语义不对”，还是“tool call 回路不闭合”？&lt;/p&gt;</description></item></channel></rss>
+第三问：失败表现是“格式不合法”“格式合法但语义不对”，还是“tool call 回路不闭合”？&lt;/p&gt;</description></item><item><title>8.6 Profiling、trace 采样与性能回归证据</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</guid><description>&lt;h1 id="profilingtrace-采样与性能回归证据"&gt;Profiling、trace 采样与性能回归证据&lt;a class="anchor" href="#profilingtrace-%e9%87%87%e6%a0%b7%e4%b8%8e%e6%80%a7%e8%83%bd%e5%9b%9e%e5%bd%92%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多系统在讲完 observability 和 testing 之后，仍然会缺一块：如果你怀疑是性能问题，或者你做了一次优化，究竟拿什么证明“它真的更快了、或者至少没有更慢”？这类问题并不完全属于 metrics，也不完全属于 benchmark，它更像“证据链”问题。&lt;/p&gt;
+&lt;p&gt;这一章要解决的，就是把 profiling、trace 采样和性能回归证据拉回整本书主线里。这样一来，扩展与调试部分就不只是“出了问题怎么看”，还会继续回答“改完之后拿什么证明变化是真的”。&lt;/p&gt;
+&lt;h2 id="profiler-和常规-trace-的差别"&gt;profiler 和常规 trace 的差别&lt;a class="anchor" href="#profiler-%e5%92%8c%e5%b8%b8%e8%a7%84-trace-%e7%9a%84%e5%b7%ae%e5%88%ab"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;python/sglang/profiler.py&lt;/code&gt; 和 &lt;code&gt;docs/developer_guide/benchmark_and_profiling.md&lt;/code&gt; 看，SGLang 并不是只有在线 trace 或 Prometheus metrics。它还提供 profile trace 输出、profile-by-stage、merge profiles 等路径。这说明 profiling 的目的，不只是“再多收一点日志”，而是生成更适合性能分析的时间证据。&lt;/p&gt;
+&lt;p&gt;因此，profiling 章节和 observability 章节的边界也要讲清楚：observability 更偏持续可见性；profiling 更偏一次性、定点、面向诊断和优化的高密度证据。&lt;/p&gt;
+&lt;h2 id="为什么-bench-工具也属于证据链的一部分"&gt;为什么 bench 工具也属于证据链的一部分&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-bench-%e5%b7%a5%e5%85%b7%e4%b9%9f%e5%b1%9e%e4%ba%8e%e8%af%81%e6%8d%ae%e9%93%be%e7%9a%84%e4%b8%80%e9%83%a8%e5%88%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;bench_one_batch.py&lt;/code&gt;、&lt;code&gt;bench_serving.py&lt;/code&gt;、developer guide 里的 benchmark / profiling 文档都在说明一件事：性能判断不能只靠“感觉更快了”。你需要有一致的输入、已知的 profile 产物、可回放的 trace，甚至在需要时还要能把请求到达时间重放出来。&lt;/p&gt;
+&lt;p&gt;这也是为什么好技术书到后面会开始讲“怎么证明”。没有证据链，优化章节就很容易变成经验随笔；有了证据链，它才会变成可复用的方法。&lt;/p&gt;
+&lt;h2 id="一个更接近维护者的最小证据链"&gt;一个更接近维护者的最小证据链&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e6%8e%a5%e8%bf%91%e7%bb%b4%e6%8a%a4%e8%80%85%e7%9a%84%e6%9c%80%e5%b0%8f%e8%af%81%e6%8d%ae%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;发现性能异常
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 先看 metrics / trace 判断问题范围
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 需要更细粒度分析时打开 profiler
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 用 bench_one_batch / bench_serving / benchmark 文档组织输入
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 产出 trace / profile / benchmark 结果
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 对比前后变化&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链本质上是在回答：当你怀疑系统慢了，或者觉得自己把它优化快了，到底怎样避免“只凭直觉得出结论”。&lt;/p&gt;</description></item><item><title>8.7 从故障现象到根因：一条完整维护者路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</guid><description>&lt;h1 id="从故障现象到根因一条完整维护者路径"&gt;从故障现象到根因：一条完整维护者路径&lt;a class="anchor" href="#%e4%bb%8e%e6%95%85%e9%9a%9c%e7%8e%b0%e8%b1%a1%e5%88%b0%e6%a0%b9%e5%9b%a0%e4%b8%80%e6%9d%a1%e5%ae%8c%e6%95%b4%e7%bb%b4%e6%8a%a4%e8%80%85%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;排障章节如果只列工具、只列清单，读者仍然可能不知道真正的顺序是什么。真正困难的地方往往不是“有没有工具”，而是“从现象出发，怎样一步步走到根因，而不是在系统里乱撞”。这一章就是把前面所有维护层章节，重新压成一条完整路径。&lt;/p&gt;
+&lt;h2 id="一条更真实的维护者路径"&gt;一条更真实的维护者路径&lt;a class="anchor" href="#%e4%b8%80%e6%9d%a1%e6%9b%b4%e7%9c%9f%e5%ae%9e%e7%9a%84%e7%bb%b4%e6%8a%a4%e8%80%85%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 判断是主链路问题、性能问题、结构化结果问题，还是回归问题
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 回到对应章节锁定第一观察面
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 用 metrics / trace / dump / tests / benchmark 收集证据
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 回到对应源码锚点验证假设
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 修复
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 再用 tests / profile / release checklist 证明修复有效&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条路径的重点，不在于它看起来完整，而在于它把整本书前面的几乎所有主线都重新收拢了一次。也就是说，维护者不是在用一个附录，而是在用整本书。&lt;/p&gt;
+&lt;h2 id="为什么先归类问题类型比先开代码更重要"&gt;为什么“先归类问题类型”比“先开代码”更重要&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%85%88%e5%bd%92%e7%b1%bb%e9%97%ae%e9%a2%98%e7%b1%bb%e5%9e%8b%e6%af%94%e5%85%88%e5%bc%80%e4%bb%a3%e7%a0%81%e6%9b%b4%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多排障失败，并不是因为读者不够努力，而是因为第一步就走错了。如果问题其实是结构化结果和 parser 契约不一致，你却先钻 scheduler；如果问题其实是 cache reuse 退化，你却先看 OpenAI-compatible 接口；那后面无论怎么深入，方向都容易错。&lt;/p&gt;
+&lt;p&gt;好技术书到最后，通常会不断强化这种“先判断问题属于哪一层”的习惯。因为这比再教几个调试命令更接近真正的系统性能力。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章本质上回指前文所有关键锚点：&lt;code&gt;launch_server.py&lt;/code&gt;、&lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt;、&lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;SamplingParams&lt;/code&gt;、&lt;code&gt;req_time_stats.py&lt;/code&gt;、&lt;code&gt;run_suite.py&lt;/code&gt;、&lt;code&gt;benchmark_and_profiling.md&lt;/code&gt;、&lt;code&gt;support_new_models.md&lt;/code&gt; 等。&lt;/p&gt;
+&lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果一本书最后能让读者形成“从现象到根因”的完整工作流，它就已经不只是一本导读书，而开始像一本真正能带着进现场的技术书。这一章承担的就是这个作用。&lt;/p&gt;</description></item><item><title>8.8 分层缓存、存储后端与更深的运行时故障面</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</guid><description>&lt;h1 id="分层缓存存储后端与更深的运行时故障面"&gt;分层缓存、存储后端与更深的运行时故障面&lt;a class="anchor" href="#%e5%88%86%e5%b1%82%e7%bc%93%e5%ad%98%e5%ad%98%e5%82%a8%e5%90%8e%e7%ab%af%e4%b8%8e%e6%9b%b4%e6%b7%b1%e7%9a%84%e8%bf%90%e8%a1%8c%e6%97%b6%e6%95%85%e9%9a%9c%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;当书已经走到维护层时，还会剩下一类更深、更不适合塞进前面主线章节的问题：如果系统启用了更复杂的分层缓存、storage backend 或远端缓存路径，很多异常就不再只是 scheduler、KV cache 或单机 observability 可以解释的了。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这些“更深层但仍属于主线延伸”的故障面单独拉出来。这样一来，整本书就不会只覆盖常见路径，而会开始触及更复杂运行时配置下的维护现实。&lt;/p&gt;
+&lt;h2 id="为什么-hicache--storage-backend-值得单独收口"&gt;为什么 HiCache / storage backend 值得单独收口&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-hicache--storage-backend-%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%94%b6%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;docs/advanced_features/hicache_best_practices.md&lt;/code&gt;、&lt;code&gt;hicache_design.md&lt;/code&gt;、runtime attach/detach 文档以及 &lt;code&gt;model_runner.py&lt;/code&gt; 中与 Mooncake / storage backend 相关路径看，分层缓存不是一个简单插件，而是会显著改变系统对“缓存命中、预取、写回、存储后端”的理解方式。&lt;/p&gt;
+&lt;p&gt;这意味着一旦系统进入分层缓存和存储后端路径，前面关于 cache 的理解就要再多一层：不仅要看本地 reuse 和 eviction，还要看远端状态是否存在、是否被预取、是否已经写回，以及控制面和数据面是否对这些状态有一致认识。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章的锚点主要包括 &lt;code&gt;docs/advanced_features/hicache_best_practices.md&lt;/code&gt;、&lt;code&gt;docs/advanced_features/hicache_design.md&lt;/code&gt;、&lt;code&gt;docs/advanced_features/hicache_storage_runtime_attach_detach.md&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/model_runner.py&lt;/code&gt; 中与 Mooncake / storage backend 相关路径，以及 &lt;code&gt;python/sglang/srt/managers/schedule_batch.py&lt;/code&gt; 中与 storage hit / cached token 统计相关的字段。&lt;/p&gt;
+&lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;把这一章补进来之后，扩展与调试这一大节就不再只覆盖“普通主线问题”，而开始触及更深层、更复杂部署形态下的运行时故障面。这正是一本更厚技术书该有的延展能力。&lt;/p&gt;</description></item><item><title>8.9 Debug utils、dump 与低层证据采集</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/debug-utils-and-dumps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/debug-utils-and-dumps/</guid><description>&lt;h1 id="debug-utilsdump-与低层证据采集"&gt;Debug utils、dump 与低层证据采集&lt;a class="anchor" href="#debug-utilsdump-%e4%b8%8e%e4%bd%8e%e5%b1%82%e8%af%81%e6%8d%ae%e9%87%87%e9%9b%86"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;到目前为止，扩展与调试这一节已经覆盖了 observability、tests、profiling、checklists 和故障工作流，但还缺最底下一层：当问题已经细到“我需要直接采集运行时材料、函数输入输出、kernel API 级证据”时，应该怎么办？&lt;/p&gt;
+&lt;p&gt;这一章就是把这层低级诊断工具拉回主线。否则整本书的维护层仍然会停在比较高层的 metrics / trace / tests，而缺少真正“贴着实现抓证据”的部分。&lt;/p&gt;
+&lt;h2 id="为什么-dump-工具值得进入技术书正文"&gt;为什么 dump 工具值得进入技术书正文&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-dump-%e5%b7%a5%e5%85%b7%e5%80%bc%e5%be%97%e8%bf%9b%e5%85%a5%e6%8a%80%e6%9c%af%e4%b9%a6%e6%ad%a3%e6%96%87"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多项目会把 dump / debug utils 当成内部脚本，不会在主书里认真讲。但对 inference runtime 来说，某些最棘手的问题恰恰只会在这里暴露：某个函数输入输出是否真的符合预期，某个 kernel 调用是否被正确记录，某个阶段的材料是否已落盘。&lt;/p&gt;
+&lt;p&gt;因此，debug utils 不只是开发者玩具，而是更深层证据链的一部分。&lt;/p&gt;
+&lt;h2 id="从哪里看这层能力"&gt;从哪里看这层能力&lt;a class="anchor" href="#%e4%bb%8e%e5%93%aa%e9%87%8c%e7%9c%8b%e8%bf%99%e5%b1%82%e8%83%bd%e5%8a%9b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/kernel_api_logging.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/debug_utils/*&lt;/code&gt;、&lt;code&gt;test/registered/debug_utils/*&lt;/code&gt; 这类路径都说明，系统已经提供了低层材料采集与验证能力。它们并不替代 trace 和 profiler，而是在更接近实现的层面补充证据。&lt;/p&gt;
+&lt;p&gt;从技术书角度看，这层很重要，因为它告诉读者：如果高层证据不够，还可以往下继续收证，而不是只能猜。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章的锚点包括 &lt;code&gt;python/sglang/kernel_api_logging.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/debug_utils/&lt;/code&gt;、&lt;code&gt;test/registered/debug_utils/&lt;/code&gt;、&lt;code&gt;python/sglang/profiler.py&lt;/code&gt; 以及相关 dump / trace 文件生成路径。&lt;/p&gt;
+&lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;当一本技术书能把“高层观察”一直讲到底层证据采集，它就更接近一本真正能带着进复杂现场的书，而不只是一本原理读物。&lt;/p&gt;</description></item><item><title>8.10 Watchdog、health check 与 liveness 链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/watchdogs-health-checks-and-liveness/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/watchdogs-health-checks-and-liveness/</guid><description>&lt;h1 id="watchdoghealth-check-与-liveness-链"&gt;Watchdog、health check 与 liveness 链&lt;a class="anchor" href="#watchdoghealth-check-%e4%b8%8e-liveness-%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试这一节已经覆盖了 observability、profiling、dump、failure workflow 和更深层缓存故障面，但还缺一层非常像生产维护现实的内容：系统如何判断自己“还活着”，以及当它可能卡住、子进程崩掉、health check 被长 prefill 阻塞时，运行时怎样把这些现象暴露出来。&lt;/p&gt;
+&lt;p&gt;这一章专门讲 liveness 链。它回答的不是“请求慢不慢”，而是“系统有没有继续前进”“卡住时谁先发现”“健康检查为什么有时会和真实流量互相影响”。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;watchdog_timeout&lt;/code&gt;、&lt;code&gt;soft_watchdog_timeout&lt;/code&gt;、&lt;code&gt;SubprocessWatchdog&lt;/code&gt;、dummy health check server、scheduler 的 health check signal 路径，这些在代码里分散在 &lt;code&gt;server_args.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt;、&lt;code&gt;tokenizer_manager.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;detokenizer_manager.py&lt;/code&gt; 和 &lt;code&gt;utils/watchdog.py&lt;/code&gt;。如果不把它们收拢成一章，读者会知道“系统有 watchdog”，却不知道它其实是一整条跨进程 liveness 机制。&lt;/p&gt;
+&lt;h2 id="一张图sglang-的-liveness-链是怎样串起来的"&gt;一张图：SGLang 的 liveness 链是怎样串起来的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besglang-%e7%9a%84-liveness-%e9%93%be%e6%98%af%e6%80%8e%e6%a0%b7%e4%b8%b2%e8%b5%b7%e6%9d%a5%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：health check、soft watchdog、硬 watchdog、subprocess watchdog 看起来像四套东西，但它们在运行时里是串联关系。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ HC[&amp;#34;HTTP health check&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager&amp;#34;]
+ TM --&amp;gt; SCH[&amp;#34;Scheduler&amp;#34;]
+ SCH --&amp;gt; DET[&amp;#34;DetokenizerManager&amp;#34;]
+ TM --&amp;gt; SW[&amp;#34;SubprocessWatchdog&amp;#34;]
+ SCH --&amp;gt; W1[&amp;#34;Scheduler watchdog&amp;#34;]
+ TM --&amp;gt; W2[&amp;#34;Tokenizer soft watchdog&amp;#34;]
+ DET --&amp;gt; W3[&amp;#34;Detokenizer soft watchdog&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释了一点：health check 不只是 HTTP 路由，而是要穿过 manager 和 scheduler 才能真正说明系统健康；watchdog 则从不同层并行观察这条链是否还在推进。&lt;/p&gt;</description></item><item><title>8.11 Request metrics exporter 与证据落盘链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-metrics-exporters-and-evidence-sinks/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-metrics-exporters-and-evidence-sinks/</guid><description>&lt;h1 id="request-metrics-exporter-与证据落盘链"&gt;Request metrics exporter 与证据落盘链&lt;a class="anchor" href="#request-metrics-exporter-%e4%b8%8e%e8%af%81%e6%8d%ae%e8%90%bd%e7%9b%98%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试部分前面已经讲了 metrics、trace、profiling、dump、watchdog 和 liveness，但还有一条很容易被忽略、却非常接近“工程证据落地”的链：请求完成后，那些 request-level 的性能与元信息如何被真正导出到文件或其他 sink，而不是只停留在内存里的 &lt;code&gt;meta_info&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这一章专门讲 &lt;code&gt;request_metrics_exporter.py&lt;/code&gt; 及其在 &lt;code&gt;TokenizerManager&lt;/code&gt; 收尾路径中的位置。&lt;/p&gt;
+&lt;h2 id="为什么它值得单独成章"&gt;为什么它值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ae%83%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多技术书在讲 observability 时会止步于“系统有 metrics”和“系统能 trace”。但对运行时维护者来说，另一类很关键的能力是：当一条请求结束后，能否把它的 request parameters、finish reason、latency 和 token 统计持久化，供之后离线分析、批量对比或合规存档。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/observability/request_metrics_exporter.py&lt;/code&gt; 正在做这件事，而且它不是外围脚本，而是已经接入 &lt;code&gt;TokenizerManager&lt;/code&gt; 请求收尾路径的正式能力。&lt;/p&gt;
+&lt;h2 id="一张图请求完成之后证据怎样被落盘"&gt;一张图：请求完成之后，证据怎样被落盘&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e5%ae%8c%e6%88%90%e4%b9%8b%e5%90%8e%e8%af%81%e6%8d%ae%e6%80%8e%e6%a0%b7%e8%a2%ab%e8%90%bd%e7%9b%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 request-level exporter 误以为是 Prometheus metrics 的附属物，但它实际上走的是另一条链。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Done[&amp;#34;request finished in _wait_one_response()&amp;#34;] --&amp;gt; Log[&amp;#34;request_logger.log_finished_request()&amp;#34;]
+ Log --&amp;gt; Export[&amp;#34;RequestMetricsExporterManager.write_record()&amp;#34;]
+ Export --&amp;gt; File[&amp;#34;FileRequestMetricsExporter&amp;#34;]
+ File --&amp;gt; Sink[&amp;#34;sglang-request-metrics-*.log&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这是请求收尾链上的持久化分支，而不是常驻 scrape 指标路径。&lt;/p&gt;
+&lt;h2 id="requestmetricsexporter-抽象的核心是什么"&gt;&lt;code&gt;RequestMetricsExporter&lt;/code&gt; 抽象的核心是什么&lt;a class="anchor" href="#requestmetricsexporter-%e6%8a%bd%e8%b1%a1%e7%9a%84%e6%a0%b8%e5%bf%83%e6%98%af%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;request_metrics_exporter.py&lt;/code&gt; 里的基类已经把职责切得很清楚：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;_format_output_data(...)&lt;/code&gt; 先把 request parameters 和 &lt;code&gt;meta_info&lt;/code&gt; 里的可序列化字段整理成记录。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;write_record(...)&lt;/code&gt; 再把这条记录写到具体 exporter。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，exporter 抽象的重点不是“怎么写文件”，而是先定义“什么叫一条可持久化的请求证据”。&lt;/p&gt;</description></item><item><title>8.12 Request logger、straggler 与 crash dump 证据链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-logger-and-crash-dumps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-logger-and-crash-dumps/</guid><description>&lt;h1 id="request-loggerstraggler-与-crash-dump-证据链"&gt;Request logger、straggler 与 crash dump 证据链&lt;a class="anchor" href="#request-loggerstraggler-%e4%b8%8e-crash-dump-%e8%af%81%e6%8d%ae%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试部分已经讲了 observability、request metrics exporter、dump 工具和 liveness，但还缺一条非常贴近实际事故调查的链：系统在请求收尾时怎样记录 request log，怎样积累定期 dump，怎样保留 crash 前后的请求材料，以及怎样把 straggler 请求从普通流量里筛出来。&lt;/p&gt;
+&lt;p&gt;这一章专门把 &lt;code&gt;RequestLogger&lt;/code&gt; 和 &lt;code&gt;TokenizerManager&lt;/code&gt; 里的 dump/crash/straggler 证据链拉成一条完整路径。&lt;/p&gt;
+&lt;h2 id="为什么这一层不该和普通日志混为一谈"&gt;为什么这一层不该和“普通日志”混为一谈&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e4%b8%8d%e8%af%a5%e5%92%8c%e6%99%ae%e9%80%9a%e6%97%a5%e5%bf%97%e6%b7%b7%e4%b8%ba%e4%b8%80%e8%b0%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;RequestLogger&lt;/code&gt; 不是简单的 &lt;code&gt;logger.info(...)&lt;/code&gt; 包装。它负责的是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;接收请求时的结构化记录&lt;/li&gt;
+&lt;li&gt;请求完成时的结构化记录&lt;/li&gt;
+&lt;li&gt;与 metrics exporter 的字段筛选口径协同&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;而 &lt;code&gt;TokenizerManager&lt;/code&gt; 在它之上又叠了一层：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;dump_request_list&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;crash_dump_request_list&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;straggler_request_list&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dump_requests_folder&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dump_requests_threshold&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明“请求日志”和“事故证据”虽然共享部分信息，但在系统里是两层不同能力。&lt;/p&gt;
+&lt;h2 id="一张图请求从完成到事故证据的几条分支"&gt;一张图：请求从完成到事故证据的几条分支&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e4%bb%8e%e5%ae%8c%e6%88%90%e5%88%b0%e4%ba%8b%e6%95%85%e8%af%81%e6%8d%ae%e7%9a%84%e5%87%a0%e6%9d%a1%e5%88%86%e6%94%af"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 finished request 只联想到日志输出，但实际上它可能同时流向多个证据槽。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Finish[&amp;#34;request finished&amp;#34;] --&amp;gt; Log[&amp;#34;RequestLogger.log_finished_request()&amp;#34;]
+ Finish --&amp;gt; Metrics[&amp;#34;request metrics exporter&amp;#34;]
+ Finish --&amp;gt; Dump[&amp;#34;dump_request_list / thresholded flush&amp;#34;]
+ Finish --&amp;gt; Crash[&amp;#34;crash_dump_request_list (recent window)&amp;#34;]
+ Finish --&amp;gt; Strag[&amp;#34;straggler_request_list&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：一个请求在完成之后，并不是只写一条日志，而可能按不同调查目的进入不同证据容器。&lt;/p&gt;</description></item><item><title>8.13 RequestStage、ReqTimeStats 与时间线证据</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-stage-timeline-and-req-time-stats/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-stage-timeline-and-req-time-stats/</guid><description>&lt;h1 id="requeststagereqtimestats-与时间线证据"&gt;RequestStage、ReqTimeStats 与时间线证据&lt;a class="anchor" href="#requeststagereqtimestats-%e4%b8%8e%e6%97%b6%e9%97%b4%e7%ba%bf%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试这一节已经讲了 metrics、trace、exporter、watchdog 和 crash dump，但还有一层非常关键的“统一时间语义”没有单独成章：同一条请求在系统内部经过这么多阶段，时间戳究竟是怎么被记录、切成 stage、再变成 queue time、per-stage latency 和 trace slice 的？&lt;/p&gt;
+&lt;p&gt;这一章专门解释 &lt;code&gt;req_time_stats.py&lt;/code&gt; 这套时间线证据体系。&lt;/p&gt;
+&lt;h2 id="为什么这一层比普通-trace-更值得单独讲"&gt;为什么这一层比普通 trace 更值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e6%af%94%e6%99%ae%e9%80%9a-trace-%e6%9b%b4%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是单纯“打点多一点”。&lt;code&gt;ReqTimeStats&lt;/code&gt; 和 &lt;code&gt;RequestStage&lt;/code&gt; 实际上做了三件事：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;给请求定义统一阶段名&lt;/li&gt;
+&lt;li&gt;把这些阶段同时接到 metrics 和 trace 上&lt;/li&gt;
+&lt;li&gt;让请求在 lifecycle、scheduler、execution、disaggregation 路径之间共享一套时间语义&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着它是整本书里少数能把前文很多章节重新接到一起的“证据总线”。&lt;/p&gt;
+&lt;h2 id="一张图一条请求怎样被切成阶段切片"&gt;一张图：一条请求怎样被切成阶段切片&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%80%e6%9d%a1%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e8%a2%ab%e5%88%87%e6%88%90%e9%98%b6%e6%ae%b5%e5%88%87%e7%89%87"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：读者容易把 queue time、TTFT、decode loop、dispatch time 当成彼此独立的指标，而不是同一条时间线的切片。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Create[&amp;#34;created&amp;#34;] --&amp;gt; Tok[&amp;#34;TOKENIZE&amp;#34;]
+ Tok --&amp;gt; APID[&amp;#34;API_SERVER_DISPATCH&amp;#34;]
+ APID --&amp;gt; Wait[&amp;#34;PREFILL_WAITING / DECODE_WAITING&amp;#34;]
+ Wait --&amp;gt; Fwd[&amp;#34;PREFILL_FORWARD / DECODE_FORWARD&amp;#34;]
+ Fwd --&amp;gt; Loop[&amp;#34;DECODE_LOOP&amp;#34;]
+ Loop --&amp;gt; Resp[&amp;#34;response_sent_to_client&amp;#34;]
+ Resp --&amp;gt; Done[&amp;#34;finished&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：很多“指标名字”其实都是同一条时间线上的稳定切片。&lt;/p&gt;
+&lt;h2 id="requeststage-定义了什么"&gt;&lt;code&gt;RequestStage&lt;/code&gt; 定义了什么&lt;a class="anchor" href="#requeststage-%e5%ae%9a%e4%b9%89%e4%ba%86%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;req_time_stats.py&lt;/code&gt; 里的 &lt;code&gt;RequestStage&lt;/code&gt; 不只是一个枚举，而是一组带 &lt;code&gt;stage_name&lt;/code&gt; 和 &lt;code&gt;level&lt;/code&gt; 的配置对象。当前至少包括：&lt;/p&gt;</description></item><item><title>8.14 /v1/loads、routing key 与 placement signal</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/loads-routing-and-placement-signals/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/loads-routing-and-placement-signals/</guid><description>&lt;h1 id="v1loadsrouting-key-与-placement-signal"&gt;/v1/loads、routing key 与 placement signal&lt;a class="anchor" href="#v1loadsrouting-key-%e4%b8%8e-placement-signal"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试部分已经讲了 metrics、watchdog、request stage、request-level 证据链，但还缺一类对平台工程特别关键的信号：如何从 &lt;code&gt;/v1/loads&lt;/code&gt;、routing key 统计、&lt;code&gt;routed_dp_rank&lt;/code&gt; 和 worker load metrics 判断系统当前“把请求放到了哪里、负载是不是在往你预期的方向流”。&lt;/p&gt;
+&lt;p&gt;这一章就是把这些 placement signal 收成一条维护者可用的负载证据链。&lt;/p&gt;
+&lt;h2 id="为什么这层和普通-metrics-不一样"&gt;为什么这层和普通 metrics 不一样&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%92%8c%e6%99%ae%e9%80%9a-metrics-%e4%b8%8d%e4%b8%80%e6%a0%b7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;普通 metrics 更偏“系统现在忙不忙、快不快”；而 &lt;code&gt;/v1/loads&lt;/code&gt; 和 routing signal 更偏“系统把请求分配到了哪里、某类请求是否被聚到一起、当前 worker 之间是否失衡”。这是一层更接近 placement / routing 的观测面。&lt;/p&gt;
+&lt;p&gt;对多 DP、外部 router、租户隔离或 routing key 场景来说，这层比单纯 TTFT/QPS 更有诊断价值。&lt;/p&gt;
+&lt;h2 id="一张图placement-signal-来自哪几层"&gt;一张图：placement signal 来自哪几层&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beplacement-signal-%e6%9d%a5%e8%87%aa%e5%93%aa%e5%87%a0%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 &lt;code&gt;/v1/loads&lt;/code&gt; 看成单一接口，但它其实综合了 controller、scheduler 和请求对象上的 routing 信息。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;request with routing_key / routed_dp_rank&amp;#34;] --&amp;gt; DPC[&amp;#34;DataParallelController&amp;#34;]
+ DPC --&amp;gt; SCH[&amp;#34;scheduler stats / load metrics&amp;#34;]
+ SCH --&amp;gt; Loads[&amp;#34;GetLoadReq / GetLoadsReq -&amp;gt; /v1/loads&amp;#34;]
+ Req --&amp;gt; Obs[&amp;#34;routing key metrics / active gauges&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：placement signal 不是某个单点 API 生成的，而是请求字段、调度层统计和控制面共同形成的。&lt;/p&gt;</description></item></channel></rss>

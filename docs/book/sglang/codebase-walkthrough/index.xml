@@ -58,4 +58,134 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;查回归与维护：
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;test/README.md -&amp;gt; run_suite.py -&amp;gt; registered/manual tests -&amp;gt; contribution_guide.md&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这一章本质上是把前一章列出的入口重新按任务重组，所以锚点仍然主要落在 &lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;docs/basic_usage/*&lt;/code&gt;、&lt;code&gt;docs/advanced_features/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt; 与 &lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这一章本质上是把前一章列出的入口重新按任务重组，所以锚点仍然主要落在 &lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;docs/basic_usage/*&lt;/code&gt;、&lt;code&gt;docs/advanced_features/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt; 与 &lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>7.4 遇到 bug 时，先从仓库哪几处下手</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</guid><description>&lt;h1 id="遇到-bug-时先从仓库哪几处下手"&gt;遇到 bug 时，先从仓库哪几处下手&lt;a class="anchor" href="#%e9%81%87%e5%88%b0-bug-%e6%97%b6%e5%85%88%e4%bb%8e%e4%bb%93%e5%ba%93%e5%93%aa%e5%87%a0%e5%a4%84%e4%b8%8b%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;知道仓库结构，和真正会用仓库排障，是两件不同的事。很多读者在读完代码导读之后，仍然会在真实问题面前卡住：目录都知道了，但第一步到底该打开哪个文件，第二步该看哪个测试，第三步又该去对照哪份文档？&lt;/p&gt;
+&lt;p&gt;这一章就是把“仓库地图”进一步压成“故障入口地图”。它不是再讲一遍目录，而是回答：遇到不同类型的 bug，先去哪几处最可能拿到高价值线索。&lt;/p&gt;
+&lt;h2 id="如果-bug-表现为请求进来了但行为不对"&gt;如果 bug 表现为“请求进来了但行为不对”&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c-bug-%e8%a1%a8%e7%8e%b0%e4%b8%ba%e8%af%b7%e6%b1%82%e8%bf%9b%e6%9d%a5%e4%ba%86%e4%bd%86%e8%a1%8c%e4%b8%ba%e4%b8%8d%e5%af%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这类问题最稳的起手式通常还是主链路：&lt;code&gt;launch_server.py&lt;/code&gt;、&lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt;。因为只要你还没有确认请求究竟卡在 lifecycle 的哪一段，过早跳进 cache 或 backend 往往只会增加噪音。&lt;/p&gt;
+&lt;p&gt;一个简单判断是：如果你仍然说不清“请求有没有真正完成闭环”，那就还没到应该读 &lt;code&gt;model_executor&lt;/code&gt; 深处的时候。&lt;/p&gt;
+&lt;h2 id="如果-bug-表现为性能或资源行为异常"&gt;如果 bug 表现为“性能或资源行为异常”&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c-bug-%e8%a1%a8%e7%8e%b0%e4%b8%ba%e6%80%a7%e8%83%bd%e6%88%96%e8%b5%84%e6%ba%90%e8%a1%8c%e4%b8%ba%e5%bc%82%e5%b8%b8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这类问题最常见的错误入口，是直接去看 benchmark 脚本。更稳的顺序通常是：先回到 &lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;schedule_batch.py&lt;/code&gt;、&lt;code&gt;memory_pool.py&lt;/code&gt;、&lt;code&gt;radix_cache.py&lt;/code&gt;、&lt;code&gt;chunk_cache.py&lt;/code&gt; 和 &lt;code&gt;model_runner.py&lt;/code&gt;，确认问题更像 batch、cache 还是执行路径差异，然后再去看 benchmark 和 profiling 路径。&lt;/p&gt;
+&lt;p&gt;原因很简单：benchmark 往往告诉你“慢了”，但不一定告诉你“为什么慢了”。仓库里最先告诉你原因的，通常还是主机制文件。&lt;/p&gt;
+&lt;h2 id="如果-bug-表现为结构化结果或工具调用不稳"&gt;如果 bug 表现为“结构化结果或工具调用不稳”&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c-bug-%e8%a1%a8%e7%8e%b0%e4%b8%ba%e7%bb%93%e6%9e%84%e5%8c%96%e7%bb%93%e6%9e%9c%e6%88%96%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8%e4%b8%8d%e7%a8%b3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这时最稳的入口不在 scheduler，而在 &lt;code&gt;SamplingParams&lt;/code&gt;、frontend &lt;code&gt;gen(...)&lt;/code&gt;、&lt;code&gt;tool_parser&lt;/code&gt; 文档与 &lt;code&gt;function_call&lt;/code&gt; 路径。因为这类问题首先是“约束和解释是否一致”，其次才是 runtime 细节。&lt;/p&gt;
+&lt;p&gt;也就是说，bug 类型一旦变化，最短阅读路径就应该立刻变化。代码导读真正想提供的，正是这种“不要总从同一个地方开始”的判断能力。&lt;/p&gt;
+&lt;h2 id="如果-bug-表现为改动后不确定是否伤到别处"&gt;如果 bug 表现为“改动后不确定是否伤到别处”&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c-bug-%e8%a1%a8%e7%8e%b0%e4%b8%ba%e6%94%b9%e5%8a%a8%e5%90%8e%e4%b8%8d%e7%a1%ae%e5%ae%9a%e6%98%af%e5%90%a6%e4%bc%a4%e5%88%b0%e5%88%ab%e5%a4%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这类问题不属于单个源码文件，而属于“验证路径是否找对”。起手式应当是 &lt;code&gt;test/README.md&lt;/code&gt;、&lt;code&gt;run_suite.py&lt;/code&gt;、对应 &lt;code&gt;registered / unit / manual&lt;/code&gt; 测试路径，以及必要时的 benchmark / profiling 文档。很多时候，读者真正缺的不是更多源码，而是更清楚的验证地图。&lt;/p&gt;
+&lt;p&gt;对一本厚一点的技术书来说，这种章节很重要，因为它把“仓库导读”从静态说明，推进成了维护者真正能用的排障工具。&lt;/p&gt;
+&lt;h2 id="一个按故障类型选入口的表"&gt;一个按故障类型选入口的表&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%8c%89%e6%95%85%e9%9a%9c%e7%b1%bb%e5%9e%8b%e9%80%89%e5%85%a5%e5%8f%a3%e7%9a%84%e8%a1%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：请求不回包
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：launch_server.py / http_server.py / TokenizerManager / Scheduler / DetokenizerManager
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：吞吐或显存异常
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：scheduler.py / schedule_batch.py / memory_pool.py / radix_cache.py / model_runner.py
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：结构化结果不稳
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：sampling_params.py / lang/api.py / tool_parser 文档 / function_call 路径
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：改动后不确定影响范围
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：test/README.md / run_suite.py / registered / unit / benchmark 文档&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章本质上回指整本书前面已经建立好的锚点：&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/function_call/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt;、&lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>7.5 通过 tests 反向理解系统行为</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</guid><description>&lt;h1 id="通过-tests-反向理解系统行为"&gt;通过 tests 反向理解系统行为&lt;a class="anchor" href="#%e9%80%9a%e8%bf%87-tests-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者读代码时只看实现文件，直到某个行为看不懂时才想起去找测试。这种顺序当然可行，但它经常让人忽略一个重要事实：测试文件不只是验证实现，它们本身也在告诉你维护者认为哪些行为是“必须稳定存在的语义”。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把 tests 从“最后才顺手看”的材料，提升成代码导读中的正式入口。&lt;/p&gt;
+&lt;h2 id="为什么-tests-往往比注释更像系统承诺"&gt;为什么 tests 往往比注释更像“系统承诺”&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-tests-%e5%be%80%e5%be%80%e6%af%94%e6%b3%a8%e9%87%8a%e6%9b%b4%e5%83%8f%e7%b3%bb%e7%bb%9f%e6%89%bf%e8%af%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;实现文件里的注释会解释作者当时怎么想，但测试更像系统今天仍然承诺什么。尤其对 runtime 来说，哪些行为被写进 &lt;code&gt;registered&lt;/code&gt;、哪些路径有专门 unit test、哪些场景有 function calling 或 observability 的回归测试，这些都在告诉你：维护者认为什么不能轻易变。&lt;/p&gt;
+&lt;p&gt;这也是为什么用 tests 反向理解系统是很有价值的阅读方式。你不只是在看“代码如何工作”，还在看“哪些工作方式被长期保护”。&lt;/p&gt;
+&lt;h2 id="如果你想理解-scheduler--cache先看哪类测试"&gt;如果你想理解 scheduler / cache，先看哪类测试&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%83%b3%e7%90%86%e8%a7%a3-scheduler--cache%e5%85%88%e7%9c%8b%e5%93%aa%e7%b1%bb%e6%b5%8b%e8%af%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;当问题落在 &lt;code&gt;scheduler&lt;/code&gt;、&lt;code&gt;cache&lt;/code&gt;、allocator 或 reuse / eviction 时，只看 &lt;code&gt;scheduler.py&lt;/code&gt; 和 &lt;code&gt;mem_cache/*&lt;/code&gt; 往往还不够。更稳的补充材料是 &lt;code&gt;test/manual/test_schedule_policy.py&lt;/code&gt;、&lt;code&gt;test/registered/unit/mem_cache/&lt;/code&gt; 以及 SWA / radix cache 相关测试。它们会把一些实现里分散的假设压成更明确的断言。&lt;/p&gt;
+&lt;p&gt;这对读者很有帮助，因为它让你看到：“维护者认为这里最容易坏的地方是什么”。而这类信息，很多时候比继续盯大文件里的条件分支更高价值。&lt;/p&gt;
+&lt;h2 id="如果你想理解-function-calling--observability为什么测试更重要"&gt;如果你想理解 function calling / observability，为什么测试更重要&lt;a class="anchor" href="#%e5%a6%82%e6%9e%9c%e4%bd%a0%e6%83%b3%e7%90%86%e8%a7%a3-function-calling--observability%e4%b8%ba%e4%bb%80%e4%b9%88%e6%b5%8b%e8%af%95%e6%9b%b4%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;test/registered/openai_server/function_call/&lt;/code&gt; 这一类路径和 &lt;code&gt;test/registered/observability/&lt;/code&gt; 里的 tracing tests，实际上都在帮助读者理解“外部可见行为到底应该长成什么样”。这些行为很容易在实现层被多个模块共同影响，因此只看一个 parser 或一个 tracing file 往往不够。&lt;/p&gt;
+&lt;p&gt;相反，测试会强迫你从结果视角看问题：最终是否真的出现了 tool_calls、streaming 片段是否能正确拼回去、某个 &lt;code&gt;RequestStage&lt;/code&gt; 是否真的被记录。这种“从结果倒逼理解”的阅读方式，是很多优秀技术书都会鼓励读者掌握的能力。&lt;/p&gt;
+&lt;h2 id="一个更像技术书练习的阅读法"&gt;一个更像技术书练习的阅读法&lt;a class="anchor" href="#%e4%b8%80%e4%b8%aa%e6%9b%b4%e5%83%8f%e6%8a%80%e6%9c%af%e4%b9%a6%e7%bb%83%e4%b9%a0%e7%9a%84%e9%98%85%e8%af%bb%e6%b3%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你读完实现还不够踏实，可以尝试做这样一个小练习：&lt;/p&gt;</description></item><item><title>7.6 从 README 到 benchmark：一条更完整的仓库主线</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/from-readme-to-benchmarks/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/from-readme-to-benchmarks/</guid><description>&lt;h1 id="从-readme-到-benchmark一条更完整的仓库主线"&gt;从 README 到 benchmark：一条更完整的仓库主线&lt;a class="anchor" href="#%e4%bb%8e-readme-%e5%88%b0-benchmark%e4%b8%80%e6%9d%a1%e6%9b%b4%e5%ae%8c%e6%95%b4%e7%9a%84%e4%bb%93%e5%ba%93%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面几章已经把“按目标读仓库”“通过 tests 读系统行为”“遇到 bug 从哪里下手”这些角度分别讲开了，但对一本更厚的技术书来说，还需要再把这些角度重新串起来：如果一个读者准备从零进入这个仓库，一路走到 benchmark 与 profiling，他的最佳路径到底是什么？&lt;/p&gt;
+&lt;p&gt;这一章要解决的，就是“如何把分散的阅读策略重新压成一条更长、更稳的仓库主线”。&lt;/p&gt;
+&lt;h2 id="为什么从-readme-开始仍然是对的"&gt;为什么从 README 开始仍然是对的&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e4%bb%8e-readme-%e5%bc%80%e5%a7%8b%e4%bb%8d%e7%84%b6%e6%98%af%e5%af%b9%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多进阶读者会天然觉得 README 太浅，不值得花太多时间。但对一个复杂系统来说，README 的价值从来不是“够不够深”，而是“能不能帮你在最早阶段避免误判系统形状”。SGLang 尤其如此，因为它同时有 frontend language、server runtime、native API、offline engine、structured output 和 observability 这些外部表面。&lt;/p&gt;
+&lt;p&gt;因此，把 README 放在阅读链最前面，并不是迁就新手，而是把系统形状先讲正。只要形状一开始没看偏，后面进入 &lt;code&gt;srt&lt;/code&gt;、tests 和 benchmark 才不至于越读越散。&lt;/p&gt;
+&lt;h2 id="为什么阅读路径应该最终落到-benchmark"&gt;为什么阅读路径应该最终落到 benchmark&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e9%98%85%e8%af%bb%e8%b7%af%e5%be%84%e5%ba%94%e8%af%a5%e6%9c%80%e7%bb%88%e8%90%bd%e5%88%b0-benchmark"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多代码导读会在“知道源码在哪”之后结束，但大系统真正的终点往往不是源码，而是“怎样证明你的理解和修改在运行上站得住”。这也是为什么这章要把 benchmark 和 profiling 拉进来。&lt;/p&gt;
+&lt;p&gt;对 SGLang 这种 inference runtime 而言，benchmark 不是额外附录，而是“理解是否最终落地”的一层证据。你理解了请求主线、scheduler、cache、execution model 之后，最终总要回到 benchmark / profiling 问：这些理解怎样影响真实运行结果。&lt;/p&gt;
+&lt;h2 id="一条更完整的阅读路径"&gt;一条更完整的阅读路径&lt;a class="anchor" href="#%e4%b8%80%e6%9d%a1%e6%9b%b4%e5%ae%8c%e6%95%b4%e7%9a%84%e9%98%85%e8%af%bb%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;README
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; __init__.py / lang/api.py / launch_server.py
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; entrypoints / managers / model_executor / mem_cache / observability
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; docs/basic_usage / advanced_features
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; examples/runtime / examples/monitoring
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; test/README.md / run_suite.py / registered tests
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; benchmark_and_profiling / bench_one_batch / bench_serving / benchmark/*&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条路径的意义，不是让读者机械照抄，而是说明：一个系统性的技术读法，最终应该从“项目怎样介绍自己”走到“项目怎样证明自己”。这正是技术书比普通源码介绍更有价值的地方。&lt;/p&gt;</description></item><item><title>7.7 从 benchmark 和 profiler 反向理解实现</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-performance-evidence/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-performance-evidence/</guid><description>&lt;h1 id="从-benchmark-和-profiler-反向理解实现"&gt;从 benchmark 和 profiler 反向理解实现&lt;a class="anchor" href="#%e4%bb%8e-benchmark-%e5%92%8c-profiler-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e5%ae%9e%e7%8e%b0"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者在读到 benchmark 或 profiler 输出时，会把它们当成“性能结果展示”。但对一本更厚的技术书来说，性能证据的价值远不止结果本身，它还应该反过来帮助读者更准确地理解 &lt;code&gt;scheduler&lt;/code&gt;、&lt;code&gt;cache&lt;/code&gt;、&lt;code&gt;execution model&lt;/code&gt; 到底在哪里花时间、为什么会花时间。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把 benchmark / profiler 从“结果页”重新变成“源码阅读入口”。&lt;/p&gt;
+&lt;h2 id="为什么性能证据不该停在图表上"&gt;为什么性能证据不该停在图表上&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%80%a7%e8%83%bd%e8%af%81%e6%8d%ae%e4%b8%8d%e8%af%a5%e5%81%9c%e5%9c%a8%e5%9b%be%e8%a1%a8%e4%b8%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果 benchmark 只是告诉你吞吐高低，它的价值仍然有限。真正高价值的部分在于：这些结果能否帮助你更快回到 &lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;memory_pool.py&lt;/code&gt;、&lt;code&gt;model_runner.py&lt;/code&gt;、&lt;code&gt;ForwardBatch&lt;/code&gt; 或 graph runner 路径，解释“为什么会得到这样的曲线”。&lt;/p&gt;
+&lt;p&gt;这也是为什么好技术书喜欢把性能证据重新接回实现，而不是只展示结论。因为只有这样，读者拿到的才不只是数字，而是更强的判断框架。&lt;/p&gt;
+&lt;h2 id="一条更像维护者的反向路径"&gt;一条更像维护者的反向路径&lt;a class="anchor" href="#%e4%b8%80%e6%9d%a1%e6%9b%b4%e5%83%8f%e7%bb%b4%e6%8a%a4%e8%80%85%e7%9a%84%e5%8f%8d%e5%90%91%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-text" data-lang="text"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;benchmark / profiler 结果
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 判断更像 scheduler / cache / execution / protocol 表面问题
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 回到对应章节和源码锚点
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 验证假设&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条路径的关键是：不要让 profiler 和 benchmark 变成“最后才看的旁支材料”。它们应该反过来推动你重新读核心实现。&lt;/p&gt;
+&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一章的锚点主要包括 &lt;code&gt;python/sglang/bench_one_batch.py&lt;/code&gt;、&lt;code&gt;python/sglang/bench_serving.py&lt;/code&gt;、&lt;code&gt;python/sglang/profiler.py&lt;/code&gt;、&lt;code&gt;docs/developer_guide/benchmark_and_profiling.md&lt;/code&gt;、&lt;code&gt;docs/developer_guide/bench_serving.md&lt;/code&gt;，以及它们回指的 &lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;memory_pool.py&lt;/code&gt;、&lt;code&gt;model_runner.py&lt;/code&gt; 等核心实现。&lt;/p&gt;
+&lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;性能证据不是附录。把 benchmark 和 profiler 重新接回源码主线之后，代码导读这一大节才更像一本成熟技术书，而不是一份“看完目录就结束”的导航。&lt;/p&gt;</description></item><item><title>7.8 读 entrypoints/openai：协议表面怎样回到 runtime</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-openai-entrypoints/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-openai-entrypoints/</guid><description>&lt;h1 id="读-entrypointsopenai协议表面怎样回到-runtime"&gt;读 entrypoints/openai：协议表面怎样回到 runtime&lt;a class="anchor" href="#%e8%af%bb-entrypointsopenai%e5%8d%8f%e8%ae%ae%e8%a1%a8%e9%9d%a2%e6%80%8e%e6%a0%b7%e5%9b%9e%e5%88%b0-runtime"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面的章节已经把仓库主线、tests、benchmark 和故障入口讲得比较厚了，但还有一层非常值得单独讲：如果你想从协议表面往里读，&lt;code&gt;python/sglang/srt/entrypoints/openai/&lt;/code&gt; 这一整层到底该怎样读？很多工程读者会把这里当成“单纯的接口适配目录”，但它实际上承接了模板解释、请求转换、stream/non-stream 分支、tool call 语义翻译和最终 runtime 调用。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把 &lt;code&gt;entrypoints/openai&lt;/code&gt; 从“接口目录”提升成一条可读的调用栈。&lt;/p&gt;
+&lt;h2 id="为什么这层值得放进代码导读而不是只放在-api-章节"&gt;为什么这层值得放进代码导读，而不是只放在 API 章节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e6%94%be%e8%bf%9b%e4%bb%a3%e7%a0%81%e5%af%bc%e8%af%bb%e8%80%8c%e4%b8%8d%e6%98%af%e5%8f%aa%e6%94%be%e5%9c%a8-api-%e7%ab%a0%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;API 章节关注“为什么有这些 surface”；代码导读章节关注“如果我要顺着源码把这个 surface 读进去，应该怎么走”。对 &lt;code&gt;entrypoints/openai&lt;/code&gt; 来说，这两者不是同一件事。前者回答的是协议职责，后者回答的是阅读路径。&lt;/p&gt;
+&lt;p&gt;从代码组织看，这层至少同时涉及：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;serving_base.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;serving_chat.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;serving_completions.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;serving_responses.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;protocol.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;http_server.py&lt;/code&gt; 中的路由绑定&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这些路径压成一章，读者很容易在 &lt;code&gt;serving_chat.py&lt;/code&gt; 里迷路，不知道哪些逻辑是共用的，哪些逻辑是 chat 特有的。&lt;/p&gt;
+&lt;h2 id="一张图openai-compatible-请求怎样落回-runtime"&gt;一张图：OpenAI-compatible 请求怎样落回 runtime&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beopenai-compatible-%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e8%90%bd%e5%9b%9e-runtime"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：许多读者会直接跳进 &lt;code&gt;serving_chat.py&lt;/code&gt;，结果把“共用基类逻辑”和“chat 特有逻辑”混在一起。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Route[&amp;#34;http_server route&amp;#34;] --&amp;gt; Base[&amp;#34;OpenAIServingBase.handle_request()&amp;#34;]
+ Base --&amp;gt; Convert[&amp;#34;_convert_to_internal_request()&amp;#34;]
+ Convert --&amp;gt; Stream[&amp;#34;_handle_streaming_request() / _handle_non_streaming_request()&amp;#34;]
+ Stream --&amp;gt; TM[&amp;#34;TokenizerManager.generate_request()&amp;#34;]
+ TM --&amp;gt; Runtime[&amp;#34;scheduler / detokenizer / response path&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：OpenAI-compatible surface 并不是每个 handler 各写一套逻辑，而是先经过基类统一模式，再落到各自的请求转换和结果翻译。&lt;/p&gt;</description></item><item><title>7.9 读 protocol.py 与 io_struct.py：公开协议怎样变成内部对象</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/protocol-and-io-struct-bridge/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/protocol-and-io-struct-bridge/</guid><description>&lt;h1 id="读-protocolpy-与-io_structpy公开协议怎样变成内部对象"&gt;读 protocol.py 与 io_struct.py：公开协议怎样变成内部对象&lt;a class="anchor" href="#%e8%af%bb-protocolpy-%e4%b8%8e-io_structpy%e5%85%ac%e5%bc%80%e5%8d%8f%e8%ae%ae%e6%80%8e%e6%a0%b7%e5%8f%98%e6%88%90%e5%86%85%e9%83%a8%e5%af%b9%e8%b1%a1"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把 &lt;code&gt;entrypoints/openai&lt;/code&gt; 的 handler 骨架讲出来了，但还有一层非常值得单独补：请求在协议层用的是 Pydantic request/response model，而进入 runtime 之后又会变成 dataclass 风格的内部对象。这条桥如果不讲清楚，读者会很容易在 &lt;code&gt;protocol.py&lt;/code&gt; 和 &lt;code&gt;io_struct.py&lt;/code&gt; 之间反复跳，却始终不确定“这两个文件到底是不是在描述同一条请求”。&lt;/p&gt;
+&lt;p&gt;这一章就是把这条桥讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层对读仓库特别重要"&gt;为什么这层对读仓库特别重要&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%af%b9%e8%af%bb%e4%bb%93%e5%ba%93%e7%89%b9%e5%88%ab%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你只读 &lt;code&gt;protocol.py&lt;/code&gt;，你会以为系统关心的是 OpenAI-compatible request schema；如果你只读 &lt;code&gt;io_struct.py&lt;/code&gt;，你又会以为系统关心的是 manager 之间传递的运行时对象。真正的情况是：这两者分别站在同一条请求的外层和内层。&lt;/p&gt;
+&lt;p&gt;这也是为什么这章更适合放在代码导读而不是 API 章节里。它不是解释协议本身，而是解释“协议对象怎样真正走进运行时内部”。&lt;/p&gt;
+&lt;h2 id="一张图协议对象与内部对象之间的桥"&gt;一张图：协议对象与内部对象之间的桥&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%8d%8f%e8%ae%ae%e5%af%b9%e8%b1%a1%e4%b8%8e%e5%86%85%e9%83%a8%e5%af%b9%e8%b1%a1%e4%b9%8b%e9%97%b4%e7%9a%84%e6%a1%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;ChatCompletionRequest&lt;/code&gt; 和 &lt;code&gt;GenerateReqInput&lt;/code&gt; 看成两套平行系统，而不是同一条变换链上的前后状态。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Proto[&amp;#34;protocol.py Pydantic models&amp;#34;] --&amp;gt; Serve[&amp;#34;serving_*._convert_to_internal_request()&amp;#34;]
+ Serve --&amp;gt; IO[&amp;#34;io_struct.py request objects&amp;#34;]
+ IO --&amp;gt; Batch[&amp;#34;tokenized / batch output structs&amp;#34;]
+ Batch --&amp;gt; Runtime[&amp;#34;scheduler / detokenizer / tokenizer manager&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;protocol.py&lt;/code&gt; 和 &lt;code&gt;io_struct.py&lt;/code&gt; 不是重复定义，而是协议对象与运行时对象的两端。&lt;/p&gt;
+&lt;h2 id="protocolpy-更像什么"&gt;&lt;code&gt;protocol.py&lt;/code&gt; 更像什么&lt;a class="anchor" href="#protocolpy-%e6%9b%b4%e5%83%8f%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;entrypoints/openai/protocol.py&lt;/code&gt; 明确写着自己是 “Pydantic models for OpenAI API protocol”。这里的对象重点在于：&lt;/p&gt;</description></item><item><title>7.10 读 Engine Python API：它与 HTTP server 共享了什么核心</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-engine-and-http-shared-core/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-engine-and-http-shared-core/</guid><description>&lt;h1 id="读-engine-python-api它与-http-server-共享了什么核心"&gt;读 Engine Python API：它与 HTTP server 共享了什么核心&lt;a class="anchor" href="#%e8%af%bb-engine-python-api%e5%ae%83%e4%b8%8e-http-server-%e5%85%b1%e4%ba%ab%e4%ba%86%e4%bb%80%e4%b9%88%e6%a0%b8%e5%bf%83"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把 &lt;code&gt;entrypoints/openai&lt;/code&gt;、&lt;code&gt;protocol.py&lt;/code&gt; 和 &lt;code&gt;io_struct.py&lt;/code&gt; 串起来了，但还有一条非常值得补的阅读路径：如果你不是从 HTTP server 进入，而是从 Python &lt;code&gt;Engine&lt;/code&gt; API 进入，这条路到底和 HTTP shared core 共享了什么，又在哪些地方开始分叉？&lt;/p&gt;
+&lt;p&gt;这一章就是把 &lt;code&gt;Engine&lt;/code&gt; 这条阅读路径补进来。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会天然把 &lt;code&gt;Engine.generate(...)&lt;/code&gt;、&lt;code&gt;Engine.encode(...)&lt;/code&gt; 当成“另一套实现”。从 &lt;code&gt;engine.py&lt;/code&gt; 看，这并不准确。它们在很大程度上共享同一套 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 主路径，只是少了 HTTP 路由、协议 schema 和 surface 级翻译。&lt;/p&gt;
+&lt;p&gt;把这层讲出来，对整本书非常重要，因为它能让读者真正理解：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;HTTP server 和 Python API 不只是“都能用 SGLang”&lt;/li&gt;
+&lt;li&gt;它们很多时候是在复用同一条 runtime 核心&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图engine-api-与-http-server-并不是两套独立系统"&gt;一张图：Engine API 与 HTTP server 并不是两套独立系统&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beengine-api-%e4%b8%8e-http-server-%e5%b9%b6%e4%b8%8d%e6%98%af%e4%b8%a4%e5%a5%97%e7%8b%ac%e7%ab%8b%e7%b3%bb%e7%bb%9f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 &lt;code&gt;Engine&lt;/code&gt; 和 &lt;code&gt;http_server&lt;/code&gt; 想成两条平行道路，但实际上它们在很深的位置汇合。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ HTTP[&amp;#34;HTTP / OpenAI surface&amp;#34;] --&amp;gt; Route[&amp;#34;serving handler / request conversion&amp;#34;]
+ PY[&amp;#34;Engine.generate / encode / rerank&amp;#34;] --&amp;gt; Obj[&amp;#34;GenerateReqInput / EmbeddingReqInput&amp;#34;]
+ Route --&amp;gt; Obj
+ Obj --&amp;gt; TM[&amp;#34;TokenizerManager.generate_request()&amp;#34;]
+ TM --&amp;gt; Runtime[&amp;#34;scheduler / detokenizer / managers&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：区别更多发生在“对象如何被构造”，而不是“对象进入运行时之后怎么跑”。&lt;/p&gt;</description></item></channel></rss>
