@@ -244,4 +244,20 @@
  DPC --&amp;gt; W0[&amp;#34;DP worker 0 / scheduler&amp;#34;]
  DPC --&amp;gt; W1[&amp;#34;DP worker 1 / scheduler&amp;#34;]
  DPC --&amp;gt; WN[&amp;#34;DP worker N / scheduler&amp;#34;]
- Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：请求在进入某个具体 scheduler 之前，先经过了一次 rank 级控制决策。&lt;/p&gt;</description></item></channel></rss>
+ Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：请求在进入某个具体 scheduler 之前，先经过了一次 rank 级控制决策。&lt;/p&gt;</description></item><item><title>3.10 Scheduler event loop 矩阵与运行模式切换</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</guid><description>&lt;h1 id="scheduler-event-loop-矩阵与运行模式切换"&gt;Scheduler event loop 矩阵与运行模式切换&lt;a class="anchor" href="#scheduler-event-loop-%e7%9f%a9%e9%98%b5%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%bc%8f%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经把分层、装配、消息织网和 data parallel controller 讲出来了，但还有一个非常容易让读者困惑的点没有单独展开：&lt;code&gt;Scheduler&lt;/code&gt; 并不是只有一个 event loop。根据 overlap、pipeline parallel、pdmux 以及 disaggregation mode 的组合，系统会进入一组不同的 event loop 变体。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这组“模式矩阵”讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者第一次读 &lt;code&gt;scheduler.py&lt;/code&gt; 时，会天然把 &lt;code&gt;event_loop_normal()&lt;/code&gt; 当成唯一主循环，然后在后面遇到 &lt;code&gt;event_loop_overlap()&lt;/code&gt;、&lt;code&gt;event_loop_*_disagg_prefill()&lt;/code&gt;、&lt;code&gt;event_loop_*_disagg_decode()&lt;/code&gt; 时逐渐迷失。实际上，源码已经把这件事抽象得很明确：&lt;code&gt;dispatch_event_loop(scheduler)&lt;/code&gt; 会根据一组模式开关选择不同主循环。&lt;/p&gt;
+&lt;p&gt;一本更像大部头技术书的作品，不应该让读者在这里靠自己“猜矩阵”，而应该把矩阵写出来。&lt;/p&gt;
+&lt;h2 id="一张图scheduler-主循环不是单条而是一组模式选择"&gt;一张图：&lt;code&gt;Scheduler&lt;/code&gt; 主循环不是单条，而是一组模式选择&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bescheduler-%e4%b8%bb%e5%be%aa%e7%8e%af%e4%b8%8d%e6%98%af%e5%8d%95%e6%9d%a1%e8%80%8c%e6%98%af%e4%b8%80%e7%bb%84%e6%a8%a1%e5%bc%8f%e9%80%89%e6%8b%a9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：读者容易把不同 event loop 看成互不相干的特殊实现，而不是同一调度器在不同模式下的主循环矩阵。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Start[&amp;#34;dispatch_event_loop(scheduler)&amp;#34;] --&amp;gt; Mode[&amp;#34;disaggregation_mode&amp;#34;]
+ Mode --&amp;gt; Null[&amp;#34;NULL&amp;#34;]
+ Mode --&amp;gt; Prefill[&amp;#34;PREFILL&amp;#34;]
+ Mode --&amp;gt; Decode[&amp;#34;DECODE&amp;#34;]
+ Null --&amp;gt; N1[&amp;#34;pdmux / pp / overlap / normal&amp;#34;]
+ Prefill --&amp;gt; P1[&amp;#34;pp_disagg_prefill / overlap_disagg_prefill / normal_disagg_prefill&amp;#34;]
+ Decode --&amp;gt; D1[&amp;#34;pp_disagg_decode / overlap_disagg_decode / normal_disagg_decode&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Scheduler&lt;/code&gt; 的主循环选择，是一棵正式的模式树，而不是零散的 if/else 补丁。&lt;/p&gt;</description></item></channel></rss>

@@ -108,4 +108,45 @@
  Check --&amp;gt;|not enough| Retract[&amp;#34;retract_decode()&amp;#34;]
  Retract --&amp;gt; Release[&amp;#34;release_req() + release_kv_cache()&amp;#34;]
  Release --&amp;gt; Queue[&amp;#34;re-add request to waiting/retracted queue&amp;#34;]
- Retract --&amp;gt; Abort[&amp;#34;abort last request if still cannot fit&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：retract 不是失败后的补丁，而是 decode 调度本身内建的分支。&lt;/p&gt;</description></item></channel></rss>
+ Retract --&amp;gt; Abort[&amp;#34;abort last request if still cannot fit&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：retract 不是失败后的补丁，而是 decode 调度本身内建的分支。&lt;/p&gt;</description></item><item><title>4.7 Priority、routing key 与 waiting queue 重排</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</guid><description>&lt;h1 id="priorityrouting-key-与-waiting-queue-重排"&gt;Priority、routing key 与 waiting queue 重排&lt;a class="anchor" href="#priorityrouting-key-%e4%b8%8e-waiting-queue-%e9%87%8d%e6%8e%92"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经解释了 batch 怎么形成、内存不够时怎样 retract、allocator 和 cache 怎样共同工作，但还缺一层更贴近“请求在真正进入 batch 之前怎样被排队重排”的逻辑：priority scheduling、routing key 亲和、FCFS、最长输出优先、随机化，以及 cache-aware policy 之间到底怎样组合。&lt;/p&gt;
+&lt;p&gt;如果不把这层讲出来，读者会知道 scheduler 最终拿到了一个 batch，却说不清 waiting queue 在这之前经历了哪些策略性重排。&lt;/p&gt;
+&lt;h2 id="为什么-waiting-queue-排序值得单独成章"&gt;为什么 waiting queue 排序值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-waiting-queue-%e6%8e%92%e5%ba%8f%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;schedule_policy.py&lt;/code&gt; 并不是一个边缘优化文件。它直接决定：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;waiting queue 先按什么标准排序&lt;/li&gt;
+&lt;li&gt;priority 是否参与排序&lt;/li&gt;
+&lt;li&gt;routing key 是否尝试与 running batch 保持亲和&lt;/li&gt;
+&lt;li&gt;cache-aware policy 在队列很大时是否切换策略&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这层逻辑虽然没有直接 forward 模型，但它显著改变了后续 batch 的形状与资源行为。&lt;/p&gt;
+&lt;h2 id="一张图请求从-waiting-queue-到-batch-之前会先被哪几层策略加工"&gt;一张图：请求从 waiting queue 到 batch 之前，会先被哪几层策略加工&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e4%bb%8e-waiting-queue-%e5%88%b0-batch-%e4%b9%8b%e5%89%8d%e4%bc%9a%e5%85%88%e8%a2%ab%e5%93%aa%e5%87%a0%e5%b1%82%e7%ad%96%e7%95%a5%e5%8a%a0%e5%b7%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 waiting queue 想成普通 FIFO 队列，但源码实际是“队列 + 多层重排策略”。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ WQ[&amp;#34;waiting queue&amp;#34;] --&amp;gt; Pri[&amp;#34;priority / FCFS&amp;#34;]
+ Pri --&amp;gt; Cache[&amp;#34;cache-aware policy&amp;#34;]
+ Cache --&amp;gt; Route[&amp;#34;routing-key affinity&amp;#34;]
+ Route --&amp;gt; Batch[&amp;#34;selected batch&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：batch 的形状不是只由请求到达顺序决定，而是由多层排序策略共同塑形。&lt;/p&gt;</description></item><item><title>4.8 Disaggregation 队列、bootstrap 与 transfer 阶段</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/disaggregation-queues-and-transfer-stages/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/disaggregation-queues-and-transfer-stages/</guid><description>&lt;h1 id="disaggregation-队列bootstrap-与-transfer-阶段"&gt;Disaggregation 队列、bootstrap 与 transfer 阶段&lt;a class="anchor" href="#disaggregation-%e9%98%9f%e5%88%97bootstrap-%e4%b8%8e-transfer-%e9%98%b6%e6%ae%b5"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节大多默认请求在单条本地 runtime 主线里排队、等待、forward、完成。但一旦进入 prefill/decode disaggregation，队列形状会明显变化：不再只是一个 &lt;code&gt;waiting_queue&lt;/code&gt;，而会出现 bootstrap queue、prealloc queue、transfer queue，甚至 retracted queue。没有这一章，调度与内存章节仍然会偏单机稳态，而覆盖不到分离式运行时的真正队列结构。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;scheduler.py&lt;/code&gt; 和 &lt;code&gt;req_time_stats.py&lt;/code&gt; 看，disaggregation 不是纯传输细节，而是会直接改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求进入哪个队列&lt;/li&gt;
+&lt;li&gt;哪些阶段被记录进时间线&lt;/li&gt;
+&lt;li&gt;queue time 如何拆解&lt;/li&gt;
+&lt;li&gt;transfer / bootstrap 是否成为新的瓶颈&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着它理应属于调度与内存主线，而不是只留在 disaggregation 实现目录里。&lt;/p&gt;
+&lt;h2 id="一张图disaggregation-模式下请求不再只经过一个-waiting-queue"&gt;一张图：disaggregation 模式下，请求不再只经过一个 waiting queue&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bedisaggregation-%e6%a8%a1%e5%bc%8f%e4%b8%8b%e8%af%b7%e6%b1%82%e4%b8%8d%e5%86%8d%e5%8f%aa%e7%bb%8f%e8%bf%87%e4%b8%80%e4%b8%aa-waiting-queue"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者脑中默认只有 &lt;code&gt;waiting_queue -&amp;gt; forward&lt;/code&gt;，但 disaggregation 会把中段拆成更多阶段。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;incoming req&amp;#34;] --&amp;gt; P0[&amp;#34;prefill bootstrap queue&amp;#34;]
+ P0 --&amp;gt; P1[&amp;#34;wait queue&amp;#34;]
+ P1 --&amp;gt; PF[&amp;#34;prefill forward&amp;#34;]
+ PF --&amp;gt; T[&amp;#34;transfer queue / KV transfer&amp;#34;]
+ T --&amp;gt; D0[&amp;#34;decode prealloc queue&amp;#34;]
+ D0 --&amp;gt; D1[&amp;#34;decode transfer queue&amp;#34;]
+ D1 --&amp;gt; DW[&amp;#34;decode waiting&amp;#34;]
+ DW --&amp;gt; DF[&amp;#34;decode forward&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：disaggregation 不是只在 forward 之后多一个传输动作，而是把整个排队结构改写成多段阶段链。&lt;/p&gt;</description></item></channel></rss>

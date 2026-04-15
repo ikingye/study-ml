@@ -194,4 +194,46 @@
  GM --&amp;gt; Key[&amp;#34;grammar_key selection&amp;#34;]
  Key --&amp;gt; Cache[&amp;#34;backend cache / future / cache hit&amp;#34;]
  Cache --&amp;gt; Obj[&amp;#34;BaseGrammarObject / InvalidGrammarObject&amp;#34;]
- Obj --&amp;gt; Decode[&amp;#34;generation path&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：约束不是直接进入 decode loop，而是先被 &lt;code&gt;GrammarManager&lt;/code&gt; 归档、缓存和调度。&lt;/p&gt;</description></item></channel></rss>
+ Obj --&amp;gt; Decode[&amp;#34;generation path&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：约束不是直接进入 decode loop，而是先被 &lt;code&gt;GrammarManager&lt;/code&gt; 归档、缓存和调度。&lt;/p&gt;</description></item><item><title>6.12 Grammar queue、ready 检查与 decode 前置等待</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-queue-and-decode-gating/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-queue-and-decode-gating/</guid><description>&lt;h1 id="grammar-queueready-检查与-decode-前置等待"&gt;Grammar queue、ready 检查与 decode 前置等待&lt;a class="anchor" href="#grammar-queueready-%e6%a3%80%e6%9f%a5%e4%b8%8e-decode-%e5%89%8d%e7%bd%ae%e7%ad%89%e5%be%85"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成章节已经讲了 grammar backend 自身怎样维护状态、&lt;code&gt;GrammarManager&lt;/code&gt; 怎样做预处理缓存与超时控制，但还差最后一层非常关键的 scheduler 结合点：当 grammar 对象还没 ready 时，请求到底停在哪里？ready 之后又怎样重新回到 waiting queue？换句话说，约束生成不是“编译完就算了”，它还会真实地改变请求在调度层里的等待方式。&lt;/p&gt;
+&lt;p&gt;这一章就是把这层 decode 前置等待讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层应该放在结构化生成章节"&gt;为什么这层应该放在结构化生成章节&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%ba%94%e8%af%a5%e6%94%be%e5%9c%a8%e7%bb%93%e6%9e%84%e5%8c%96%e7%94%9f%e6%88%90%e7%ab%a0%e8%8a%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为这里讨论的核心不是一般排队，而是“结构化约束会给请求增加一个额外的前置等待阶段”。这和普通 waiting queue 不是同一回事，它是 grammar 特有的进入门槛。&lt;/p&gt;
+&lt;p&gt;也正因为这样，它更适合写在结构化生成章节末端，而不是只在调度章节里一带而过。&lt;/p&gt;
+&lt;h2 id="一张图带-grammar-的请求在真正进入普通等待队列前还会多经过一层-queue"&gt;一张图：带 grammar 的请求在真正进入普通等待队列前，还会多经过一层 queue&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%b8%a6-grammar-%e7%9a%84%e8%af%b7%e6%b1%82%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5%e6%99%ae%e9%80%9a%e7%ad%89%e5%be%85%e9%98%9f%e5%88%97%e5%89%8d%e8%bf%98%e4%bc%9a%e5%a4%9a%e7%bb%8f%e8%bf%87%e4%b8%80%e5%b1%82-queue"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会以为 grammar 请求和普通请求的区别只发生在 decode 时，其实更早就已经分叉了。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;request with json_schema / regex / ebnf / structural_tag&amp;#34;] --&amp;gt; GM[&amp;#34;GrammarManager.process_req_with_grammar()&amp;#34;]
+ GM --&amp;gt; GQ[&amp;#34;grammar_queue&amp;#34;]
+ GQ --&amp;gt; Ready[&amp;#34;get_ready_grammar_requests()&amp;#34;]
+ Ready --&amp;gt; WQ[&amp;#34;waiting_queue&amp;#34;]
+ WQ --&amp;gt; Decode[&amp;#34;normal scheduler path&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：grammar 请求在成为普通 waiting request 之前，先要通过一层“约束就绪”检查。&lt;/p&gt;</description></item><item><title>6.13 response_format、tool constraint 与 SamplingParams 落地</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-format-to-sampling-params/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-format-to-sampling-params/</guid><description>&lt;h1 id="response_formattool-constraint-与-samplingparams-落地"&gt;response_format、tool constraint 与 SamplingParams 落地&lt;a class="anchor" href="#response_formattool-constraint-%e4%b8%8e-samplingparams-%e8%90%bd%e5%9c%b0"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成章节已经讲了 schema、tool parser、grammar backend、grammar manager 和 grammar queue，但还差最后一条非常关键的协议桥：一个 OpenAI-compatible request 里的 &lt;code&gt;response_format&lt;/code&gt;、&lt;code&gt;tool_choice&lt;/code&gt;、&lt;code&gt;parallel_tool_calls&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;ebnf&lt;/code&gt; 这些字段，到底怎样一步步落成 &lt;code&gt;SamplingParams&lt;/code&gt; 上真正会被 execution 消费的字段？&lt;/p&gt;
+&lt;p&gt;这一章专门解释这条“协议约束 -&amp;gt; 采样参数”桥。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你只读 &lt;code&gt;protocol.py&lt;/code&gt;，你会看到很多字段：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;response_format&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ebnf&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tool_choice&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;parallel_tool_calls&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;stop_regex&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果你只读 execution 或 grammar 章节，你又会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;json_schema&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;structural_tag&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ebnf&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;真正高价值的问题是：这些字段中间怎样转换、冲突时谁优先、tool-call constraint 与已有约束谁覆盖谁。没有这章，这条桥只能靠读者自己拼。&lt;/p&gt;
+&lt;h2 id="一张图协议层约束怎样落成真正的-samplingparams"&gt;一张图：协议层约束怎样落成真正的 &lt;code&gt;SamplingParams&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%8d%8f%e8%ae%ae%e5%b1%82%e7%ba%a6%e6%9d%9f%e6%80%8e%e6%a0%b7%e8%90%bd%e6%88%90%e7%9c%9f%e6%ad%a3%e7%9a%84-samplingparams"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者知道“response_format 会影响输出”，但不知道它是在哪一层真正被降成采样参数的。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;ChatCompletionRequest / CompletionRequest&amp;#34;] --&amp;gt; Conv[&amp;#34;to_sampling_params() / _convert_to_internal_request()&amp;#34;]
+ Conv --&amp;gt; SP[&amp;#34;SamplingParams fields&amp;#34;]
+ SP --&amp;gt; GM[&amp;#34;GrammarManager / grammar backend&amp;#34;]
+ GM --&amp;gt; Exec[&amp;#34;SamplingBatchInfo / sampler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：&lt;code&gt;response_format&lt;/code&gt; 并不是直接进 grammar backend，而是先被协议层压成统一采样参数。&lt;/p&gt;</description></item></channel></rss>

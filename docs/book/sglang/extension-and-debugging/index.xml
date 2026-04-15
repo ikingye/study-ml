@@ -260,4 +260,26 @@
  Req[&amp;#34;request with routing_key / routed_dp_rank&amp;#34;] --&amp;gt; DPC[&amp;#34;DataParallelController&amp;#34;]
  DPC --&amp;gt; SCH[&amp;#34;scheduler stats / load metrics&amp;#34;]
  SCH --&amp;gt; Loads[&amp;#34;GetLoadReq / GetLoadsReq -&amp;gt; /v1/loads&amp;#34;]
- Req --&amp;gt; Obs[&amp;#34;routing key metrics / active gauges&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：placement signal 不是某个单点 API 生成的，而是请求字段、调度层统计和控制面共同形成的。&lt;/p&gt;</description></item></channel></rss>
+ Req --&amp;gt; Obs[&amp;#34;routing key metrics / active gauges&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：placement signal 不是某个单点 API 生成的，而是请求字段、调度层统计和控制面共同形成的。&lt;/p&gt;</description></item><item><title>8.15 Disaggregation、transfer 与路由失衡的排障路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/disaggregation-routing-debug-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/disaggregation-routing-debug-workflow/</guid><description>&lt;h1 id="disaggregationtransfer-与路由失衡的排障路径"&gt;Disaggregation、transfer 与路由失衡的排障路径&lt;a class="anchor" href="#disaggregationtransfer-%e4%b8%8e%e8%b7%af%e7%94%b1%e5%a4%b1%e8%a1%a1%e7%9a%84%e6%8e%92%e9%9a%9c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试前面已经分别讲了 &lt;code&gt;/v1/loads&lt;/code&gt;、routing signal、watchdog、RequestStage 时间线和更深的 cache/storage backend 故障面，但还缺一条更接近现场的复合型工作流：当你怀疑问题和 disaggregation、transfer 或路由失衡一起缠在时，应该怎样把这些信号串起来，而不是在 controller、scheduler、transfer backend 和 metrics 之间来回跳。&lt;/p&gt;
+&lt;p&gt;这一章就是把这条复合型排障路径压出来。&lt;/p&gt;
+&lt;h2 id="为什么这类问题特别容易误判"&gt;为什么这类问题特别容易误判&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e7%b1%bb%e9%97%ae%e9%a2%98%e7%89%b9%e5%88%ab%e5%ae%b9%e6%98%93%e8%af%af%e5%88%a4"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它往往会同时表现成几种症状：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求被放错 DP rank&lt;/li&gt;
+&lt;li&gt;某些 bootstrap / transfer 队列积压&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;/v1/loads&lt;/code&gt; 看起来不均匀&lt;/li&gt;
+&lt;li&gt;请求时间线卡在 transfer 或 decode_prealloc&lt;/li&gt;
+&lt;li&gt;甚至表面上像普通延迟问题&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有明确工作流，维护者很容易各看一半证据，然后得出错误结论。&lt;/p&gt;
+&lt;h2 id="一张图这类问题要怎样把多层信号串起来"&gt;一张图：这类问题要怎样把多层信号串起来&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%b1%bb%e9%97%ae%e9%a2%98%e8%a6%81%e6%80%8e%e6%a0%b7%e6%8a%8a%e5%a4%9a%e5%b1%82%e4%bf%a1%e5%8f%b7%e4%b8%b2%e8%b5%b7%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会先看一个面板或者一段日志，但这类问题需要跨 controller、scheduler、RequestStage 和 transfer 状态一起看。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Place[&amp;#34;placement signal&amp;#34;] --&amp;gt; Loads[&amp;#34;/v1/loads&amp;#34;]
+ Loads --&amp;gt; Stage[&amp;#34;RequestStage timeline&amp;#34;]
+ Stage --&amp;gt; Queue[&amp;#34;bootstrap / prealloc / transfer queues&amp;#34;]
+ Queue --&amp;gt; Backend[&amp;#34;transfer backend / staging / mooncake&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这类问题不是单层问题，而是需要按层级逐步收敛。&lt;/p&gt;
+&lt;h2 id="第一步先看-placement-signal-是否已经不合理"&gt;第一步：先看 placement signal 是否已经不合理&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e6%ad%a5%e5%85%88%e7%9c%8b-placement-signal-%e6%98%af%e5%90%a6%e5%b7%b2%e7%bb%8f%e4%b8%8d%e5%90%88%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;先确认：&lt;/p&gt;</description></item></channel></rss>
