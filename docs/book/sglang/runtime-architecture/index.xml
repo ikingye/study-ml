@@ -390,4 +390,31 @@
  MP --&amp;gt; Groups[&amp;#34;world / tp / pp groups&amp;#34;]
  Groups --&amp;gt; Worker[&amp;#34;scheduler / tp_worker / runner&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：rank 身份只是静态标签，group 初始化才是把它变成可通信对象的那一步。&lt;/p&gt;
 &lt;h2 id="parallel_statepy-为什么是这条路径的主锚点"&gt;&lt;code&gt;parallel_state.py&lt;/code&gt; 为什么是这条路径的主锚点&lt;a class="anchor" href="#parallel_statepy-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e8%bf%99%e6%9d%a1%e8%b7%af%e5%be%84%e7%9a%84%e4%b8%bb%e9%94%9a%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这里最值得记住的几个入口是：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这里最值得记住的几个入口是：&lt;/p&gt;</description></item><item><title>3.17 warmup、权重就绪与 readiness 门</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/warmup-and-readiness-gates/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/warmup-and-readiness-gates/</guid><description>&lt;h1 id="warmup权重就绪与-readiness-门"&gt;warmup、权重就绪与 readiness 门&lt;a class="anchor" href="#warmup%e6%9d%83%e9%87%8d%e5%b0%b1%e7%bb%aa%e4%b8%8e-readiness-%e9%97%a8"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构章节已经解释了启动入口、进程装配、并行身份和分布式 group 初始化，但还有一层很关键的启动后语义没有单独展开：子进程都已经拉起来之后，系统什么时候才算“真的可以接流量”？这个问题在 SGLang 里并不是一句“HTTP 端口监听成功”就能回答。&lt;/p&gt;
+&lt;p&gt;真正的 readiness 还要穿过几道门：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;权重是否已经准备好&lt;/li&gt;
+&lt;li&gt;warmup 请求是否成功走通&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TokenizerManager.server_status&lt;/code&gt; 是否从 &lt;code&gt;Starting&lt;/code&gt; 切到 &lt;code&gt;Up&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;某些多节点场景下，当前节点是否只是等待 completion 的非零 rank&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把这条启动后门禁链讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多系统书会把启动写成“进程拉起来就算结束”，但真实生产系统不是这样。对 SGLang 而言，&lt;code&gt;Engine._launch_subprocesses(...)&lt;/code&gt; 解决的是“组件被装起来了”，而 &lt;code&gt;_wait_and_warmup(...)&lt;/code&gt;、&lt;code&gt;_execute_server_warmup(...)&lt;/code&gt; 和 &lt;code&gt;initial_weights_loaded&lt;/code&gt; 这些路径解决的是“组件已经被证明确实能跑了”。&lt;/p&gt;
+&lt;p&gt;如果不把这一层讲清楚，读者会混淆三件事：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;进程存在&lt;/li&gt;
+&lt;li&gt;端口可达&lt;/li&gt;
+&lt;li&gt;服务真正 ready&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这三者在实现上并不等价。&lt;/p&gt;
+&lt;h2 id="一张图readiness-不是单点而是一条门禁链"&gt;一张图：readiness 不是单点，而是一条门禁链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bereadiness-%e4%b8%8d%e6%98%af%e5%8d%95%e7%82%b9%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e9%97%a8%e7%a6%81%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 ready 理解成 HTTP server 已启动，但源码实际上把 ready 拆成了权重、warmup 和状态位三段。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Boot[&amp;#34;Engine._launch_subprocesses()&amp;#34;] --&amp;gt; WaitW[&amp;#34;wait_weights_ready ?&amp;#34;]
+ WaitW --&amp;gt; Warm[&amp;#34;execute_server_warmup()&amp;#34;]
+ Warm --&amp;gt; Status[&amp;#34;TokenizerManager.server_status = Up&amp;#34;]
+ Status --&amp;gt; Ready[&amp;#34;ready to serve traffic&amp;#34;]
+ Warm --&amp;gt; Unhealthy[&amp;#34;warmup failed -&amp;gt; UnHealthy / kill process tree&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：readiness 是一条时序化的门禁链，而不是一个布尔标志。&lt;/p&gt;</description></item></channel></rss>

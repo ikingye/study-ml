@@ -393,4 +393,35 @@
 &lt;li&gt;&lt;code&gt;ollama_serving&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;anthropic_serving&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这一步特别重要，因为它说明后面的路由并不直接实现逻辑，而是只是把请求转给一组已经装配好的 handler。也就是说，路由层更像调度表，而不是行为本体。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这一步特别重要，因为它说明后面的路由并不直接实现逻辑，而是只是把请求转给一组已经装配好的 handler。也就是说，路由层更像调度表，而不是行为本体。&lt;/p&gt;</description></item><item><title>7.19 读 launch_server.py：模式分叉怎样决定全书入口</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-launch-server-and-mode-switches/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-launch-server-and-mode-switches/</guid><description>&lt;h1 id="读-launch_serverpy模式分叉怎样决定全书入口"&gt;读 launch_server.py：模式分叉怎样决定全书入口&lt;a class="anchor" href="#%e8%af%bb-launch_serverpy%e6%a8%a1%e5%bc%8f%e5%88%86%e5%8f%89%e6%80%8e%e6%a0%b7%e5%86%b3%e5%ae%9a%e5%85%a8%e4%b9%a6%e5%85%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经覆盖了 &lt;code&gt;http_server.py&lt;/code&gt;、OpenAI entrypoints、&lt;code&gt;protocol.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt; 和 observability 源码树，但还有一个短小却特别关键的入口文件值得单独讲：&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;它的代码量不大，却决定了整本书最开始那条“从外到内”的阅读路径究竟会走向哪一种 runtime 人格：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;编码器分离式服务&lt;/li&gt;
+&lt;li&gt;gRPC 模式&lt;/li&gt;
+&lt;li&gt;Ray 模式&lt;/li&gt;
+&lt;li&gt;默认 HTTP + SRT 模式&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果你忽略这个入口文件，很容易把整本书都读成“默认 HTTP server 的说明书”，但上游源码实际上已经把多种启动人格放进同一个启动分叉里。&lt;/p&gt;
+&lt;h2 id="为什么短入口文件也值得技术书单独成章"&gt;为什么短入口文件也值得技术书单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e7%9f%ad%e5%85%a5%e5%8f%a3%e6%96%87%e4%bb%b6%e4%b9%9f%e5%80%bc%e5%be%97%e6%8a%80%e6%9c%af%e4%b9%a6%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这是计算机书里很常见的一种误判：读者会高估大文件、低估小入口。可是在复杂系统里，短入口文件往往承担的是“路由全局心智模型”的角色。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;launch_server.py&lt;/code&gt; 的价值不是实现细节多，而是它用非常少的分支告诉你：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些运行模式属于同一家族&lt;/li&gt;
+&lt;li&gt;哪些模式会走完全不同的入口文件&lt;/li&gt;
+&lt;li&gt;默认路径到底落到哪一套子系统&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从教学角度看，它像整本书的目录索引器。&lt;/p&gt;
+&lt;h2 id="一张图run_serverserver_args-怎样把系统送进不同人格"&gt;一张图：&lt;code&gt;run_server(server_args)&lt;/code&gt; 怎样把系统送进不同人格&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%berun_serverserver_args-%e6%80%8e%e6%a0%b7%e6%8a%8a%e7%b3%bb%e7%bb%9f%e9%80%81%e8%bf%9b%e4%b8%8d%e5%90%8c%e4%ba%ba%e6%a0%bc"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 &lt;code&gt;sglang serve&lt;/code&gt; 最终总会落到 &lt;code&gt;entrypoints/http_server.py&lt;/code&gt;，但源码并不是这样写的。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Args[&amp;#34;prepare_server_args(...)&amp;#34;] --&amp;gt; Run[&amp;#34;run_server(server_args)&amp;#34;]
+ Run --&amp;gt; Enc[&amp;#34;encoder_only ?&amp;#34;]
+ Enc --&amp;gt;|yes + grpc| EncGrpc[&amp;#34;disaggregation.encode_grpc_server.serve_grpc_encoder&amp;#34;]
+ Enc --&amp;gt;|yes + no grpc| EncHttp[&amp;#34;disaggregation.encode_server.launch_server&amp;#34;]
+ Run --&amp;gt;|no| Grpc[&amp;#34;grpc_mode ?&amp;#34;]
+ Grpc --&amp;gt;|yes| GrpcSrv[&amp;#34;entrypoints.grpc_server.serve_grpc&amp;#34;]
+ Grpc --&amp;gt;|no| Ray[&amp;#34;use_ray ?&amp;#34;]
+ Ray --&amp;gt;|yes| RaySrv[&amp;#34;ray.http_server.launch_server&amp;#34;]
+ Ray --&amp;gt;|no| Http[&amp;#34;entrypoints.http_server.launch_server&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：默认 HTTP 路径只是分叉树的一枝，而不是唯一现实。&lt;/p&gt;</description></item></channel></rss>

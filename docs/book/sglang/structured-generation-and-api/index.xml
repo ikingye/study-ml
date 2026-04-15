@@ -281,4 +281,42 @@
  Req[&amp;#34;ResponsesRequest + tools&amp;#34;] --&amp;gt; Server[&amp;#34;tool_server / MCPToolServer / DemoToolServer&amp;#34;]
  Server --&amp;gt; Session[&amp;#34;tool session(s)&amp;#34;]
  Session --&amp;gt; Ctx[&amp;#34;HarmonyContext / StreamingHarmonyContext&amp;#34;]
- Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：工具不是后处理附属物，而是会在请求开始前就进入上下文。&lt;/p&gt;</description></item></channel></rss>
+ Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：工具不是后处理附属物，而是会在请求开始前就进入上下文。&lt;/p&gt;</description></item><item><title>6.16 tool_choice、parallel_tool_calls 与约束降级</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</guid><description>&lt;h1 id="tool_choiceparallel_tool_calls-与约束降级"&gt;tool_choice、parallel_tool_calls 与约束降级&lt;a class="anchor" href="#tool_choiceparallel_tool_calls-%e4%b8%8e%e7%ba%a6%e6%9d%9f%e9%99%8d%e7%ba%a7"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成章节已经解释了 &lt;code&gt;response_format&lt;/code&gt;、grammar backend、tool parser、&lt;code&gt;SamplingParams&lt;/code&gt; 和 Responses 工作流，但还有一层非常工程化的细节值得单独成章：当调用方提供 &lt;code&gt;tools&lt;/code&gt; 以后，&lt;code&gt;tool_choice&lt;/code&gt; 和 &lt;code&gt;parallel_tool_calls&lt;/code&gt; 到底怎样改变请求的约束形状？如果同时又给了 &lt;code&gt;response_format&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt; 或 &lt;code&gt;ebnf&lt;/code&gt;，系统会怎样处理？&lt;/p&gt;
+&lt;p&gt;这不是协议边角料，而是结构化输出在真实工程里最容易踩坑的一层。&lt;/p&gt;
+&lt;p&gt;因为调用方真正关心的不是“系统理论上支持 tool call”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;我要求必须调用工具时，输出到底会被约束成什么样&lt;/li&gt;
+&lt;li&gt;我指定某个工具时，系统会不会只保留这一把工具&lt;/li&gt;
+&lt;li&gt;我允许并行工具调用时，约束 schema 怎样变化&lt;/li&gt;
+&lt;li&gt;如果我同时给了 schema 和 tool call，系统会怎样取舍&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="为什么这一层值得单独讲"&gt;为什么这一层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只看 &lt;code&gt;tools&lt;/code&gt; 字段，你很容易形成一个过度简化的心智模型：模型有工具列表，然后 parser 去解析输出，事情就结束了。实际不是这样。&lt;/p&gt;
+&lt;p&gt;在 &lt;code&gt;python/sglang/srt/entrypoints/openai/protocol.py&lt;/code&gt;、&lt;code&gt;serving_chat.py&lt;/code&gt; 和 &lt;code&gt;function_call_parser.py&lt;/code&gt; 之间，系统还做了三层决策：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;协议层先把默认 &lt;code&gt;tool_choice&lt;/code&gt; 补齐&lt;/li&gt;
+&lt;li&gt;serving 层按 &lt;code&gt;tool_choice&lt;/code&gt; 过滤工具集并生成 &lt;code&gt;tool_call_constraint&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;parser 再根据 detector 能力选择 &lt;code&gt;structural_tag&lt;/code&gt;、&lt;code&gt;json_schema&lt;/code&gt; 或不加额外约束&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明 tool call 不是单一开关，而是一条多级编译链。&lt;/p&gt;
+&lt;h2 id="一张图tools-怎样被编译成约束"&gt;一张图：&lt;code&gt;tools&lt;/code&gt; 怎样被编译成约束&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%betools-%e6%80%8e%e6%a0%b7%e8%a2%ab%e7%bc%96%e8%af%91%e6%88%90%e7%ba%a6%e6%9d%9f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;tool_choice&lt;/code&gt; 理解成“只影响 parser 后处理”，但它实际上会提前改变 sampling constraint。&lt;/p&gt;</description></item><item><title>6.17 Harmony built-in tools、tool session 与二段生成回路</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/harmony-built-in-tools-and-tool-sessions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/harmony-built-in-tools-and-tool-sessions/</guid><description>&lt;h1 id="harmony-built-in-toolstool-session-与二段生成回路"&gt;Harmony built-in tools、tool session 与二段生成回路&lt;a class="anchor" href="#harmony-built-in-toolstool-session-%e4%b8%8e%e4%ba%8c%e6%ae%b5%e7%94%9f%e6%88%90%e5%9b%9e%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成章节已经讲了普通 function calling、tool parser、Responses API 的 background 语义，以及 MCP tool server，但还有一层很容易让读者误以为“只是内建 demo 工具”的机制没有单独讲：当 &lt;code&gt;Responses API&lt;/code&gt; 进入 harmony 路径，并启用内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具时，系统不再是“一次生成完就结束”，而是会进入一条生成、调用工具、回填工具结果、再继续生成的二段甚至多段回路。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把这条 built-in tool 回路讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只把内建工具写成“支持浏览器和 Python”，整本书会漏掉一层很重要的工程事实：这些工具不是在 HTTP handler 外面随手包一层，而是通过 &lt;code&gt;ConversationContext&lt;/code&gt;、tool session 和 harmony message 结构真正进入生成回路。&lt;/p&gt;
+&lt;p&gt;换句话说，它们不是“外插插件”，而是 output loop 的一部分。&lt;/p&gt;
+&lt;h2 id="一张图built-in-tool-回路为什么不是单段生成"&gt;一张图：built-in tool 回路为什么不是单段生成&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bebuilt-in-tool-%e5%9b%9e%e8%b7%af%e4%b8%ba%e4%bb%80%e4%b9%88%e4%b8%8d%e6%98%af%e5%8d%95%e6%ae%b5%e7%94%9f%e6%88%90"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 tool 调用想成“模型输出一次 tool call，服务端同步执行后收工”，但 harmony 路径实际上是一个带上下文回填的循环。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Prompt[&amp;#34;engine prompt&amp;#34;] --&amp;gt; Gen1[&amp;#34;generate_request(...)&amp;#34;]
+ Gen1 --&amp;gt; Ctx[&amp;#34;HarmonyContext.append_output()&amp;#34;]
+ Ctx --&amp;gt; Need[&amp;#34;need_builtin_tool_call()?&amp;#34;]
+ Need --&amp;gt;|yes| Tool[&amp;#34;call_tool() / tool session&amp;#34;]
+ Tool --&amp;gt; Msg[&amp;#34;tool result message&amp;#34;]
+ Msg --&amp;gt; Render[&amp;#34;render_for_completion()&amp;#34;]
+ Render --&amp;gt; Gen2[&amp;#34;second generation pass&amp;#34;]
+ Need --&amp;gt;|no| Final[&amp;#34;final response&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：tool 调用不是结果后处理，而是下一轮生成的输入准备阶段。&lt;/p&gt;</description></item></channel></rss>

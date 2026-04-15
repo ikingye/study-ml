@@ -194,4 +194,24 @@
 &lt;/ul&gt;
 &lt;p&gt;这说明这三者不是后来随手出现的局部变量，而是 scheduler 对运行世界的长期状态表示。&lt;/p&gt;
 &lt;h2 id="get_next_batch_to_run-为什么是理解三态流转的最佳入口"&gt;&lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 为什么是理解三态流转的最佳入口&lt;a class="anchor" href="#get_next_batch_to_run-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e7%90%86%e8%a7%a3%e4%b8%89%e6%80%81%e6%b5%81%e8%bd%ac%e7%9a%84%e6%9c%80%e4%bd%b3%e5%85%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这段函数的最大价值，不只是“选下一个 batch”，而是把三态流转写得很清楚：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这段函数的最大价值，不只是“选下一个 batch”，而是把三态流转写得很清楚：&lt;/p&gt;</description></item><item><title>4.11 ReqToTokenPool、KV 索引表与释放生命周期</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/req-to-token-and-kv-index-lifecycle/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/req-to-token-and-kv-index-lifecycle/</guid><description>&lt;h1 id="reqtotokenpoolkv-索引表与释放生命周期"&gt;ReqToTokenPool、KV 索引表与释放生命周期&lt;a class="anchor" href="#reqtotokenpoolkv-%e7%b4%a2%e5%bc%95%e8%a1%a8%e4%b8%8e%e9%87%8a%e6%94%be%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经解释了 batch 怎样成形、allocator 怎样分配页、prefix cache 怎样复用，但还有一层非常关键的“账本逻辑”没有单独展开：请求在逻辑上是一串 token，在物理上是一组 KV 槽位，那么系统究竟用什么结构把这两者连起来，又在什么时候把这层映射回收掉？&lt;/p&gt;
+&lt;p&gt;这正是 &lt;code&gt;ReqToTokenPool&lt;/code&gt; 在解决的问题。&lt;/p&gt;
+&lt;p&gt;如果不把这一层单独讲清楚，读者会看到很多 allocator、page、cache node 和 &lt;code&gt;req_pool_idx&lt;/code&gt;，但很难建立一个稳定判断框架：某个请求当前到底占了哪些物理位置，这些位置在 extend、decode、speculative over-allocation、session 复用和释放时又会发生什么。&lt;/p&gt;
+&lt;h2 id="为什么-reqtotokenpool-值得单独成章"&gt;为什么 &lt;code&gt;ReqToTokenPool&lt;/code&gt; 值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-reqtotokenpool-%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt; 负责“哪里还有空闲 KV 槽位”，&lt;code&gt;RadixCache&lt;/code&gt; 负责“哪些前缀已经被缓存”，但这两者都不能直接回答“某个请求的第 N 个 token 现在映射到哪一个物理槽位”。这层桥正是 &lt;code&gt;ReqToTokenPool&lt;/code&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;行：请求槽位，也就是 &lt;code&gt;req_pool_idx&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;列：逻辑 token 位置&lt;/li&gt;
+&lt;li&gt;值：物理 KV index&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这不是一个可有可无的辅助表，而是调度层、cache 层和 attention backend 之间共同依赖的中介结构。&lt;code&gt;forward_batch.req_to_token_pool.req_to_token[...]&lt;/code&gt; 之所以会在不同 backend 里反复出现，就是因为执行层最终仍然要靠这张表把“序列位置”翻译成“真正的 KV 位置”。&lt;/p&gt;
+&lt;h2 id="一张图请求槽位怎样变成物理-kv-索引"&gt;一张图：请求槽位怎样变成物理 KV 索引&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e6%a7%bd%e4%bd%8d%e6%80%8e%e6%a0%b7%e5%8f%98%e6%88%90%e7%89%a9%e7%90%86-kv-%e7%b4%a2%e5%bc%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;ReqToTokenPool&lt;/code&gt; 误以为只是“请求 id 到缓存对象”的普通映射，但它其实是一张二维索引表。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;Req / req_pool_idx&amp;#34;] --&amp;gt; Table[&amp;#34;ReqToTokenPool.req_to_token[row, col]&amp;#34;]
+ Table --&amp;gt; KV[&amp;#34;physical KV indices&amp;#34;]
+ KV --&amp;gt; Pool[&amp;#34;TokenToKVPoolAllocator / KV pool&amp;#34;]
+ KV --&amp;gt; Cache[&amp;#34;RadixCache / SessionAwareCache&amp;#34;]
+ Table --&amp;gt; Attn[&amp;#34;attention backend reads page table&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;ReqToTokenPool&lt;/code&gt; 既服务分配，也服务执行；它不是只在 scheduler 里短暂存在。&lt;/p&gt;</description></item></channel></rss>
