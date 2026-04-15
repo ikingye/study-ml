@@ -260,4 +260,134 @@
  Mode --&amp;gt; Decode[&amp;#34;DECODE&amp;#34;]
  Null --&amp;gt; N1[&amp;#34;pdmux / pp / overlap / normal&amp;#34;]
  Prefill --&amp;gt; P1[&amp;#34;pp_disagg_prefill / overlap_disagg_prefill / normal_disagg_prefill&amp;#34;]
- Decode --&amp;gt; D1[&amp;#34;pp_disagg_decode / overlap_disagg_decode / normal_disagg_decode&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Scheduler&lt;/code&gt; 的主循环选择，是一棵正式的模式树，而不是零散的 if/else 补丁。&lt;/p&gt;</description></item></channel></rss>
+ Decode --&amp;gt; D1[&amp;#34;pp_disagg_decode / overlap_disagg_decode / normal_disagg_decode&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Scheduler&lt;/code&gt; 的主循环选择，是一棵正式的模式树，而不是零散的 if/else 补丁。&lt;/p&gt;</description></item><item><title>3.11 ServerArgs：把运行时选项编译成拓扑</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/server-args-as-topology-compiler/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/server-args-as-topology-compiler/</guid><description>&lt;h1 id="serverargs把运行时选项编译成拓扑"&gt;ServerArgs：把运行时选项编译成拓扑&lt;a class="anchor" href="#serverargs%e6%8a%8a%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9%e7%bc%96%e8%af%91%e6%88%90%e6%8b%93%e6%89%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经解释了 engine 装配、event loop 矩阵、typed IPC、DP controller 和热变更控制面，但还有一个非常值得单独讲的中心节点：&lt;code&gt;ServerArgs&lt;/code&gt;。很多读者会把它看成“命令行参数集合”，而从源码看，它实际上更像一个运行时拓扑编译器。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这层“配置如何变成系统形状”的逻辑讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么-serverargs-不是普通配置对象"&gt;为什么 &lt;code&gt;ServerArgs&lt;/code&gt; 不是普通配置对象&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-serverargs-%e4%b8%8d%e6%98%af%e6%99%ae%e9%80%9a%e9%85%8d%e7%bd%ae%e5%af%b9%e8%b1%a1"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;server_args.py&lt;/code&gt; 和 &lt;code&gt;engine.py::_set_envs_and_config(...)&lt;/code&gt; 看，&lt;code&gt;ServerArgs&lt;/code&gt; 至少承担三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;保存参数值。&lt;/li&gt;
+&lt;li&gt;在 &lt;code&gt;_handle_*&lt;/code&gt; / &lt;code&gt;check_server_args()&lt;/code&gt; 里做归一化和约束检查。&lt;/li&gt;
+&lt;li&gt;直接决定 runtime 要启动什么拓扑、允许哪些模式组合、禁止哪些组合。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;也就是说，它不是 passive config，而是 active topology compiler。&lt;/p&gt;
+&lt;h2 id="一张图从命令行参数到运行时人格中间隔着一次编译"&gt;一张图：从命令行参数到运行时人格，中间隔着一次“编译”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e%e5%91%bd%e4%bb%a4%e8%a1%8c%e5%8f%82%e6%95%b0%e5%88%b0%e8%bf%90%e8%a1%8c%e6%97%b6%e4%ba%ba%e6%a0%bc%e4%b8%ad%e9%97%b4%e9%9a%94%e7%9d%80%e4%b8%80%e6%ac%a1%e7%bc%96%e8%af%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认参数只是被下游模块各自读取，而不是先经历一次全局归一化和裁剪。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ CLI[&amp;#34;CLI / kwargs / config file&amp;#34;] --&amp;gt; Args[&amp;#34;ServerArgs&amp;#34;]
+ Args --&amp;gt; Normalize[&amp;#34;_handle_* / check_server_args()&amp;#34;]
+ Normalize --&amp;gt; Runtime[&amp;#34;engine / scheduler / workers / topology&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：参数不是原样流入运行时，而是先被“编译”成一个可运行的配置人格。&lt;/p&gt;
+&lt;h2 id="_handle_load_balance_method-已经说明配置会改变控制策略"&gt;&lt;code&gt;_handle_load_balance_method()&lt;/code&gt; 已经说明配置会改变控制策略&lt;a class="anchor" href="#_handle_load_balance_method-%e5%b7%b2%e7%bb%8f%e8%af%b4%e6%98%8e%e9%85%8d%e7%bd%ae%e4%bc%9a%e6%94%b9%e5%8f%98%e6%8e%a7%e5%88%b6%e7%ad%96%e7%95%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;ServerArgs&lt;/code&gt; 会在 &lt;code&gt;load_balance_method == &amp;quot;auto&amp;quot;&lt;/code&gt; 时，根据 &lt;code&gt;disaggregation_mode&lt;/code&gt; 等条件改写实际方法。这说明配置层不是简单存一个字符串，而是会把较高层意图“自动”编译成具体策略。&lt;/p&gt;</description></item><item><title>3.12 TpWorker、ModelRunner 与 draft worker 的边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/tp-worker-model-runner-and-draft-boundaries/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/tp-worker-model-runner-and-draft-boundaries/</guid><description>&lt;h1 id="tpworkermodelrunner-与-draft-worker-的边界"&gt;TpWorker、ModelRunner 与 draft worker 的边界&lt;a class="anchor" href="#tpworkermodelrunner-%e4%b8%8e-draft-worker-%e7%9a%84%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 scheduler 的模式树、typed IPC、data parallel controller 和配置编译层，但还有一个非常关键的执行边界没有单独讲：&lt;code&gt;Scheduler&lt;/code&gt; 自己并不直接 forward 模型，它是通过 &lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt;，以及在 speculative 场景下的 &lt;code&gt;draft_worker&lt;/code&gt; 来完成真正的执行。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这三个层的边界讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者在第一次读 &lt;code&gt;scheduler.py&lt;/code&gt; 时会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;self.tp_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.draft_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.model_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.tp_worker.model_runner&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层分工讲明白，就很容易把它们误读成重复包装。事实上它们承担的是不同粒度的职责：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Scheduler&lt;/code&gt; 负责调度和状态推进&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 负责 worker 级执行接口与资源拥有权&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 负责更接近 forward/sample/graph/backend 的执行细节&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;draft_worker&lt;/code&gt; 只在 speculative 路径下引入另一条执行人格&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图scheduler-并不是直接把-batch-丢给模型而是经过-worker--runner-边界"&gt;一张图：scheduler 并不是直接把 batch 丢给模型，而是经过 worker / runner 边界&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bescheduler-%e5%b9%b6%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e6%8a%8a-batch-%e4%b8%a2%e7%bb%99%e6%a8%a1%e5%9e%8b%e8%80%8c%e6%98%af%e7%bb%8f%e8%bf%87-worker--runner-%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人默认 &lt;code&gt;Scheduler -&amp;gt; ModelRunner&lt;/code&gt; 是直接关系，但中间实际上隔了一层 worker 边界。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Sch[&amp;#34;Scheduler&amp;#34;] --&amp;gt; TP[&amp;#34;TpModelWorker&amp;#34;]
+ TP --&amp;gt; MR[&amp;#34;ModelRunner&amp;#34;]
+ Sch --&amp;gt; Draft[&amp;#34;draft_worker (spec only)&amp;#34;]
+ Draft --&amp;gt; DMR[&amp;#34;draft ModelRunner&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：执行层不只是一个 &lt;code&gt;ModelRunner&lt;/code&gt;，而是存在 worker 边界和 speculative 分支边界。&lt;/p&gt;</description></item><item><title>3.13 ModelConfig、tokenizer 与 processor 的启动链</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-config-tokenizer-and-processor-bootstrap/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-config-tokenizer-and-processor-bootstrap/</guid><description>&lt;h1 id="modelconfigtokenizer-与-processor-的启动链"&gt;ModelConfig、tokenizer 与 processor 的启动链&lt;a class="anchor" href="#modelconfigtokenizer-%e4%b8%8e-processor-%e7%9a%84%e5%90%af%e5%8a%a8%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ServerArgs&lt;/code&gt; 如何把配置编译成系统人格，也讲了 &lt;code&gt;TemplateManager&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt; 和 &lt;code&gt;ModelRunner&lt;/code&gt; 的边界，但还有一条非常关键的启动链没有单独成章：模型配置、tokenizer、processor 和 multimodal processor 到底怎样被装配起来，以及这条链如何决定后面哪些能力真正可用。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这条启动链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多后续行为都直接依赖它：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;skip_tokenizer_init&lt;/code&gt; 是否允许文本输入&lt;/li&gt;
+&lt;li&gt;模型到底被识别成 generation / embedding / multimodal 哪一类&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;processor&lt;/code&gt; 是否存在&lt;/li&gt;
+&lt;li&gt;scheduler 侧是否能加载 multimodal processor 做 M-RoPE fallback&lt;/li&gt;
+&lt;li&gt;reasoning parser 是否能从 tokenizer 里得到 &lt;code&gt;think_end_id&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;换句话说，这不是“启动时顺手做的准备工作”，而是运行时能力边界的真正来源。&lt;/p&gt;
+&lt;h2 id="一张图模型启动链的真正顺序"&gt;一张图：模型启动链的真正顺序&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%a8%a1%e5%9e%8b%e5%90%af%e5%8a%a8%e9%93%be%e7%9a%84%e7%9c%9f%e6%ad%a3%e9%a1%ba%e5%ba%8f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把“加载模型”和“拿 tokenizer”想成平行动作，而实际上中间隔着 &lt;code&gt;ModelConfig&lt;/code&gt; 对系统人格的判定。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Args[&amp;#34;ServerArgs&amp;#34;] --&amp;gt; MC[&amp;#34;ModelConfig.from_server_args()&amp;#34;]
+ MC --&amp;gt; Kind[&amp;#34;generation / multimodal / encoder-decoder / local-attn&amp;#34;]
+ Kind --&amp;gt; Tok[&amp;#34;get_tokenizer() or get_processor()&amp;#34;]
+ Tok --&amp;gt; MM[&amp;#34;get_mm_processor() when needed&amp;#34;]
+ MM --&amp;gt; Runtime[&amp;#34;scheduler / template / execution path&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：&lt;code&gt;ModelConfig&lt;/code&gt; 是这条链的中心枢纽，而不是简单的模型元数据缓存。&lt;/p&gt;</description></item><item><title>3.14 rank 计算、并行维度与进程身份</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/rank-math-and-process-identity/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/rank-math-and-process-identity/</guid><description>&lt;h1 id="rank-计算并行维度与进程身份"&gt;rank 计算、并行维度与进程身份&lt;a class="anchor" href="#rank-%e8%ae%a1%e7%ae%97%e5%b9%b6%e8%a1%8c%e7%bb%b4%e5%ba%a6%e4%b8%8e%e8%bf%9b%e7%a8%8b%e8%ba%ab%e4%bb%bd"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;DataParallelController&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ServerArgs&lt;/code&gt; 和 event loop 矩阵，但还有一个很容易被忽略、同时又对多机/多并行维度阅读特别关键的问题：一个 scheduler 进程到底怎样知道自己是哪个 &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;PP&lt;/code&gt; / &lt;code&gt;ATTN_CP&lt;/code&gt; / &lt;code&gt;MOE_DP&lt;/code&gt; / &lt;code&gt;EP&lt;/code&gt; rank，它的进程名和日志前缀又为什么会长成现在这样？&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这层 rank 数学与进程身份生成讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为多并行维度系统最容易把读者搞糊涂的，不只是“有哪些 rank”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这些 rank 怎么算出来&lt;/li&gt;
+&lt;li&gt;某个 node 到底负责哪一段 &lt;code&gt;pp_rank_range&lt;/code&gt; 和 &lt;code&gt;tp_rank_range&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;日志里看到的 &lt;code&gt;PP&lt;/code&gt; / &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;EP&lt;/code&gt; 前缀是怎么来的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层讲清楚，后面多机日志和进程命名会很难读。&lt;/p&gt;
+&lt;h2 id="一张图从-node-维度到多种并行-rank是一层层展开的"&gt;一张图：从 node 维度到多种并行 rank，是一层层展开的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-node-%e7%bb%b4%e5%ba%a6%e5%88%b0%e5%a4%9a%e7%a7%8d%e5%b9%b6%e8%a1%8c-rank%e6%98%af%e4%b8%80%e5%b1%82%e5%b1%82%e5%b1%95%e5%bc%80%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：读者容易把 &lt;code&gt;node_rank&lt;/code&gt;、&lt;code&gt;tp_rank&lt;/code&gt;、&lt;code&gt;pp_rank&lt;/code&gt;、&lt;code&gt;attn_cp_rank&lt;/code&gt;、&lt;code&gt;moe_dp_rank&lt;/code&gt; 混成一锅。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Node[&amp;#34;node_rank&amp;#34;] --&amp;gt; Range[&amp;#34;pp_rank_range / tp_rank_range&amp;#34;]
+ Range --&amp;gt; TP[&amp;#34;tp_rank&amp;#34;]
+ TP --&amp;gt; Attn[&amp;#34;attn_cp_rank&amp;#34;]
+ TP --&amp;gt; MoeDP[&amp;#34;moe_dp_rank&amp;#34;]
+ TP --&amp;gt; MoeEP[&amp;#34;moe_ep_rank&amp;#34;]
+ Range --&amp;gt; PP[&amp;#34;pp_rank&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：很多并行维度并不是并列算出来的，而是在 node -&amp;gt; range -&amp;gt; tp_rank 这条链上继续拆细。&lt;/p&gt;</description></item><item><title>3.15 模型定义、执行壳与 backend 实现边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</guid><description>&lt;h1 id="模型定义执行壳与-backend-实现边界"&gt;模型定义、执行壳与 backend 实现边界&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e6%89%a7%e8%a1%8c%e5%a3%b3%e4%b8%8e-backend-%e5%ae%9e%e7%8e%b0%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ModelConfig&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt; 和并行 rank 身份，但还缺一层非常关键的边界：上游 &lt;code&gt;models/&lt;/code&gt; 目录里的模型定义、&lt;code&gt;layers/&lt;/code&gt; 目录里的后端实现，以及 &lt;code&gt;TpModelWorker / ModelRunner&lt;/code&gt; 这层执行壳到底是怎样互相咬合的。&lt;/p&gt;
+&lt;p&gt;如果不把这层讲出来，读者会知道“模型很多、backend 很多、runner 也很多”，却不清楚这些东西在架构上谁包谁、谁依赖谁。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;tp_worker.py&lt;/code&gt; 的初始化链可以看得很清楚：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先 &lt;code&gt;_init_model_config()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;再 &lt;code&gt;_init_model_runner()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;必要时再补 multi-layer eagle runners&lt;/li&gt;
+&lt;li&gt;再根据是否 multimodal 去拿 tokenizer / processor&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这说明模型定义与执行壳的关系并不是扁平的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;models/&lt;/code&gt; 提供模型级定义&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/&lt;/code&gt; 提供更底层的 attention、sampler、quantization、moe 等执行砖块&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 把这些砖块组装成真正可执行的 runtime 壳&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 再把它挂进分布式 worker 边界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图从模型定义到真正执行的层次关系"&gt;一张图：从模型定义到真正执行的层次关系&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e5%88%b0%e7%9c%9f%e6%ad%a3%e6%89%a7%e8%a1%8c%e7%9a%84%e5%b1%82%e6%ac%a1%e5%85%b3%e7%b3%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 想成两个平行目录，而忽略了它们要经过 &lt;code&gt;ModelRunner&lt;/code&gt; 这层执行壳才真正落地。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Models[&amp;#34;models/&amp;#34;] --&amp;gt; Runner[&amp;#34;ModelRunner&amp;#34;]
+ Layers[&amp;#34;layers/&amp;#34;] --&amp;gt; Runner
+ Runner --&amp;gt; Worker[&amp;#34;TpModelWorker / draft worker&amp;#34;]
+ Worker --&amp;gt; Scheduler[&amp;#34;Scheduler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：真正被 scheduler 操作的，不是裸模型定义，而是已经被执行壳包起来的 worker。&lt;/p&gt;</description></item><item><title>3.16 分布式 group 初始化与通信边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/distributed-group-initialization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/distributed-group-initialization/</guid><description>&lt;h1 id="分布式-group-初始化与通信边界"&gt;分布式 group 初始化与通信边界&lt;a class="anchor" href="#%e5%88%86%e5%b8%83%e5%bc%8f-group-%e5%88%9d%e5%a7%8b%e5%8c%96%e4%b8%8e%e9%80%9a%e4%bf%a1%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 rank 计算、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;DataParallelController&lt;/code&gt; 和 &lt;code&gt;ServerArgs&lt;/code&gt; 的人格编译，但还缺一层非常重要的“把这些并行意图真的落成通信组”的路径：distributed group 到底在哪里初始化？&lt;code&gt;TP&lt;/code&gt;、&lt;code&gt;PP&lt;/code&gt;、world group 这些对象什么时候真的变成 PyTorch 通信边界？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条分布式初始化链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多多机/多并行问题如果只看 rank 数学还是不够。你还需要知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;group 什么时候初始化&lt;/li&gt;
+&lt;li&gt;哪些组件会直接拿 &lt;code&gt;get_tp_group()&lt;/code&gt; / &lt;code&gt;get_pp_group()&lt;/code&gt; / &lt;code&gt;get_world_group()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;graph capture、通信融合、worker 初始化都怎样依赖这些 group&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这一层是“并行身份”进一步变成“通信现实”的桥。&lt;/p&gt;
+&lt;h2 id="一张图从-rank-身份到通信边界还要再过一层-distributed-init"&gt;一张图：从 rank 身份到通信边界，还要再过一层 distributed init&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-rank-%e8%ba%ab%e4%bb%bd%e5%88%b0%e9%80%9a%e4%bf%a1%e8%be%b9%e7%95%8c%e8%bf%98%e8%a6%81%e5%86%8d%e8%bf%87%e4%b8%80%e5%b1%82-distributed-init"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 rank 计算完就当作一切都到位，而实际上还要真的初始化 group。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Rank[&amp;#34;tp/pp/dp/ep identity&amp;#34;] --&amp;gt; Dist[&amp;#34;init_distributed_environment()&amp;#34;]
+ Dist --&amp;gt; MP[&amp;#34;initialize_model_parallel()&amp;#34;]
+ MP --&amp;gt; Groups[&amp;#34;world / tp / pp groups&amp;#34;]
+ Groups --&amp;gt; Worker[&amp;#34;scheduler / tp_worker / runner&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：rank 身份只是静态标签，group 初始化才是把它变成可通信对象的那一步。&lt;/p&gt;
+&lt;h2 id="parallel_statepy-为什么是这条路径的主锚点"&gt;&lt;code&gt;parallel_state.py&lt;/code&gt; 为什么是这条路径的主锚点&lt;a class="anchor" href="#parallel_statepy-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e8%bf%99%e6%9d%a1%e8%b7%af%e5%be%84%e7%9a%84%e4%b8%bb%e9%94%9a%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这里最值得记住的几个入口是：&lt;/p&gt;</description></item></channel></rss>

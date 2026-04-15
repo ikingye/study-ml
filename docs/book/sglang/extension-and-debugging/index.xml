@@ -282,4 +282,58 @@
  Stage --&amp;gt; Queue[&amp;#34;bootstrap / prealloc / transfer queues&amp;#34;]
  Queue --&amp;gt; Backend[&amp;#34;transfer backend / staging / mooncake&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这类问题不是单层问题，而是需要按层级逐步收敛。&lt;/p&gt;
 &lt;h2 id="第一步先看-placement-signal-是否已经不合理"&gt;第一步：先看 placement signal 是否已经不合理&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e6%ad%a5%e5%85%88%e7%9c%8b-placement-signal-%e6%98%af%e5%90%a6%e5%b7%b2%e7%bb%8f%e4%b8%8d%e5%90%88%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;先确认：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;先确认：&lt;/p&gt;</description></item><item><title>8.16 围绕单个 rid 串起证据链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/single-request-evidence-stitching/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/single-request-evidence-stitching/</guid><description>&lt;h1 id="围绕单个-rid-串起证据链"&gt;围绕单个 rid 串起证据链&lt;a class="anchor" href="#%e5%9b%b4%e7%bb%95%e5%8d%95%e4%b8%aa-rid-%e4%b8%b2%e8%b5%b7%e8%af%81%e6%8d%ae%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试这一节前面已经分别讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;RequestStage&lt;/code&gt; / &lt;code&gt;ReqTimeStats&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;request logger&lt;/li&gt;
+&lt;li&gt;request metrics exporter&lt;/li&gt;
+&lt;li&gt;crash dump / straggler&lt;/li&gt;
+&lt;li&gt;trace&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但维护者在现场排障时经常面对的并不是“某一类工具怎么用”，而是更具体的问题：我现在已经锁定一个 &lt;code&gt;rid&lt;/code&gt;，怎样把它在不同证据系统里的痕迹串起来，形成一条完整证据链？&lt;/p&gt;
+&lt;p&gt;这一章就是把这件事讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么单个-rid-视角特别重要"&gt;为什么单个 &lt;code&gt;rid&lt;/code&gt; 视角特别重要&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%8d%95%e4%b8%aa-rid-%e8%a7%86%e8%a7%92%e7%89%b9%e5%88%ab%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多最难的问题并不是系统整体坏了，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;某一条请求特别慢&lt;/li&gt;
+&lt;li&gt;某一条请求在结构化结果上异常&lt;/li&gt;
+&lt;li&gt;某一条请求在 transfer / queue / detokenize 边界上表现异常&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这种时候，如果你只能分别看 metrics、logger、trace、dump，而不能把它们对到同一个 request identity 上，排障效率会很低。&lt;/p&gt;
+&lt;h2 id="一张图单条请求的证据不在一个地方而在多条证据链上同时存在"&gt;一张图：单条请求的证据不在一个地方，而在多条证据链上同时存在&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%8d%95%e6%9d%a1%e8%af%b7%e6%b1%82%e7%9a%84%e8%af%81%e6%8d%ae%e4%b8%8d%e5%9c%a8%e4%b8%80%e4%b8%aa%e5%9c%b0%e6%96%b9%e8%80%8c%e5%9c%a8%e5%a4%9a%e6%9d%a1%e8%af%81%e6%8d%ae%e9%93%be%e4%b8%8a%e5%90%8c%e6%97%b6%e5%ad%98%e5%9c%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会默认“拿到 rid 就能在某个地方看到完整真相”，而真实系统更像多份局部证据的拼接。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ RID[&amp;#34;rid&amp;#34;] --&amp;gt; Stage[&amp;#34;ReqTimeStats / RequestStage&amp;#34;]
+ RID --&amp;gt; Log[&amp;#34;RequestLogger&amp;#34;]
+ RID --&amp;gt; Export[&amp;#34;request metrics exporter&amp;#34;]
+ RID --&amp;gt; Dump[&amp;#34;dump / crash dump / straggler&amp;#34;]
+ RID --&amp;gt; Trace[&amp;#34;trace / spans / events&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：单个请求的“完整故事”天然分布在多个证据系统里。&lt;/p&gt;</description></item><item><title>8.17 internal state、dumper_control 与 freeze_gc 控制路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/internal-state-and-low-level-controls/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/internal-state-and-low-level-controls/</guid><description>&lt;h1 id="internal-statedumper_control-与-freeze_gc-控制路径"&gt;internal state、dumper_control 与 freeze_gc 控制路径&lt;a class="anchor" href="#internal-statedumper_control-%e4%b8%8e-freeze_gc-%e6%8e%a7%e5%88%b6%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试部分前面已经讲了 logger、exporter、watchdog、loads、single-rid 证据链，但还缺一类更偏底层维护与实验性的控制能力：如果你要直接拉内部状态快照、控制 dumper、或者冻结 GC，这些路径是怎样进入系统的？它们应该被看成调试工具、控制面，还是危急情况下的手术刀？&lt;/p&gt;
+&lt;p&gt;这一章专门把这类低层控制路径收进主线。&lt;/p&gt;
+&lt;h2 id="为什么这层值得成章"&gt;为什么这层值得成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为这些能力虽然不属于日常用户路径，但对维护者和平台工程师很有价值：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;get_internal_state()&lt;/code&gt; / &lt;code&gt;set_internal_state()&lt;/code&gt; 提供更直接的内部视图与注入能力&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dumper_control()&lt;/code&gt; 控制更底层证据采集&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;freeze_gc()&lt;/code&gt; 影响运行时垃圾回收行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这类能力一旦存在，就说明系统作者已经把“深入观察和人工干预”当成正式维护需求，而不是临时加的 debug hack。&lt;/p&gt;
+&lt;h2 id="一张图这类低层控制不是从日志系统旁路进去而是走正式-communicator-控制面"&gt;一张图：这类低层控制不是从日志系统旁路进去，而是走正式 communicator 控制面&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%b1%bb%e4%bd%8e%e5%b1%82%e6%8e%a7%e5%88%b6%e4%b8%8d%e6%98%af%e4%bb%8e%e6%97%a5%e5%bf%97%e7%b3%bb%e7%bb%9f%e6%97%81%e8%b7%af%e8%bf%9b%e5%8e%bb%e8%80%8c%e6%98%af%e8%b5%b0%e6%ad%a3%e5%bc%8f-communicator-%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会以为这些低层控制是本地函数直调，而源码实际让它们走和其他控制请求一致的 manager 通道。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Tool[&amp;#34;maintainer control request&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager communicator&amp;#34;]
+ TM --&amp;gt; SCH[&amp;#34;Scheduler control handlers&amp;#34;]
+ SCH --&amp;gt; Dump[&amp;#34;dumper / internal state / freeze_gc&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这些命令不是偷偷直连某个对象，而是作为正式控制消息进入运行时。&lt;/p&gt;
+&lt;h2 id="tokenizermanager-这一侧提供了哪些入口"&gt;&lt;code&gt;TokenizerManager&lt;/code&gt; 这一侧提供了哪些入口&lt;a class="anchor" href="#tokenizermanager-%e8%bf%99%e4%b8%80%e4%be%a7%e6%8f%90%e4%be%9b%e4%ba%86%e5%93%aa%e4%ba%9b%e5%85%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt; 已经把这些能力显式暴露成 async 控制方法：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;get_internal_state()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;set_internal_state()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dumper_control()&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明对外控制面并不只有 flush/load/profile，也包括更偏内部观测的控制动作。&lt;/p&gt;
+&lt;h2 id="get_internal_state-为什么很有价值"&gt;&lt;code&gt;get_internal_state()&lt;/code&gt; 为什么很有价值&lt;a class="anchor" href="#get_internal_state-%e4%b8%ba%e4%bb%80%e4%b9%88%e5%be%88%e6%9c%89%e4%bb%b7%e5%80%bc"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;它会通过 communicator 发 &lt;code&gt;GetInternalStateReq()&lt;/code&gt;，然后收各 rank 返回的 &lt;code&gt;GetInternalStateReqOutput&lt;/code&gt;。这意味着内部状态快照不是本地线程里临时打印一下，而是可以跨 rank 正式收集。&lt;/p&gt;</description></item></channel></rss>

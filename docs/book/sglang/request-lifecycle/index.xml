@@ -168,4 +168,43 @@
 &lt;/ul&gt;
 &lt;p&gt;如果不把这层讲出来，request lifecycle 仍然会过于“只看 payload”，不够像真实系统。&lt;/p&gt;
 &lt;h2 id="一张图请求除了-payload还带着一串控制与观测信号一起流动"&gt;一张图：请求除了 payload，还带着一串控制与观测信号一起流动&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e9%99%a4%e4%ba%86-payload%e8%bf%98%e5%b8%a6%e7%9d%80%e4%b8%80%e4%b8%b2%e6%8e%a7%e5%88%b6%e4%b8%8e%e8%a7%82%e6%b5%8b%e4%bf%a1%e5%8f%b7%e4%b8%80%e8%b5%b7%e6%b5%81%e5%8a%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者默认只有 prompt / sampling params 会进入 runtime，但实际还有一整串 side-channel metadata 也在同行。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这张图解决的理解障碍是：很多读者默认只有 prompt / sampling params 会进入 runtime，但实际还有一整串 side-channel metadata 也在同行。&lt;/p&gt;</description></item><item><title>2.9 batch 请求、并行采样与回包 fan-out / fan-in</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/batch-requests-and-fanout/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/batch-requests-and-fanout/</guid><description>&lt;h1 id="batch-请求并行采样与回包-fan-out--fan-in"&gt;batch 请求、并行采样与回包 fan-out / fan-in&lt;a class="anchor" href="#batch-%e8%af%b7%e6%b1%82%e5%b9%b6%e8%a1%8c%e9%87%87%e6%a0%b7%e4%b8%8e%e5%9b%9e%e5%8c%85-fan-out--fan-in"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经讲了单请求主线、streaming 回包、多 worker、控制请求分叉和请求元数据传播，但还有一层很关键的真实行为没有单独展开：当用户提交的是一个 batch，或者同一条请求带 &lt;code&gt;parallel_sample_num &amp;gt; 1&lt;/code&gt;，系统到底怎样把一条表面请求扇出成多条内部 request，又怎样把它们重新收回来？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条 fan-out / fan-in 链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为一旦进入 batch / parallel sampling 场景，请求生命周期不再只是“一条 request 一路向前”：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内部会生成多个 &lt;code&gt;rid&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;会创建多个 &lt;code&gt;_wait_one_response(...)&lt;/code&gt; generator&lt;/li&gt;
+&lt;li&gt;streaming 模式下还要持续把多个内部结果按 index 重新交织回外部调用方&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层讲出来，整本书的 request lifecycle 仍然更偏单请求直线模型，不够像真实系统。&lt;/p&gt;
+&lt;h2 id="一张图一个-batch-请求是怎样在内部被扇出再在外部被收回的"&gt;一张图：一个 batch 请求是怎样在内部被扇出，再在外部被收回的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%80%e4%b8%aa-batch-%e8%af%b7%e6%b1%82%e6%98%af%e6%80%8e%e6%a0%b7%e5%9c%a8%e5%86%85%e9%83%a8%e8%a2%ab%e6%89%87%e5%87%ba%e5%86%8d%e5%9c%a8%e5%a4%96%e9%83%a8%e8%a2%ab%e6%94%b6%e5%9b%9e%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者默认 batch 请求只是“同一个函数多跑几次”，而源码实际已经为它建立了一套独立的 fan-out / fan-in 机制。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Batch[&amp;#34;batch request / parallel_sample_num&amp;#34;] --&amp;gt; Split[&amp;#34;tokenize / duplicate / assign rid&amp;#34;]
+ Split --&amp;gt; Gens[&amp;#34;_wait_one_response generators&amp;#34;]
+ Gens --&amp;gt; Runtime[&amp;#34;scheduler / detokenizer / outputs&amp;#34;]
+ Runtime --&amp;gt; Merge[&amp;#34;gather / index-based merge&amp;#34;]
+ Merge --&amp;gt; Client[&amp;#34;batch response / streaming chunks&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：batch 请求的复杂度主要不在 tokenization 本身，而在“内部请求如何分裂、外部结果如何重组”。&lt;/p&gt;</description></item><item><title>2.10 多模态输入、mm_processor 与 encoder 路径</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multimodal-inputs-and-encoder-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multimodal-inputs-and-encoder-paths/</guid><description>&lt;h1 id="多模态输入mm_processor-与-encoder-路径"&gt;多模态输入、mm_processor 与 encoder 路径&lt;a class="anchor" href="#%e5%a4%9a%e6%a8%a1%e6%80%81%e8%be%93%e5%85%a5mm_processor-%e4%b8%8e-encoder-%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经讲了输入规范化、batch fan-out、控制请求分叉和元数据传播，但仍然有一条非常值得单独展开的路径：当输入里真正带了 &lt;code&gt;image_data&lt;/code&gt;、&lt;code&gt;audio_data&lt;/code&gt;、&lt;code&gt;video_data&lt;/code&gt; 时，请求怎样从“普通文本请求”变成“需要 processor / mm_processor / encoder receiver 参与的多模态请求”？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条路径讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为多模态输入不是“在普通请求前面再多做一点预处理”那么简单。从 &lt;code&gt;TokenizerManager._tokenize_one_request(...)&lt;/code&gt;、&lt;code&gt;io_struct.py&lt;/code&gt; 和 &lt;code&gt;encode_receiver.py&lt;/code&gt; 看，它会真实改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;输入规范化方式&lt;/li&gt;
+&lt;li&gt;是否先由 &lt;code&gt;processor&lt;/code&gt; / &lt;code&gt;mm_processor&lt;/code&gt; 处理&lt;/li&gt;
+&lt;li&gt;是否要把一部分工作 dispatch 到 encoder 侧&lt;/li&gt;
+&lt;li&gt;scheduler 侧是否还要重新 materialize &lt;code&gt;MultimodalInputs&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它已经不是局部细节，而是 request lifecycle 的一条正式分支。&lt;/p&gt;
+&lt;h2 id="一张图多模态请求在真正进入-runtime-前多了一条-processorencoder-链"&gt;一张图：多模态请求在真正进入 runtime 前，多了一条 processor/encoder 链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a%e6%a8%a1%e6%80%81%e8%af%b7%e6%b1%82%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5-runtime-%e5%89%8d%e5%a4%9a%e4%ba%86%e4%b8%80%e6%9d%a1-processorencoder-%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认多模态只是“文本 tokenization 之前再转一下图像”，而源码实际已经长出了一条更完整的支路。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Input[&amp;#34;text + image/audio/video&amp;#34;] --&amp;gt; Tok[&amp;#34;TokenizerManager._tokenize_one_request()&amp;#34;]
+ Tok --&amp;gt; MM[&amp;#34;mm_processor / process_mm_data_async()&amp;#34;]
+ MM --&amp;gt; Enc[&amp;#34;optional encoder dispatch / mm_receiver&amp;#34;]
+ Enc --&amp;gt; Req[&amp;#34;tokenized request + mm_inputs&amp;#34;]
+ Req --&amp;gt; Scheduler[&amp;#34;scheduler / MultimodalInputs&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：多模态输入并不是只在 tokenizer 内部被吃掉，而是会带着额外状态继续进入 scheduler。&lt;/p&gt;</description></item></channel></rss>

@@ -114,7 +114,47 @@
 &lt;/ul&gt;
 &lt;p&gt;所以当你在阅读某个局部策略时，不要只问“它把队列排成什么样”，还要问“它会怎样改变缓存和执行的后果”。&lt;/p&gt;
 &lt;h2 id="不变量五输出不是-sample-结束时才突然出现"&gt;不变量五：输出不是 sample 结束时才突然出现&lt;a class="anchor" href="#%e4%b8%8d%e5%8f%98%e9%87%8f%e4%ba%94%e8%be%93%e5%87%ba%e4%b8%8d%e6%98%af-sample-%e7%bb%93%e6%9d%9f%e6%97%b6%e6%89%8d%e7%aa%81%e7%84%b6%e5%87%ba%e7%8e%b0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这也是整本书后半程反复回扣的一条线：&lt;/p&gt;</description></item><item><title>2.1 一次请求如何穿过 SGLang</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</guid><description>&lt;h1 id="一次请求如何穿过-sglang"&gt;一次请求如何穿过 SGLang&lt;a class="anchor" href="#%e4%b8%80%e6%ac%a1%e8%af%b7%e6%b1%82%e5%a6%82%e4%bd%95%e7%a9%bf%e8%bf%87-sglang"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这也是整本书后半程反复回扣的一条线：&lt;/p&gt;</description></item><item><title>1.5 按角色阅读：平台、推理与框架工程师的三条路径</title><link>https://kingye.me/study-ml/docs/book/sglang/overview/reading-tracks-by-role/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/overview/reading-tracks-by-role/</guid><description>&lt;h1 id="按角色阅读平台推理与框架工程师的三条路径"&gt;按角色阅读：平台、推理与框架工程师的三条路径&lt;a class="anchor" href="#%e6%8c%89%e8%a7%92%e8%89%b2%e9%98%85%e8%af%bb%e5%b9%b3%e5%8f%b0%e6%8e%a8%e7%90%86%e4%b8%8e%e6%a1%86%e6%9e%b6%e5%b7%a5%e7%a8%8b%e5%b8%88%e7%9a%84%e4%b8%89%e6%9d%a1%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;概览部分前面已经讲了范围、阅读地图、源码阅读方法和核心不变量，但一本更像大部头技术书的作品，通常还会再给读者一个更“可带走”的东西：不同角色的读者，应该沿着哪条路径读这本书，才能最快进入自己的问题域。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把整本书再压成三条角色化阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为这本书现在已经不薄了。随着章节越来越多，单纯给出章节顺序已经不够，读者还需要知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;如果我是平台工程师，我最该先抓哪几章&lt;/li&gt;
+&lt;li&gt;如果我是推理 / 性能工程师，我应该怎样避开前期噪声&lt;/li&gt;
+&lt;li&gt;如果我是框架 / 接口工程师，我应该怎样更快进入表面层与 parser 层&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这正是很多优秀技术书会在开篇额外给出的“角色化阅读图”。&lt;/p&gt;
+&lt;h2 id="一张图同一本书可以有三条不同的主阅读线"&gt;一张图：同一本书可以有三条不同的主阅读线&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%90%8c%e4%b8%80%e6%9c%ac%e4%b9%a6%e5%8f%af%e4%bb%a5%e6%9c%89%e4%b8%89%e6%9d%a1%e4%b8%8d%e5%90%8c%e7%9a%84%e4%b8%bb%e9%98%85%e8%af%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者看到大书时会默认只能从第一章线性读到最后一章，而真正高质量的技术书会让你按角色剪出不同主线。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ A[&amp;#34;平台工程师&amp;#34;] --&amp;gt; A1[&amp;#34;概览&amp;#34;]
+ A1 --&amp;gt; A2[&amp;#34;请求生命周期&amp;#34;]
+ A2 --&amp;gt; A3[&amp;#34;运行时架构&amp;#34;]
+ A3 --&amp;gt; A4[&amp;#34;调度与内存&amp;#34;]
+ A4 --&amp;gt; A5[&amp;#34;扩展与调试&amp;#34;]
+
+ B[&amp;#34;推理/性能工程师&amp;#34;] --&amp;gt; B1[&amp;#34;概览&amp;#34;]
+ B1 --&amp;gt; B2[&amp;#34;调度与内存&amp;#34;]
+ B2 --&amp;gt; B3[&amp;#34;执行模型&amp;#34;]
+ B3 --&amp;gt; B4[&amp;#34;代码导读&amp;#34;]
+ B4 --&amp;gt; B5[&amp;#34;扩展与调试&amp;#34;]
+
+ C[&amp;#34;框架/接口工程师&amp;#34;] --&amp;gt; C1[&amp;#34;概览&amp;#34;]
+ C1 --&amp;gt; C2[&amp;#34;请求生命周期&amp;#34;]
+ C2 --&amp;gt; C3[&amp;#34;结构化生成与 API&amp;#34;]
+ C3 --&amp;gt; C4[&amp;#34;代码导读&amp;#34;]
+ C4 --&amp;gt; C5[&amp;#34;扩展与调试&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：同一套主线可以按角色被重新切片，而不是只有唯一正确读法。&lt;/p&gt;
+&lt;h2 id="路线一平台工程师"&gt;路线一：平台工程师&lt;a class="anchor" href="#%e8%b7%af%e7%ba%bf%e4%b8%80%e5%b9%b3%e5%8f%b0%e5%b7%a5%e7%a8%8b%e5%b8%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你的核心问题是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务如何启动与编排&lt;/li&gt;
+&lt;li&gt;请求如何穿过各 manager&lt;/li&gt;
+&lt;li&gt;多 worker / 多 rank / 配置人格怎样影响系统&lt;/li&gt;
+&lt;li&gt;线上故障如何用系统级证据排查&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;那么更稳的顺序通常是：&lt;/p&gt;</description></item><item><title>2.1 一次请求如何穿过 SGLang</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/request-path/</guid><description>&lt;h1 id="一次请求如何穿过-sglang"&gt;一次请求如何穿过 SGLang&lt;a class="anchor" href="#%e4%b8%80%e6%ac%a1%e8%af%b7%e6%b1%82%e5%a6%82%e4%bd%95%e7%a9%bf%e8%bf%87-sglang"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章解决的是“请求主链路在哪里开始，又在哪里发生关键 handoff”。如果只从零散模块出发阅读源码，你会看到 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;grpc_server.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;tokenizer_manager.py&lt;/code&gt; 这些名字，却不知道它们是按什么顺序被接上的。生命周期章节的任务，就是先把这条主线画出来。&lt;/p&gt;
 &lt;p&gt;第一版在这里刻意控制范围。它会讲清入口、模式分支、进入运行时的 handoff，以及后续要去哪几类模块找实现；但不会在这一章里深入 sampling、speculative decoding 或 &lt;code&gt;KV cache&lt;/code&gt; 的局部机制。那些问题会留给后面的执行模型和调度与内存章节。&lt;/p&gt;
@@ -284,7 +324,46 @@
 &lt;/ul&gt;
 &lt;p&gt;如果不把这层讲出来，request lifecycle 仍然会过于“只看 payload”，不够像真实系统。&lt;/p&gt;
 &lt;h2 id="一张图请求除了-payload还带着一串控制与观测信号一起流动"&gt;一张图：请求除了 payload，还带着一串控制与观测信号一起流动&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e9%99%a4%e4%ba%86-payload%e8%bf%98%e5%b8%a6%e7%9d%80%e4%b8%80%e4%b8%b2%e6%8e%a7%e5%88%b6%e4%b8%8e%e8%a7%82%e6%b5%8b%e4%bf%a1%e5%8f%b7%e4%b8%80%e8%b5%b7%e6%b5%81%e5%8a%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者默认只有 prompt / sampling params 会进入 runtime，但实际还有一整串 side-channel metadata 也在同行。&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;关注项目&lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者默认只有 prompt / sampling params 会进入 runtime，但实际还有一整串 side-channel metadata 也在同行。&lt;/p&gt;</description></item><item><title>2.9 batch 请求、并行采样与回包 fan-out / fan-in</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/batch-requests-and-fanout/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/batch-requests-and-fanout/</guid><description>&lt;h1 id="batch-请求并行采样与回包-fan-out--fan-in"&gt;batch 请求、并行采样与回包 fan-out / fan-in&lt;a class="anchor" href="#batch-%e8%af%b7%e6%b1%82%e5%b9%b6%e8%a1%8c%e9%87%87%e6%a0%b7%e4%b8%8e%e5%9b%9e%e5%8c%85-fan-out--fan-in"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经讲了单请求主线、streaming 回包、多 worker、控制请求分叉和请求元数据传播，但还有一层很关键的真实行为没有单独展开：当用户提交的是一个 batch，或者同一条请求带 &lt;code&gt;parallel_sample_num &amp;gt; 1&lt;/code&gt;，系统到底怎样把一条表面请求扇出成多条内部 request，又怎样把它们重新收回来？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条 fan-out / fan-in 链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为一旦进入 batch / parallel sampling 场景，请求生命周期不再只是“一条 request 一路向前”：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;内部会生成多个 &lt;code&gt;rid&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;会创建多个 &lt;code&gt;_wait_one_response(...)&lt;/code&gt; generator&lt;/li&gt;
+&lt;li&gt;streaming 模式下还要持续把多个内部结果按 index 重新交织回外部调用方&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层讲出来，整本书的 request lifecycle 仍然更偏单请求直线模型，不够像真实系统。&lt;/p&gt;
+&lt;h2 id="一张图一个-batch-请求是怎样在内部被扇出再在外部被收回的"&gt;一张图：一个 batch 请求是怎样在内部被扇出，再在外部被收回的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%80%e4%b8%aa-batch-%e8%af%b7%e6%b1%82%e6%98%af%e6%80%8e%e6%a0%b7%e5%9c%a8%e5%86%85%e9%83%a8%e8%a2%ab%e6%89%87%e5%87%ba%e5%86%8d%e5%9c%a8%e5%a4%96%e9%83%a8%e8%a2%ab%e6%94%b6%e5%9b%9e%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者默认 batch 请求只是“同一个函数多跑几次”，而源码实际已经为它建立了一套独立的 fan-out / fan-in 机制。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Batch[&amp;#34;batch request / parallel_sample_num&amp;#34;] --&amp;gt; Split[&amp;#34;tokenize / duplicate / assign rid&amp;#34;]
+ Split --&amp;gt; Gens[&amp;#34;_wait_one_response generators&amp;#34;]
+ Gens --&amp;gt; Runtime[&amp;#34;scheduler / detokenizer / outputs&amp;#34;]
+ Runtime --&amp;gt; Merge[&amp;#34;gather / index-based merge&amp;#34;]
+ Merge --&amp;gt; Client[&amp;#34;batch response / streaming chunks&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：batch 请求的复杂度主要不在 tokenization 本身，而在“内部请求如何分裂、外部结果如何重组”。&lt;/p&gt;</description></item><item><title>2.10 多模态输入、mm_processor 与 encoder 路径</title><link>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multimodal-inputs-and-encoder-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/request-lifecycle/multimodal-inputs-and-encoder-paths/</guid><description>&lt;h1 id="多模态输入mm_processor-与-encoder-路径"&gt;多模态输入、mm_processor 与 encoder 路径&lt;a class="anchor" href="#%e5%a4%9a%e6%a8%a1%e6%80%81%e8%be%93%e5%85%a5mm_processor-%e4%b8%8e-encoder-%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经讲了输入规范化、batch fan-out、控制请求分叉和元数据传播，但仍然有一条非常值得单独展开的路径：当输入里真正带了 &lt;code&gt;image_data&lt;/code&gt;、&lt;code&gt;audio_data&lt;/code&gt;、&lt;code&gt;video_data&lt;/code&gt; 时，请求怎样从“普通文本请求”变成“需要 processor / mm_processor / encoder receiver 参与的多模态请求”？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条路径讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为多模态输入不是“在普通请求前面再多做一点预处理”那么简单。从 &lt;code&gt;TokenizerManager._tokenize_one_request(...)&lt;/code&gt;、&lt;code&gt;io_struct.py&lt;/code&gt; 和 &lt;code&gt;encode_receiver.py&lt;/code&gt; 看，它会真实改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;输入规范化方式&lt;/li&gt;
+&lt;li&gt;是否先由 &lt;code&gt;processor&lt;/code&gt; / &lt;code&gt;mm_processor&lt;/code&gt; 处理&lt;/li&gt;
+&lt;li&gt;是否要把一部分工作 dispatch 到 encoder 侧&lt;/li&gt;
+&lt;li&gt;scheduler 侧是否还要重新 materialize &lt;code&gt;MultimodalInputs&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它已经不是局部细节，而是 request lifecycle 的一条正式分支。&lt;/p&gt;
+&lt;h2 id="一张图多模态请求在真正进入-runtime-前多了一条-processorencoder-链"&gt;一张图：多模态请求在真正进入 runtime 前，多了一条 processor/encoder 链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a%e6%a8%a1%e6%80%81%e8%af%b7%e6%b1%82%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5-runtime-%e5%89%8d%e5%a4%9a%e4%ba%86%e4%b8%80%e6%9d%a1-processorencoder-%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认多模态只是“文本 tokenization 之前再转一下图像”，而源码实际已经长出了一条更完整的支路。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Input[&amp;#34;text + image/audio/video&amp;#34;] --&amp;gt; Tok[&amp;#34;TokenizerManager._tokenize_one_request()&amp;#34;]
+ Tok --&amp;gt; MM[&amp;#34;mm_processor / process_mm_data_async()&amp;#34;]
+ MM --&amp;gt; Enc[&amp;#34;optional encoder dispatch / mm_receiver&amp;#34;]
+ Enc --&amp;gt; Req[&amp;#34;tokenized request + mm_inputs&amp;#34;]
+ Req --&amp;gt; Scheduler[&amp;#34;scheduler / MultimodalInputs&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：多模态输入并不是只在 tokenizer 内部被吃掉，而是会带着额外状态继续进入 scheduler。&lt;/p&gt;</description></item><item><title>4.3 关注项目</title><link>https://kingye.me/study-ml/docs/appendix/attention/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/appendix/attention/</guid><description>&lt;h1 id="关注项目"&gt;关注项目&lt;a class="anchor" href="#%e5%85%b3%e6%b3%a8%e9%a1%b9%e7%9b%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="机器学习"&gt;机器学习&lt;a class="anchor" href="#%e6%9c%ba%e5%99%a8%e5%ad%a6%e4%b9%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;h3 id="scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;&lt;a href="https://github.com/scikit-learn/scikit-learn"&gt;scikit-learn/scikit-learn&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/scikit-learn/scikit-learn.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/languages/top/scikit-learn/scikit-learn.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/scikit-learn/scikit-learn.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/scikit-learn/scikit-learn.svg" alt="Last commit" /&gt;&lt;a class="anchor" href="#scikit-learnscikit-learn-github-stars-language-last-tag-last-commit"&gt;#&lt;/a&gt;&lt;/h3&gt;
 &lt;p&gt;scikit-learn: machine learning in Python &lt;a href="https://scikit-learn.org"&gt;https://scikit-learn.org&lt;/a&gt;&lt;/p&gt;
@@ -837,7 +916,26 @@
  Mode --&amp;gt; Decode[&amp;#34;DECODE&amp;#34;]
  Null --&amp;gt; N1[&amp;#34;pdmux / pp / overlap / normal&amp;#34;]
  Prefill --&amp;gt; P1[&amp;#34;pp_disagg_prefill / overlap_disagg_prefill / normal_disagg_prefill&amp;#34;]
- Decode --&amp;gt; D1[&amp;#34;pp_disagg_decode / overlap_disagg_decode / normal_disagg_decode&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Scheduler&lt;/code&gt; 的主循环选择，是一棵正式的模式树，而不是零散的 if/else 补丁。&lt;/p&gt;</description></item><item><title>4.1 Scheduler、批次与 KV Cache</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</guid><description>&lt;h1 id="scheduler批次与-kv-cache"&gt;Scheduler、批次与 KV Cache&lt;a class="anchor" href="#scheduler%e6%89%b9%e6%ac%a1%e4%b8%8e-kv-cache"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Decode --&amp;gt; D1[&amp;#34;pp_disagg_decode / overlap_disagg_decode / normal_disagg_decode&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Scheduler&lt;/code&gt; 的主循环选择，是一棵正式的模式树，而不是零散的 if/else 补丁。&lt;/p&gt;</description></item><item><title>3.11 ServerArgs：把运行时选项编译成拓扑</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/server-args-as-topology-compiler/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/server-args-as-topology-compiler/</guid><description>&lt;h1 id="serverargs把运行时选项编译成拓扑"&gt;ServerArgs：把运行时选项编译成拓扑&lt;a class="anchor" href="#serverargs%e6%8a%8a%e8%bf%90%e8%a1%8c%e6%97%b6%e9%80%89%e9%a1%b9%e7%bc%96%e8%af%91%e6%88%90%e6%8b%93%e6%89%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经解释了 engine 装配、event loop 矩阵、typed IPC、DP controller 和热变更控制面，但还有一个非常值得单独讲的中心节点：&lt;code&gt;ServerArgs&lt;/code&gt;。很多读者会把它看成“命令行参数集合”，而从源码看，它实际上更像一个运行时拓扑编译器。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这层“配置如何变成系统形状”的逻辑讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么-serverargs-不是普通配置对象"&gt;为什么 &lt;code&gt;ServerArgs&lt;/code&gt; 不是普通配置对象&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-serverargs-%e4%b8%8d%e6%98%af%e6%99%ae%e9%80%9a%e9%85%8d%e7%bd%ae%e5%af%b9%e8%b1%a1"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;server_args.py&lt;/code&gt; 和 &lt;code&gt;engine.py::_set_envs_and_config(...)&lt;/code&gt; 看，&lt;code&gt;ServerArgs&lt;/code&gt; 至少承担三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;保存参数值。&lt;/li&gt;
+&lt;li&gt;在 &lt;code&gt;_handle_*&lt;/code&gt; / &lt;code&gt;check_server_args()&lt;/code&gt; 里做归一化和约束检查。&lt;/li&gt;
+&lt;li&gt;直接决定 runtime 要启动什么拓扑、允许哪些模式组合、禁止哪些组合。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;也就是说，它不是 passive config，而是 active topology compiler。&lt;/p&gt;
+&lt;h2 id="一张图从命令行参数到运行时人格中间隔着一次编译"&gt;一张图：从命令行参数到运行时人格，中间隔着一次“编译”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e%e5%91%bd%e4%bb%a4%e8%a1%8c%e5%8f%82%e6%95%b0%e5%88%b0%e8%bf%90%e8%a1%8c%e6%97%b6%e4%ba%ba%e6%a0%bc%e4%b8%ad%e9%97%b4%e9%9a%94%e7%9d%80%e4%b8%80%e6%ac%a1%e7%bc%96%e8%af%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认参数只是被下游模块各自读取，而不是先经历一次全局归一化和裁剪。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ CLI[&amp;#34;CLI / kwargs / config file&amp;#34;] --&amp;gt; Args[&amp;#34;ServerArgs&amp;#34;]
+ Args --&amp;gt; Normalize[&amp;#34;_handle_* / check_server_args()&amp;#34;]
+ Normalize --&amp;gt; Runtime[&amp;#34;engine / scheduler / workers / topology&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：参数不是原样流入运行时，而是先被“编译”成一个可运行的配置人格。&lt;/p&gt;
+&lt;h2 id="_handle_load_balance_method-已经说明配置会改变控制策略"&gt;&lt;code&gt;_handle_load_balance_method()&lt;/code&gt; 已经说明配置会改变控制策略&lt;a class="anchor" href="#_handle_load_balance_method-%e5%b7%b2%e7%bb%8f%e8%af%b4%e6%98%8e%e9%85%8d%e7%bd%ae%e4%bc%9a%e6%94%b9%e5%8f%98%e6%8e%a7%e5%88%b6%e7%ad%96%e7%95%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;ServerArgs&lt;/code&gt; 会在 &lt;code&gt;load_balance_method == &amp;quot;auto&amp;quot;&lt;/code&gt; 时，根据 &lt;code&gt;disaggregation_mode&lt;/code&gt; 等条件改写实际方法。这说明配置层不是简单存一个字符串，而是会把较高层意图“自动”编译成具体策略。&lt;/p&gt;</description></item><item><title>4.1 Scheduler、批次与 KV Cache</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/</guid><description>&lt;h1 id="scheduler批次与-kv-cache"&gt;Scheduler、批次与 KV Cache&lt;a class="anchor" href="#scheduler%e6%89%b9%e6%ac%a1%e4%b8%8e-kv-cache"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章解决的不是“请求从哪进来”，而是“请求已经进来之后，系统怎样决定谁先跑、谁继续跑，以及这些请求占用的 &lt;code&gt;KV cache&lt;/code&gt; 怎样被映射、复用和回收”。如果没有这层理解，你读 &lt;code&gt;scheduler.py&lt;/code&gt; 时会只看到大量条件分支；读 &lt;code&gt;memory_pool.py&lt;/code&gt; 时会只看到张量分配；两边都看了，仍然不知道它们为什么必须一起工作。&lt;/p&gt;
 &lt;p&gt;这里最值得先抓住的事实，是 &lt;code&gt;python/sglang/srt/managers/schedule_batch.py&lt;/code&gt; 文件头写出的那条数据流：&lt;code&gt;ScheduleBatch -&amp;gt; ModelWorkerBatch -&amp;gt; ForwardBatch&lt;/code&gt;。这条注释说明调度阶段并不是直接操作 GPU forward 所需的最低层张量，而是先构造一个更高层的 batch 表示，再逐步降到执行层。调度与内存的配合，也正是围绕这条转换链组织的。&lt;/p&gt;
@@ -845,7 +943,32 @@
 &lt;p&gt;&lt;code&gt;python/sglang/srt/managers/scheduler.py&lt;/code&gt; 里的 &lt;code&gt;Scheduler&lt;/code&gt; 初始化时会建立等待队列、&lt;code&gt;running_batch&lt;/code&gt;、&lt;code&gt;last_batch&lt;/code&gt;、&lt;code&gt;tree_cache&lt;/code&gt;、&lt;code&gt;req_to_token_pool&lt;/code&gt; 等状态。它不是简单地从队列里拿一个请求就调用模型，而是持续维护“现在已经在跑什么、下一轮还能塞什么、哪些请求应该进入 prefill、哪些请求应该继续 decode”。&lt;/p&gt;
 &lt;p&gt;&lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 很适合当作阅读入口。这个方法先处理 timeout、过滤完成请求、把上一轮 prefill batch 合并进 &lt;code&gt;running_batch&lt;/code&gt;，然后决定本轮是取新的 prefill batch，还是推进已有 decode batch。也就是说，调度器真正管理的是 batch 生命周期，而不是单个 request 生命周期。&lt;/p&gt;
 &lt;p&gt;继续往下看 &lt;code&gt;get_new_batch_prefill()&lt;/code&gt; 和 &lt;code&gt;_get_new_batch_prefill_raw()&lt;/code&gt;，你会看到 &lt;code&gt;PrefillAdder&lt;/code&gt; 被用来在 token 预算、batch 大小、LoRA 约束、priority scheduling 与 chunked prefill 之间做折中。这里的重点不是把每个条件背下来，而是理解：SGLang 把“能不能接新请求”建模成一次 batch 构造问题，而不是某个全局开关。&lt;/p&gt;
-&lt;p&gt;这部分如果只靠文字，很容易把 &lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt; 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。&lt;/p&gt;</description></item><item><title>4.2 前缀复用、回收与退化路径</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</guid><description>&lt;h1 id="前缀复用回收与退化路径"&gt;前缀复用、回收与退化路径&lt;a class="anchor" href="#%e5%89%8d%e7%bc%80%e5%a4%8d%e7%94%a8%e5%9b%9e%e6%94%b6%e4%b8%8e%e9%80%80%e5%8c%96%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这部分如果只靠文字，很容易把 &lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;ScheduleBatch&lt;/code&gt; 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。&lt;/p&gt;</description></item><item><title>3.12 TpWorker、ModelRunner 与 draft worker 的边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/tp-worker-model-runner-and-draft-boundaries/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/tp-worker-model-runner-and-draft-boundaries/</guid><description>&lt;h1 id="tpworkermodelrunner-与-draft-worker-的边界"&gt;TpWorker、ModelRunner 与 draft worker 的边界&lt;a class="anchor" href="#tpworkermodelrunner-%e4%b8%8e-draft-worker-%e7%9a%84%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 scheduler 的模式树、typed IPC、data parallel controller 和配置编译层，但还有一个非常关键的执行边界没有单独讲：&lt;code&gt;Scheduler&lt;/code&gt; 自己并不直接 forward 模型，它是通过 &lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt;，以及在 speculative 场景下的 &lt;code&gt;draft_worker&lt;/code&gt; 来完成真正的执行。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这三个层的边界讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者在第一次读 &lt;code&gt;scheduler.py&lt;/code&gt; 时会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;self.tp_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.draft_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.model_worker&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.tp_worker.model_runner&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层分工讲明白，就很容易把它们误读成重复包装。事实上它们承担的是不同粒度的职责：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Scheduler&lt;/code&gt; 负责调度和状态推进&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 负责 worker 级执行接口与资源拥有权&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 负责更接近 forward/sample/graph/backend 的执行细节&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;draft_worker&lt;/code&gt; 只在 speculative 路径下引入另一条执行人格&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图scheduler-并不是直接把-batch-丢给模型而是经过-worker--runner-边界"&gt;一张图：scheduler 并不是直接把 batch 丢给模型，而是经过 worker / runner 边界&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bescheduler-%e5%b9%b6%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e6%8a%8a-batch-%e4%b8%a2%e7%bb%99%e6%a8%a1%e5%9e%8b%e8%80%8c%e6%98%af%e7%bb%8f%e8%bf%87-worker--runner-%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人默认 &lt;code&gt;Scheduler -&amp;gt; ModelRunner&lt;/code&gt; 是直接关系，但中间实际上隔了一层 worker 边界。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Sch[&amp;#34;Scheduler&amp;#34;] --&amp;gt; TP[&amp;#34;TpModelWorker&amp;#34;]
+ TP --&amp;gt; MR[&amp;#34;ModelRunner&amp;#34;]
+ Sch --&amp;gt; Draft[&amp;#34;draft_worker (spec only)&amp;#34;]
+ Draft --&amp;gt; DMR[&amp;#34;draft ModelRunner&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：执行层不只是一个 &lt;code&gt;ModelRunner&lt;/code&gt;，而是存在 worker 边界和 speculative 分支边界。&lt;/p&gt;</description></item><item><title>4.2 前缀复用、回收与退化路径</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/cache-reuse-and-eviction/</guid><description>&lt;h1 id="前缀复用回收与退化路径"&gt;前缀复用、回收与退化路径&lt;a class="anchor" href="#%e5%89%8d%e7%bc%80%e5%a4%8d%e7%94%a8%e5%9b%9e%e6%94%b6%e4%b8%8e%e9%80%80%e5%8c%96%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;上一章已经解释了 scheduler、batch 和 KV cache 怎样一起工作，但还有一个更接近真实性能与资源行为的问题：为什么有时 prefix reuse 很有效，有时又会明显退化？为什么有时缓存看起来还在，却仍然要重新做大量计算？这些问题决定了调度与内存章节能不能真正落到运行时行为上。&lt;/p&gt;
 &lt;p&gt;这一章要补的，正是“缓存不是只会存在，还会失效、退化、被回收”这一层。没有这一层，读者很容易把 cache 理解成一个总是带来收益的静态结构，而不是一个持续参与权衡的动态机制。&lt;/p&gt;
@@ -870,7 +993,28 @@
  F --&amp;gt; G{&amp;#34;是否需要回收 / 退化&amp;#34;}
  G --&amp;gt;|否| H[&amp;#34;后续请求继续受益&amp;#34;]
  G --&amp;gt;|是| I[&amp;#34;eviction / fallback / reuse 下降&amp;#34;]
- I --&amp;gt; J[&amp;#34;后续请求重新承担更多计算&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比前一章的调度/KV 流图多解释了“收益并不是静态的”。只要缓存进入回收和退化区间，后续请求就会重新承担更多 prefill 或状态构建成本。&lt;/p&gt;</description></item><item><title>4.3 Memory Pool、allocator 与页级状态管理</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</guid><description>&lt;h1 id="memory-poolallocator-与页级状态管理"&gt;Memory Pool、allocator 与页级状态管理&lt;a class="anchor" href="#memory-poolallocator-%e4%b8%8e%e9%a1%b5%e7%ba%a7%e7%8a%b6%e6%80%81%e7%ae%a1%e7%90%86"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ I --&amp;gt; J[&amp;#34;后续请求重新承担更多计算&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比前一章的调度/KV 流图多解释了“收益并不是静态的”。只要缓存进入回收和退化区间，后续请求就会重新承担更多 prefill 或状态构建成本。&lt;/p&gt;</description></item><item><title>3.13 ModelConfig、tokenizer 与 processor 的启动链</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-config-tokenizer-and-processor-bootstrap/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-config-tokenizer-and-processor-bootstrap/</guid><description>&lt;h1 id="modelconfigtokenizer-与-processor-的启动链"&gt;ModelConfig、tokenizer 与 processor 的启动链&lt;a class="anchor" href="#modelconfigtokenizer-%e4%b8%8e-processor-%e7%9a%84%e5%90%af%e5%8a%a8%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ServerArgs&lt;/code&gt; 如何把配置编译成系统人格，也讲了 &lt;code&gt;TemplateManager&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt; 和 &lt;code&gt;ModelRunner&lt;/code&gt; 的边界，但还有一条非常关键的启动链没有单独成章：模型配置、tokenizer、processor 和 multimodal processor 到底怎样被装配起来，以及这条链如何决定后面哪些能力真正可用。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这条启动链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多后续行为都直接依赖它：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;skip_tokenizer_init&lt;/code&gt; 是否允许文本输入&lt;/li&gt;
+&lt;li&gt;模型到底被识别成 generation / embedding / multimodal 哪一类&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;processor&lt;/code&gt; 是否存在&lt;/li&gt;
+&lt;li&gt;scheduler 侧是否能加载 multimodal processor 做 M-RoPE fallback&lt;/li&gt;
+&lt;li&gt;reasoning parser 是否能从 tokenizer 里得到 &lt;code&gt;think_end_id&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;换句话说，这不是“启动时顺手做的准备工作”，而是运行时能力边界的真正来源。&lt;/p&gt;
+&lt;h2 id="一张图模型启动链的真正顺序"&gt;一张图：模型启动链的真正顺序&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%a8%a1%e5%9e%8b%e5%90%af%e5%8a%a8%e9%93%be%e7%9a%84%e7%9c%9f%e6%ad%a3%e9%a1%ba%e5%ba%8f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把“加载模型”和“拿 tokenizer”想成平行动作，而实际上中间隔着 &lt;code&gt;ModelConfig&lt;/code&gt; 对系统人格的判定。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Args[&amp;#34;ServerArgs&amp;#34;] --&amp;gt; MC[&amp;#34;ModelConfig.from_server_args()&amp;#34;]
+ MC --&amp;gt; Kind[&amp;#34;generation / multimodal / encoder-decoder / local-attn&amp;#34;]
+ Kind --&amp;gt; Tok[&amp;#34;get_tokenizer() or get_processor()&amp;#34;]
+ Tok --&amp;gt; MM[&amp;#34;get_mm_processor() when needed&amp;#34;]
+ MM --&amp;gt; Runtime[&amp;#34;scheduler / template / execution path&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：&lt;code&gt;ModelConfig&lt;/code&gt; 是这条链的中心枢纽，而不是简单的模型元数据缓存。&lt;/p&gt;</description></item><item><title>4.3 Memory Pool、allocator 与页级状态管理</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/memory-pool-and-allocators/</guid><description>&lt;h1 id="memory-poolallocator-与页级状态管理"&gt;Memory Pool、allocator 与页级状态管理&lt;a class="anchor" href="#memory-poolallocator-%e4%b8%8e%e9%a1%b5%e7%ba%a7%e7%8a%b6%e6%80%81%e7%ae%a1%e7%90%86"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前两章已经把 scheduler、cache reuse 和 eviction 讲清楚了一大半，但还缺少一个很关键的中间层：逻辑请求状态到底怎样落到物理缓存槽位上。没有这一层，读者会知道 &lt;code&gt;ReqToTokenPool&lt;/code&gt;、&lt;code&gt;TokenToKVPoolAllocator&lt;/code&gt; 很重要，却仍然不清楚它们为什么会被拆开，以及 allocator 真正在管理什么。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把“逻辑请求状态”和“物理 cache 布局”之间的映射关系补实。这样一来，调度与内存这一节才不会只剩“策略”和“树结构”，而会真正接上底层状态承载层。&lt;/p&gt;
@@ -886,7 +1030,27 @@
  B --&amp;gt; C[&amp;#34;token slots / request-local positions&amp;#34;]
  C --&amp;gt; D[&amp;#34;TokenToKVPoolAllocator&amp;#34;]
  D --&amp;gt; E[&amp;#34;paged / physical KV layout&amp;#34;]
- E --&amp;gt; F[&amp;#34;KVCache buffers used by execution&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“从逻辑到物理”的那一层。前两章更强调 batch 和 cache 策略，而这张图让读者看到：中间还有一个 allocator 层，负责把逻辑请求真正落成设备上可消费的状态布局。&lt;/p&gt;</description></item><item><title>4.4 调度策略、延迟控制与 batch 成形</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</guid><description>&lt;h1 id="调度策略延迟控制与-batch-成形"&gt;调度策略、延迟控制与 batch 成形&lt;a class="anchor" href="#%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e5%bb%b6%e8%bf%9f%e6%8e%a7%e5%88%b6%e4%b8%8e-batch-%e6%88%90%e5%bd%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ E --&amp;gt; F[&amp;#34;KVCache buffers used by execution&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图补的是“从逻辑到物理”的那一层。前两章更强调 batch 和 cache 策略，而这张图让读者看到：中间还有一个 allocator 层，负责把逻辑请求真正落成设备上可消费的状态布局。&lt;/p&gt;</description></item><item><title>3.14 rank 计算、并行维度与进程身份</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/rank-math-and-process-identity/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/rank-math-and-process-identity/</guid><description>&lt;h1 id="rank-计算并行维度与进程身份"&gt;rank 计算、并行维度与进程身份&lt;a class="anchor" href="#rank-%e8%ae%a1%e7%ae%97%e5%b9%b6%e8%a1%8c%e7%bb%b4%e5%ba%a6%e4%b8%8e%e8%bf%9b%e7%a8%8b%e8%ba%ab%e4%bb%bd"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;DataParallelController&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ServerArgs&lt;/code&gt; 和 event loop 矩阵，但还有一个很容易被忽略、同时又对多机/多并行维度阅读特别关键的问题：一个 scheduler 进程到底怎样知道自己是哪个 &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;PP&lt;/code&gt; / &lt;code&gt;ATTN_CP&lt;/code&gt; / &lt;code&gt;MOE_DP&lt;/code&gt; / &lt;code&gt;EP&lt;/code&gt; rank，它的进程名和日志前缀又为什么会长成现在这样？&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这层 rank 数学与进程身份生成讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独讲"&gt;为什么这层值得单独讲&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e8%ae%b2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为多并行维度系统最容易把读者搞糊涂的，不只是“有哪些 rank”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这些 rank 怎么算出来&lt;/li&gt;
+&lt;li&gt;某个 node 到底负责哪一段 &lt;code&gt;pp_rank_range&lt;/code&gt; 和 &lt;code&gt;tp_rank_range&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;日志里看到的 &lt;code&gt;PP&lt;/code&gt; / &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;EP&lt;/code&gt; 前缀是怎么来的&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层讲清楚，后面多机日志和进程命名会很难读。&lt;/p&gt;
+&lt;h2 id="一张图从-node-维度到多种并行-rank是一层层展开的"&gt;一张图：从 node 维度到多种并行 rank，是一层层展开的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-node-%e7%bb%b4%e5%ba%a6%e5%88%b0%e5%a4%9a%e7%a7%8d%e5%b9%b6%e8%a1%8c-rank%e6%98%af%e4%b8%80%e5%b1%82%e5%b1%82%e5%b1%95%e5%bc%80%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：读者容易把 &lt;code&gt;node_rank&lt;/code&gt;、&lt;code&gt;tp_rank&lt;/code&gt;、&lt;code&gt;pp_rank&lt;/code&gt;、&lt;code&gt;attn_cp_rank&lt;/code&gt;、&lt;code&gt;moe_dp_rank&lt;/code&gt; 混成一锅。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Node[&amp;#34;node_rank&amp;#34;] --&amp;gt; Range[&amp;#34;pp_rank_range / tp_rank_range&amp;#34;]
+ Range --&amp;gt; TP[&amp;#34;tp_rank&amp;#34;]
+ TP --&amp;gt; Attn[&amp;#34;attn_cp_rank&amp;#34;]
+ TP --&amp;gt; MoeDP[&amp;#34;moe_dp_rank&amp;#34;]
+ TP --&amp;gt; MoeEP[&amp;#34;moe_ep_rank&amp;#34;]
+ Range --&amp;gt; PP[&amp;#34;pp_rank&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：很多并行维度并不是并列算出来的，而是在 node -&amp;gt; range -&amp;gt; tp_rank 这条链上继续拆细。&lt;/p&gt;</description></item><item><title>4.4 调度策略、延迟控制与 batch 成形</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduling-policies-and-batch-shaping/</guid><description>&lt;h1 id="调度策略延迟控制与-batch-成形"&gt;调度策略、延迟控制与 batch 成形&lt;a class="anchor" href="#%e8%b0%83%e5%ba%a6%e7%ad%96%e7%95%a5%e5%bb%b6%e8%bf%9f%e6%8e%a7%e5%88%b6%e4%b8%8e-batch-%e6%88%90%e5%bd%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;&lt;code&gt;Scheduler&lt;/code&gt; 的主循环回答的是“这一轮怎么推进”，但这仍然没有完全解释“为什么某些请求会先进去、某些请求要等等、为什么 batch 长成了现在这个形状”。这部分真正属于调度策略，而不只是 scheduler 的主流程。&lt;/p&gt;
 &lt;p&gt;这一章要解决的，就是“batch 是怎样被政策性塑形的”。只有把这一层讲出来，读者才会知道 runtime 行为不只是由实现逻辑决定，也受调度策略、timeout、priority 和 prefill 延迟控制影响。&lt;/p&gt;
@@ -902,7 +1066,32 @@
  B --&amp;gt; C[&amp;#34;PrefillDelayer / timeout window&amp;#34;]
  C --&amp;gt; D[&amp;#34;PrefillAdder / admission&amp;#34;]
  D --&amp;gt; E[&amp;#34;ScheduleBatch shape&amp;#34;]
- E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item><item><title>4.5 Runtime checker、SessionAwareCache 与内存不变量</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</guid><description>&lt;h1 id="runtime-checkersessionawarecache-与内存不变量"&gt;Runtime checker、SessionAwareCache 与内存不变量&lt;a class="anchor" href="#runtime-checkersessionawarecache-%e4%b8%8e%e5%86%85%e5%ad%98%e4%b8%8d%e5%8f%98%e9%87%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item><item><title>3.15 模型定义、执行壳与 backend 实现边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</guid><description>&lt;h1 id="模型定义执行壳与-backend-实现边界"&gt;模型定义、执行壳与 backend 实现边界&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e6%89%a7%e8%a1%8c%e5%a3%b3%e4%b8%8e-backend-%e5%ae%9e%e7%8e%b0%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ModelConfig&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt; 和并行 rank 身份，但还缺一层非常关键的边界：上游 &lt;code&gt;models/&lt;/code&gt; 目录里的模型定义、&lt;code&gt;layers/&lt;/code&gt; 目录里的后端实现，以及 &lt;code&gt;TpModelWorker / ModelRunner&lt;/code&gt; 这层执行壳到底是怎样互相咬合的。&lt;/p&gt;
+&lt;p&gt;如果不把这层讲出来，读者会知道“模型很多、backend 很多、runner 也很多”，却不清楚这些东西在架构上谁包谁、谁依赖谁。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;tp_worker.py&lt;/code&gt; 的初始化链可以看得很清楚：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;先 &lt;code&gt;_init_model_config()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;再 &lt;code&gt;_init_model_runner()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;必要时再补 multi-layer eagle runners&lt;/li&gt;
+&lt;li&gt;再根据是否 multimodal 去拿 tokenizer / processor&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这说明模型定义与执行壳的关系并不是扁平的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;models/&lt;/code&gt; 提供模型级定义&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/&lt;/code&gt; 提供更底层的 attention、sampler、quantization、moe 等执行砖块&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 把这些砖块组装成真正可执行的 runtime 壳&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 再把它挂进分布式 worker 边界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图从模型定义到真正执行的层次关系"&gt;一张图：从模型定义到真正执行的层次关系&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e5%88%b0%e7%9c%9f%e6%ad%a3%e6%89%a7%e8%a1%8c%e7%9a%84%e5%b1%82%e6%ac%a1%e5%85%b3%e7%b3%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 想成两个平行目录，而忽略了它们要经过 &lt;code&gt;ModelRunner&lt;/code&gt; 这层执行壳才真正落地。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Models[&amp;#34;models/&amp;#34;] --&amp;gt; Runner[&amp;#34;ModelRunner&amp;#34;]
+ Layers[&amp;#34;layers/&amp;#34;] --&amp;gt; Runner
+ Runner --&amp;gt; Worker[&amp;#34;TpModelWorker / draft worker&amp;#34;]
+ Worker --&amp;gt; Scheduler[&amp;#34;Scheduler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：真正被 scheduler 操作的，不是裸模型定义，而是已经被执行壳包起来的 worker。&lt;/p&gt;</description></item><item><title>4.5 Runtime checker、SessionAwareCache 与内存不变量</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</guid><description>&lt;h1 id="runtime-checkersessionawarecache-与内存不变量"&gt;Runtime checker、SessionAwareCache 与内存不变量&lt;a class="anchor" href="#runtime-checkersessionawarecache-%e4%b8%8e%e5%86%85%e5%ad%98%e4%b8%8d%e5%8f%98%e9%87%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面四章已经把 scheduler、cache reuse、allocator 和 batch 策略讲得比较深了，但还缺一层特别像“维护者手册”的内容：系统如何确认这些复杂状态没有悄悄漂移？如果 streaming session 介入之后，prefix cache 又怎样在不改写整个调度流水线的前提下接住会话态 KV？&lt;/p&gt;
 &lt;p&gt;这一章的任务就是把两个看似分散、实际高度相关的机制放到一起：&lt;/p&gt;
@@ -928,7 +1117,27 @@
  Session[&amp;#34;session_held&amp;#34;] --&amp;gt; Eq
  Uncached[&amp;#34;uncached&amp;#34;] --&amp;gt; Eq
  Eq --&amp;gt; Total[&amp;#34;== total&amp;#34;]
- Eq --&amp;gt; Leak[&amp;#34;mismatch =&amp;gt; leak / warning / assert&amp;#34;]&lt;/pre&gt;&lt;p&gt;相比纯文字，这张图多解释了一层：runtime checker 不是“又写了一堆 debug function”，而是把分散在 scheduler、tree cache、allocator、session wrapper 里的状态重新收敛成少数几个守恒式。&lt;/p&gt;</description></item><item><title>4.6 Retract、decode 内存压力与请求回退</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</guid><description>&lt;h1 id="retractdecode-内存压力与请求回退"&gt;Retract、decode 内存压力与请求回退&lt;a class="anchor" href="#retractdecode-%e5%86%85%e5%ad%98%e5%8e%8b%e5%8a%9b%e4%b8%8e%e8%af%b7%e6%b1%82%e5%9b%9e%e9%80%80"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Eq --&amp;gt; Leak[&amp;#34;mismatch =&amp;gt; leak / warning / assert&amp;#34;]&lt;/pre&gt;&lt;p&gt;相比纯文字，这张图多解释了一层：runtime checker 不是“又写了一堆 debug function”，而是把分散在 scheduler、tree cache、allocator、session wrapper 里的状态重新收敛成少数几个守恒式。&lt;/p&gt;</description></item><item><title>3.16 分布式 group 初始化与通信边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/distributed-group-initialization/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/distributed-group-initialization/</guid><description>&lt;h1 id="分布式-group-初始化与通信边界"&gt;分布式 group 初始化与通信边界&lt;a class="anchor" href="#%e5%88%86%e5%b8%83%e5%bc%8f-group-%e5%88%9d%e5%a7%8b%e5%8c%96%e4%b8%8e%e9%80%9a%e4%bf%a1%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;运行时架构前面已经讲了 rank 计算、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;DataParallelController&lt;/code&gt; 和 &lt;code&gt;ServerArgs&lt;/code&gt; 的人格编译，但还缺一层非常重要的“把这些并行意图真的落成通信组”的路径：distributed group 到底在哪里初始化？&lt;code&gt;TP&lt;/code&gt;、&lt;code&gt;PP&lt;/code&gt;、world group 这些对象什么时候真的变成 PyTorch 通信边界？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条分布式初始化链讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多多机/多并行问题如果只看 rank 数学还是不够。你还需要知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;group 什么时候初始化&lt;/li&gt;
+&lt;li&gt;哪些组件会直接拿 &lt;code&gt;get_tp_group()&lt;/code&gt; / &lt;code&gt;get_pp_group()&lt;/code&gt; / &lt;code&gt;get_world_group()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;graph capture、通信融合、worker 初始化都怎样依赖这些 group&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这一层是“并行身份”进一步变成“通信现实”的桥。&lt;/p&gt;
+&lt;h2 id="一张图从-rank-身份到通信边界还要再过一层-distributed-init"&gt;一张图：从 rank 身份到通信边界，还要再过一层 distributed init&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-rank-%e8%ba%ab%e4%bb%bd%e5%88%b0%e9%80%9a%e4%bf%a1%e8%be%b9%e7%95%8c%e8%bf%98%e8%a6%81%e5%86%8d%e8%bf%87%e4%b8%80%e5%b1%82-distributed-init"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 rank 计算完就当作一切都到位，而实际上还要真的初始化 group。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Rank[&amp;#34;tp/pp/dp/ep identity&amp;#34;] --&amp;gt; Dist[&amp;#34;init_distributed_environment()&amp;#34;]
+ Dist --&amp;gt; MP[&amp;#34;initialize_model_parallel()&amp;#34;]
+ MP --&amp;gt; Groups[&amp;#34;world / tp / pp groups&amp;#34;]
+ Groups --&amp;gt; Worker[&amp;#34;scheduler / tp_worker / runner&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：rank 身份只是静态标签，group 初始化才是把它变成可通信对象的那一步。&lt;/p&gt;
+&lt;h2 id="parallel_statepy-为什么是这条路径的主锚点"&gt;&lt;code&gt;parallel_state.py&lt;/code&gt; 为什么是这条路径的主锚点&lt;a class="anchor" href="#parallel_statepy-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e8%bf%99%e6%9d%a1%e8%b7%af%e5%be%84%e7%9a%84%e4%b8%bb%e9%94%9a%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这里最值得记住的几个入口是：&lt;/p&gt;</description></item><item><title>4.6 Retract、decode 内存压力与请求回退</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/retraction-and-memory-pressure/</guid><description>&lt;h1 id="retractdecode-内存压力与请求回退"&gt;Retract、decode 内存压力与请求回退&lt;a class="anchor" href="#retractdecode-%e5%86%85%e5%ad%98%e5%8e%8b%e5%8a%9b%e4%b8%8e%e8%af%b7%e6%b1%82%e5%9b%9e%e9%80%80"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的调度与内存章节已经解释了 batch 怎样形成、KV cache 怎样复用、allocator 怎样管理页和不变量怎样被检查，但还差一个真实系统里非常关键的问题：当 decode 阶段真的顶到内存压力时，系统不是立刻崩溃，而是怎样把部分请求回退、释放空间、继续把剩下的请求跑下去。&lt;/p&gt;
 &lt;p&gt;这一章专门讲 &lt;code&gt;retract&lt;/code&gt;。如果不补这一层，调度与内存章节仍然会偏“平稳运行时”的解释，而缺少“资源不够时系统怎样自救”的部分。&lt;/p&gt;
@@ -988,7 +1197,52 @@
  T --&amp;gt; D0[&amp;#34;decode prealloc queue&amp;#34;]
  D0 --&amp;gt; D1[&amp;#34;decode transfer queue&amp;#34;]
  D1 --&amp;gt; DW[&amp;#34;decode waiting&amp;#34;]
- DW --&amp;gt; DF[&amp;#34;decode forward&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：disaggregation 不是只在 forward 之后多一个传输动作，而是把整个排队结构改写成多段阶段链。&lt;/p&gt;</description></item><item><title>5.1 Token 生成循环与执行模型</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</guid><description>&lt;h1 id="token-生成循环与执行模型"&gt;Token 生成循环与执行模型&lt;a class="anchor" href="#token-%e7%94%9f%e6%88%90%e5%be%aa%e7%8e%af%e4%b8%8e%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ DW --&amp;gt; DF[&amp;#34;decode forward&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：disaggregation 不是只在 forward 之后多一个传输动作，而是把整个排队结构改写成多段阶段链。&lt;/p&gt;</description></item><item><title>4.9 PrefillAdder、new_token_ratio 与准入预算</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/prefill-adder-and-admission-budgets/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/prefill-adder-and-admission-budgets/</guid><description>&lt;h1 id="prefilladdernew_token_ratio-与准入预算"&gt;PrefillAdder、new_token_ratio 与准入预算&lt;a class="anchor" href="#prefilladdernew_token_ratio-%e4%b8%8e%e5%87%86%e5%85%a5%e9%a2%84%e7%ae%97"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经解释了 waiting queue 重排、disaggregation 队列、retract、自检和 cache 复用，但还有一层对 batch 形成最关键的逻辑没有单独展开：在 waiting queue 已经排序完之后，系统到底用什么预算规则决定“再放一个请求进来是否还安全”？这正是 &lt;code&gt;PrefillAdder&lt;/code&gt; 和 &lt;code&gt;new_token_ratio&lt;/code&gt; 在解决的问题。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这层 admission logic 讲透。&lt;/p&gt;
+&lt;h2 id="为什么-prefilladder-值得单独成章"&gt;为什么 &lt;code&gt;PrefillAdder&lt;/code&gt; 值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-prefilladder-%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是普通 helper。它处在一个非常关键的位置：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;之前：waiting queue 已经排好顺序&lt;/li&gt;
+&lt;li&gt;之后：&lt;code&gt;ScheduleBatch.init_new(...)&lt;/code&gt; 真正创建 batch&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它就是“排序”与“形成 batch”之间的最后一道门。优秀技术书如果不把这道门讲出来，调度章节会显得像“排完队之后 batch 就自己形成了”。&lt;/p&gt;
+&lt;h2 id="一张图prefilladder-位于-waiting-queue-和真正-batch-之间"&gt;一张图：&lt;code&gt;PrefillAdder&lt;/code&gt; 位于 waiting queue 和真正 batch 之间&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beprefilladder-%e4%bd%8d%e4%ba%8e-waiting-queue-%e5%92%8c%e7%9c%9f%e6%ad%a3-batch-%e4%b9%8b%e9%97%b4"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 batch 形成想成 waiting queue 的自然切片，但实际还有一层独立预算器在做准入。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ WQ[&amp;#34;waiting queue (already sorted)&amp;#34;] --&amp;gt; Add[&amp;#34;PrefillAdder&amp;#34;]
+ Add --&amp;gt; Budget[&amp;#34;token / request / chunk budget check&amp;#34;]
+ Budget --&amp;gt; Batch[&amp;#34;new prefill batch&amp;#34;]
+ Budget --&amp;gt; Chunk[&amp;#34;new_chunked_req / preempt_list&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：batch 形成不是被动切片，而是主动预算和准入。&lt;/p&gt;</description></item><item><title>4.10 running_batch、cur_batch、last_batch 的状态机</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/batch-state-machine-and-result-absorption/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/batch-state-machine-and-result-absorption/</guid><description>&lt;h1 id="running_batchcur_batchlast_batch-的状态机"&gt;running_batch、cur_batch、last_batch 的状态机&lt;a class="anchor" href="#running_batchcur_batchlast_batch-%e7%9a%84%e7%8a%b6%e6%80%81%e6%9c%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经解释了 waiting queue 排序、PrefillAdder 准入预算、retract 和 disaggregation 队列，但还有一个对理解 &lt;code&gt;scheduler.py&lt;/code&gt; 极其关键、同时又很容易被埋在流程细节里的问题没有单独讲：&lt;code&gt;running_batch&lt;/code&gt;、&lt;code&gt;cur_batch&lt;/code&gt;、&lt;code&gt;last_batch&lt;/code&gt; 这三个状态对象到底各自代表什么，它们之间又是怎样在一轮轮循环里流转的？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条 batch 状态机讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为在复杂调度循环里，很多误读其实都来自没分清这三个对象：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cur_batch&lt;/code&gt;：这一轮真正送去跑的 batch&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;last_batch&lt;/code&gt;：上一轮已经跑完、但其结果仍会影响下一轮的 batch&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;running_batch&lt;/code&gt;：持续被维护、准备用于 decode / 合并 / 更新的活动 batch&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果这三者关系不清楚，读 overlap、merge、retract、prefill 结果吸收都会非常痛苦。&lt;/p&gt;
+&lt;h2 id="一张图调度循环真正维护的是三态-batch而不是单个当前-batch"&gt;一张图：调度循环真正维护的是三态 batch，而不是单个“当前 batch”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%b0%83%e5%ba%a6%e5%be%aa%e7%8e%af%e7%9c%9f%e6%ad%a3%e7%bb%b4%e6%8a%a4%e7%9a%84%e6%98%af%e4%b8%89%e6%80%81-batch%e8%80%8c%e4%b8%8d%e6%98%af%e5%8d%95%e4%b8%aa%e5%bd%93%e5%89%8d-batch"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人默认 scheduler 每轮只会关心“当前 batch”，而源码实际维护的是一个小状态机。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ New[&amp;#34;new prefill batch&amp;#34;] --&amp;gt; Cur[&amp;#34;cur_batch&amp;#34;]
+ Cur --&amp;gt; Last[&amp;#34;last_batch&amp;#34;]
+ Last --&amp;gt; Run[&amp;#34;merge into running_batch&amp;#34;]
+ Run --&amp;gt; Cur&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：调度主循环不是“生成一个 batch 然后忘掉”，而是在三个批次状态之间持续迁移和吸收结果。&lt;/p&gt;
+&lt;h2 id="init_running_status-已经把三态框架写出来了"&gt;&lt;code&gt;init_running_status()&lt;/code&gt; 已经把三态框架写出来了&lt;a class="anchor" href="#init_running_status-%e5%b7%b2%e7%bb%8f%e6%8a%8a%e4%b8%89%e6%80%81%e6%a1%86%e6%9e%b6%e5%86%99%e5%87%ba%e6%9d%a5%e4%ba%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;源码在初始化时就明确了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;self.running_batch&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.cur_batch&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;self.last_batch&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明这三者不是后来随手出现的局部变量，而是 scheduler 对运行世界的长期状态表示。&lt;/p&gt;
+&lt;h2 id="get_next_batch_to_run-为什么是理解三态流转的最佳入口"&gt;&lt;code&gt;get_next_batch_to_run()&lt;/code&gt; 为什么是理解三态流转的最佳入口&lt;a class="anchor" href="#get_next_batch_to_run-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e7%90%86%e8%a7%a3%e4%b8%89%e6%80%81%e6%b5%81%e8%bd%ac%e7%9a%84%e6%9c%80%e4%bd%b3%e5%85%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这段函数的最大价值，不只是“选下一个 batch”，而是把三态流转写得很清楚：&lt;/p&gt;</description></item><item><title>5.1 Token 生成循环与执行模型</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/token-generation-loop/</guid><description>&lt;h1 id="token-生成循环与执行模型"&gt;Token 生成循环与执行模型&lt;a class="anchor" href="#token-%e7%94%9f%e6%88%90%e5%be%aa%e7%8e%af%e4%b8%8e%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章解决的不是“请求怎样进入系统”，而是“一个 batch 已经准备好之后，模型前向、logits 处理、sampling 和 decode 怎样接起来”。如果没有这层理解，前面的生命周期和架构章节会告诉你请求经过了哪些模块，但你仍然不知道真正生成 token 的那一轮循环是如何推进的。&lt;/p&gt;
 &lt;p&gt;这里最重要的切分是：调度器决定“这轮应该跑谁”，执行模型决定“这一轮怎样跑”。也正因为这样，本章不再讨论请求排队和 KV 复用策略，而是把注意力放在 &lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;ModelRunner.forward(...)&lt;/code&gt;、&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;、&lt;code&gt;sample(...)&lt;/code&gt; 和 speculative decoding 的关系上。&lt;/p&gt;
@@ -1209,7 +1463,33 @@
 &lt;p&gt;这说明协议表面本身就是系统的一层设计，而不是文档编排巧合。SGLang 一方面希望让调用方能平滑迁移到 OpenAI-compatible 表面，另一方面又保留自己的 native surface 和 offline engine path，让内部能力不被单一协议形状限制住。&lt;/p&gt;
 &lt;h2 id="openai-compatible-api-在这套系统里的位置"&gt;OpenAI-compatible API 在这套系统里的位置&lt;a class="anchor" href="#openai-compatible-api-%e5%9c%a8%e8%bf%99%e5%a5%97%e7%b3%bb%e7%bb%9f%e9%87%8c%e7%9a%84%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;OpenAI-compatible API 的价值在于降低迁移成本。官方 &lt;code&gt;openai_api_completions.ipynb&lt;/code&gt; 和相关 basic usage 文档都在强调这一点：你可以用接近 OpenAI 的请求格式对接本地模型服务。对于多数应用接入者来说，这是最容易上手的一层。&lt;/p&gt;
-&lt;p&gt;但从运行时角度看，重要的不是“长得像 OpenAI”，而是它最终怎样落进 &lt;code&gt;http_server.py&lt;/code&gt; 和 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 这条路径。也正因为如此，OpenAI-compatible 层更适合作为“协议适配面”来理解，而不是当作独立 runtime。&lt;/p&gt;</description></item><item><title>6.3 Tool Parser、Function Calling 与结构化结果回路</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</guid><description>&lt;h1 id="tool-parserfunction-calling-与结构化结果回路"&gt;Tool Parser、Function Calling 与结构化结果回路&lt;a class="anchor" href="#tool-parserfunction-calling-%e4%b8%8e%e7%bb%93%e6%9e%84%e5%8c%96%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;但从运行时角度看，重要的不是“长得像 OpenAI”，而是它最终怎样落进 &lt;code&gt;http_server.py&lt;/code&gt; 和 &lt;code&gt;TokenizerManager.generate_request(...)&lt;/code&gt; 这条路径。也正因为如此，OpenAI-compatible 层更适合作为“协议适配面”来理解，而不是当作独立 runtime。&lt;/p&gt;</description></item><item><title>5.13 SamplingParams 的规范化、互斥约束与 stop 语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</guid><description>&lt;h1 id="samplingparams-的规范化互斥约束与-stop-语义"&gt;SamplingParams 的规范化、互斥约束与 stop 语义&lt;a class="anchor" href="#samplingparams-%e7%9a%84%e8%a7%84%e8%8c%83%e5%8c%96%e4%ba%92%e6%96%a5%e7%ba%a6%e6%9d%9f%e4%b8%8e-stop-%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面已经讲了 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask、grammar sync 和 structure-aware sampling，但还有一层很基础、同时又特别容易被忽略的内容没有单独讲：&lt;code&gt;SamplingParams&lt;/code&gt; 自己在进入 batch 之前，会做哪些规范化、互斥检查和 stop 语义预处理？&lt;/p&gt;
+&lt;p&gt;没有这一章，读者会知道采样参数很重要，却不清楚：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些字段在进入执行前就已经被改写&lt;/li&gt;
+&lt;li&gt;哪些组合会被显式拒绝&lt;/li&gt;
+&lt;li&gt;stop string / stop regex 为什么需要先做长度上界估计&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;SamplingParams&lt;/code&gt; 不是一个被动结构体。&lt;code&gt;__init__()&lt;/code&gt;、&lt;code&gt;verify()&lt;/code&gt;、&lt;code&gt;normalize()&lt;/code&gt; 已经在做非常实质性的工作：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;把接近 greedy 的温度归一化&lt;/li&gt;
+&lt;li&gt;把 &lt;code&gt;top_k = -1&lt;/code&gt; 改写成 &lt;code&gt;TOP_K_ALL&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;限制 grammar 字段互斥&lt;/li&gt;
+&lt;li&gt;预处理 stop string / stop regex 的长度上界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明很多执行层行为，在 sampler 真正启动之前就已经被配置层改写过了。&lt;/p&gt;
+&lt;h2 id="一张图请求里的采样字段在真正进入-sampler-之前还要先经历一次参数语义整理"&gt;一张图：请求里的采样字段在真正进入 sampler 之前，还要先经历一次“参数语义整理”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e9%87%8c%e7%9a%84%e9%87%87%e6%a0%b7%e5%ad%97%e6%ae%b5%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5-sampler-%e4%b9%8b%e5%89%8d%e8%bf%98%e8%a6%81%e5%85%88%e7%bb%8f%e5%8e%86%e4%b8%80%e6%ac%a1%e5%8f%82%e6%95%b0%e8%af%ad%e4%b9%89%e6%95%b4%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 sampler 直接消费原始采样字段，而实际上中间还有一层参数规范化。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Raw[&amp;#34;raw sampling fields&amp;#34;] --&amp;gt; SP[&amp;#34;SamplingParams&amp;#34;]
+ SP --&amp;gt; Verify[&amp;#34;verify()&amp;#34;]
+ SP --&amp;gt; Norm[&amp;#34;normalize()&amp;#34;]
+ Verify --&amp;gt; SBI[&amp;#34;SamplingBatchInfo&amp;#34;]
+ Norm --&amp;gt; SBI
+ SBI --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：执行层真正看到的是“经过验证与规范化之后的采样语义”。&lt;/p&gt;</description></item><item><title>6.3 Tool Parser、Function Calling 与结构化结果回路</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-parser-and-function-calling/</guid><description>&lt;h1 id="tool-parserfunction-calling-与结构化结果回路"&gt;Tool Parser、Function Calling 与结构化结果回路&lt;a class="anchor" href="#tool-parserfunction-calling-%e4%b8%8e%e7%bb%93%e6%9e%84%e5%8c%96%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;如果只讲 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt; 和 API 表面，结构化生成这一节仍然会缺一块很重要的内容：当模型输出不只是“结构化文本”，而是“可执行工具调用”时，系统怎样把它解释、拼接、校验并送回调用方。这一层正是 tool parser 和 function calling 的职责。&lt;/p&gt;
 &lt;p&gt;这一章要解决的问题就是：为什么 tool parser 既不像纯 grammar backend，也不像纯 API 协议层。它更像一条把“模型输出”转成“可执行结果结构”的中间回路。&lt;/p&gt;
@@ -1228,7 +1508,30 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 函数名 / 参数结构
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 调用方执行工具
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 工具结果回填
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 模型继续生成或收尾&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链路的意义，是把 function calling 从“输出格式问题”推进成“结果回路问题”。一旦把它看成回路，你就会更自然地把它和 request lifecycle、runtime path、structured output 放到一起理解。&lt;/p&gt;</description></item><item><title>6.4 结构化响应设计：从 schema 到可消费结果</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</guid><description>&lt;h1 id="结构化响应设计从-schema-到可消费结果"&gt;结构化响应设计：从 schema 到可消费结果&lt;a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e5%93%8d%e5%ba%94%e8%ae%be%e8%ae%a1%e4%bb%8e-schema-%e5%88%b0%e5%8f%af%e6%b6%88%e8%b4%b9%e7%bb%93%e6%9e%9c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 模型继续生成或收尾&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链路的意义，是把 function calling 从“输出格式问题”推进成“结果回路问题”。一旦把它看成回路，你就会更自然地把它和 request lifecycle、runtime path、structured output 放到一起理解。&lt;/p&gt;</description></item><item><title>5.14 penalty、logit_bias 与 custom logit processor 的汇合</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</guid><description>&lt;h1 id="penaltylogit_bias-与-custom-logit-processor-的汇合"&gt;penalty、logit_bias 与 custom logit processor 的汇合&lt;a class="anchor" href="#penaltylogit_bias-%e4%b8%8e-custom-logit-processor-%e7%9a%84%e6%b1%87%e5%90%88"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面已经把 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask 和结构化约束怎样进入 sampler 讲得比较深了，但还缺最后一层很关键的“采样前改写汇合点”：&lt;code&gt;presence_penalty&lt;/code&gt;、&lt;code&gt;frequency_penalty&lt;/code&gt;、&lt;code&gt;repetition_penalty&lt;/code&gt;、&lt;code&gt;logit_bias&lt;/code&gt; 和 &lt;code&gt;custom_logit_processor&lt;/code&gt; 到底怎样在真正采样之前被统一施加到 logits 上。&lt;/p&gt;
+&lt;p&gt;如果不把这层讲出来，读者会知道这些参数存在，却仍然会把它们理解成几种互不相关的功能开关，而不是同一个采样前置变换管线中的不同来源。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为从执行角度看，这几类东西虽然来源不同，但最后都在回答同一个问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在 sampler 真正选择 token 之前，要怎样改写 logits 空间？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;其中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;penalties 更像“根据历史输出动态调节”&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logit_bias&lt;/code&gt; 更像“调用方显式推拉某些 token”&lt;/li&gt;
+&lt;li&gt;custom processor 更像“用户自定义的额外规则”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这三层如果不放在一起讲，读者很难建立完整的“采样前变换栈”心智模型。&lt;/p&gt;
+&lt;h2 id="一张图采样前其实有一条明确的-logits-改写栈"&gt;一张图：采样前其实有一条明确的 logits 改写栈&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%87%87%e6%a0%b7%e5%89%8d%e5%85%b6%e5%ae%9e%e6%9c%89%e4%b8%80%e6%9d%a1%e6%98%8e%e7%a1%ae%e7%9a%84-logits-%e6%94%b9%e5%86%99%e6%a0%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 sampler 看成“直接吃 logits 做 softmax / argmax”，而实际上中间有一条明显的改写管线。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Raw[&amp;#34;raw logits&amp;#34;] --&amp;gt; Custom[&amp;#34;custom logit processor&amp;#34;]
+ Custom --&amp;gt; Penalty[&amp;#34;additive/scaling penalties&amp;#34;]
+ Penalty --&amp;gt; Mask[&amp;#34;grammar vocab mask&amp;#34;]
+ Mask --&amp;gt; Bias[&amp;#34;logit_bias&amp;#34;]
+ Bias --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：这些机制不是各自独立地“偶尔起作用”，而是共同构成了 sampler 之前的一条统一变换栈。&lt;/p&gt;</description></item><item><title>6.4 结构化响应设计：从 schema 到可消费结果</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-shapes-and-schema-design/</guid><description>&lt;h1 id="结构化响应设计从-schema-到可消费结果"&gt;结构化响应设计：从 schema 到可消费结果&lt;a class="anchor" href="#%e7%bb%93%e6%9e%84%e5%8c%96%e5%93%8d%e5%ba%94%e8%ae%be%e8%ae%a1%e4%bb%8e-schema-%e5%88%b0%e5%8f%af%e6%b6%88%e8%b4%b9%e7%bb%93%e6%9e%9c"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;即使读者已经知道 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、tool parser 和 API 表面怎样工作，仍然可能缺少一个更实用的问题答案：怎样设计一个真正适合被模型稳定生成、又适合下游系统消费的响应结构？如果没有这一层，结构化生成章节仍然更像能力介绍，而不像工程书。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把“schema 能不能写出来”推进到“schema 应不应该这样写”。这是很多好技术书都会额外补上的层次：不仅讲功能，还讲怎样把功能设计成更稳的工程接口。&lt;/p&gt;
@@ -1254,7 +1557,27 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;更脆弱：
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &amp;#34;request&amp;#34;: &amp;#34;Please tell me the full weather situation in a rich natural language paragraph&amp;#34;
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个对照不是说自由文本没价值，而是提醒你：如果目标是“可消费”，结构应该尽量先把机器需要的部分固定下来，再把解释性文本放在外围。&lt;/p&gt;</description></item><item><title>6.5 Reasoning Parser、多轮工具回路与结果回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</guid><description>&lt;h1 id="reasoning-parser多轮工具回路与结果回填"&gt;Reasoning Parser、多轮工具回路与结果回填&lt;a class="anchor" href="#reasoning-parser%e5%a4%9a%e8%bd%ae%e5%b7%a5%e5%85%b7%e5%9b%9e%e8%b7%af%e4%b8%8e%e7%bb%93%e6%9e%9c%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个对照不是说自由文本没价值，而是提醒你：如果目标是“可消费”，结构应该尽量先把机器需要的部分固定下来，再把解释性文本放在外围。&lt;/p&gt;</description></item><item><title>5.15 embedding、pooling 与 rerank 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</guid><description>&lt;h1 id="embeddingpooling-与-rerank-执行路径"&gt;embedding、pooling 与 rerank 执行路径&lt;a class="anchor" href="#embeddingpooling-%e4%b8%8e-rerank-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;到目前为止，执行模型章节几乎都围绕 token generation loop 展开：forward、sampling、finish、output processing、grammar mask、penalties。这样的主线是对的，但如果一本更厚的技术书只讲生成路径，就仍然会缺一个很真实的空白：同一套 runtime 还支持 embedding、classification、score、rerank，这些非生成请求在 execution 层到底怎么走？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条非生成执行路径补进来。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为从运行时角度看，embedding / rerank 路径并不是“生成路径减掉 sampler”这么简单。它会显式改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;request object（&lt;code&gt;EmbeddingReqInput&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;scheduler 对 batch 的理解（&lt;code&gt;is_prefill_only&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;worker 的执行调用（&lt;code&gt;forward_batch_embedding(...)&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;输出对象（&lt;code&gt;EmbeddingBatchResult&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/pooler.py&lt;/code&gt; 中的池化与 score head 行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它已经是 execution model 的正式分支，而不是附录。&lt;/p&gt;
+&lt;h2 id="一张图非生成执行路径的核心不是-sample而是-pool--score"&gt;一张图：非生成执行路径的核心不是 sample，而是 pool / score&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%9d%9e%e7%94%9f%e6%88%90%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84%e7%9a%84%e6%a0%b8%e5%bf%83%e4%b8%8d%e6%98%af-sample%e8%80%8c%e6%98%af-pool--score"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认所有执行路径都要经过 &lt;code&gt;sample()&lt;/code&gt;，而源码清楚地表明 embedding/rerank 路径是在这里分叉的。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;EmbeddingReqInput / cross-encoder pairs&amp;#34;] --&amp;gt; Batch[&amp;#34;ModelWorkerBatch (prefill-only)&amp;#34;]
+ Batch --&amp;gt; Fwd[&amp;#34;ModelRunner.forward()&amp;#34;]
+ Fwd --&amp;gt; Pool[&amp;#34;pooler / score head / embeddings&amp;#34;]
+ Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item><item><title>6.5 Reasoning Parser、多轮工具回路与结果回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</guid><description>&lt;h1 id="reasoning-parser多轮工具回路与结果回填"&gt;Reasoning Parser、多轮工具回路与结果回填&lt;a class="anchor" href="#reasoning-parser%e5%a4%9a%e8%bd%ae%e5%b7%a5%e5%85%b7%e5%9b%9e%e8%b7%af%e4%b8%8e%e7%bb%93%e6%9e%9c%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;仅仅理解 schema、regex 和 parser 还不够，因为真实系统里常见的不是“一次结构化输出就结束”，而是多轮工具回路：模型先给 reasoning 或 tool call，外部系统执行工具，再把结果回填，模型最后继续输出。这一层如果不补，结构化生成章节仍然会偏静态。&lt;/p&gt;
 &lt;p&gt;这一章要解决的，就是“结构化结果怎样进入多轮回路”。这是很多好技术书都会继续补的一层：不只讲一次调用，而讲真实工作流。&lt;/p&gt;
@@ -1483,7 +1806,29 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;查回归与维护：
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;test/README.md -&amp;gt; run_suite.py -&amp;gt; registered/manual tests -&amp;gt; contribution_guide.md&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这一章本质上是把前一章列出的入口重新按任务重组，所以锚点仍然主要落在 &lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;docs/basic_usage/*&lt;/code&gt;、&lt;code&gt;docs/advanced_features/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt; 与 &lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>7.4 遇到 bug 时，先从仓库哪几处下手</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</guid><description>&lt;h1 id="遇到-bug-时先从仓库哪几处下手"&gt;遇到 bug 时，先从仓库哪几处下手&lt;a class="anchor" href="#%e9%81%87%e5%88%b0-bug-%e6%97%b6%e5%85%88%e4%bb%8e%e4%bb%93%e5%ba%93%e5%93%aa%e5%87%a0%e5%a4%84%e4%b8%8b%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一章本质上是把前一章列出的入口重新按任务重组，所以锚点仍然主要落在 &lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;docs/basic_usage/*&lt;/code&gt;、&lt;code&gt;docs/advanced_features/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt; 与 &lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>6.14 Responses API、background request 与取消语义</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</guid><description>&lt;h1 id="responses-apibackground-request-与取消语义"&gt;Responses API、background request 与取消语义&lt;a class="anchor" href="#responses-apibackground-request-%e4%b8%8e%e5%8f%96%e6%b6%88%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、response_format 和 tool-call 约束怎样进入采样参数，但还缺一个非常值得单独讲的表面：&lt;code&gt;Responses API&lt;/code&gt;。它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这条工作流讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;Responses API&lt;/code&gt; 不是 chat/completions 的简单别名。它额外引入了几件会明显改变请求语义的东西：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;background&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;previous_response_id&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;request_id&lt;/code&gt; / &lt;code&gt;response_id&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;response store&lt;/li&gt;
+&lt;li&gt;background task lifecycle&lt;/li&gt;
+&lt;li&gt;retrieve / cancel 语义&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明它更像一层“带生命周期管理的响应接口”，而不是单次请求-响应壳。&lt;/p&gt;
+&lt;h2 id="一张图responses-api-为什么比普通-chatcompletions-多了一条后台工作流"&gt;一张图：&lt;code&gt;Responses API&lt;/code&gt; 为什么比普通 chat/completions 多了一条后台工作流&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beresponses-api-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%af%94%e6%99%ae%e9%80%9a-chatcompletions-%e5%a4%9a%e4%ba%86%e4%b8%80%e6%9d%a1%e5%90%8e%e5%8f%b0%e5%b7%a5%e4%bd%9c%e6%b5%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把它理解成“只是返回格式不同”，但源码清楚地表明它会长出 response store 和后台任务生命周期。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;ResponsesRequest&amp;#34;] --&amp;gt; Make[&amp;#34;create_responses()&amp;#34;]
+ Make --&amp;gt; Run[&amp;#34;foreground full response&amp;#34;]
+ Make --&amp;gt; Bg[&amp;#34;background task + response_store&amp;#34;]
+ Bg --&amp;gt; Get[&amp;#34;retrieve_responses()&amp;#34;]
+ Bg --&amp;gt; Cancel[&amp;#34;cancel_responses()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：一旦进入 background 模式，请求就不再是一次性的 surface，而是变成了一个可被后续查询和取消的运行中实体。&lt;/p&gt;</description></item><item><title>7.4 遇到 bug 时，先从仓库哪几处下手</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</guid><description>&lt;h1 id="遇到-bug-时先从仓库哪几处下手"&gt;遇到 bug 时，先从仓库哪几处下手&lt;a class="anchor" href="#%e9%81%87%e5%88%b0-bug-%e6%97%b6%e5%85%88%e4%bb%8e%e4%bb%93%e5%ba%93%e5%93%aa%e5%87%a0%e5%a4%84%e4%b8%8b%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;知道仓库结构，和真正会用仓库排障，是两件不同的事。很多读者在读完代码导读之后，仍然会在真实问题面前卡住：目录都知道了，但第一步到底该打开哪个文件，第二步该看哪个测试，第三步又该去对照哪份文档？&lt;/p&gt;
 &lt;p&gt;这一章就是把“仓库地图”进一步压成“故障入口地图”。它不是再讲一遍目录，而是回答：遇到不同类型的 bug，先去哪几处最可能拿到高价值线索。&lt;/p&gt;
@@ -1511,7 +1856,30 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：改动后不确定影响范围
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：test/README.md / run_suite.py / registered / unit / benchmark 文档&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这一章本质上回指整本书前面已经建立好的锚点：&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/function_call/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt;、&lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>7.5 通过 tests 反向理解系统行为</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</guid><description>&lt;h1 id="通过-tests-反向理解系统行为"&gt;通过 tests 反向理解系统行为&lt;a class="anchor" href="#%e9%80%9a%e8%bf%87-tests-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一章本质上回指整本书前面已经建立好的锚点：&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/function_call/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt;、&lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>6.15 MCP tool server、browser/python 工具与工作流接口</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</guid><description>&lt;h1 id="mcp-tool-serverbrowserpython-工具与工作流接口"&gt;MCP tool server、browser/python 工具与工作流接口&lt;a class="anchor" href="#mcp-tool-serverbrowserpython-%e5%b7%a5%e5%85%b7%e4%b8%8e%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%8e%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经覆盖了 function calling、tool parser、Responses API 的 background 语义，但还有一层非常值得单独讲的接口能力：当系统真的要接入外部工具时，&lt;code&gt;tool_server&lt;/code&gt;、MCP 会话、以及内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具是怎样进入工作流的？&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把这条“工具工作流接口”讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是普通 function calling 的自然延长。当前实现里至少已经出现了两种非常不同的工具入口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MCPToolServer&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;DemoToolServer&lt;/code&gt;（内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;而 &lt;code&gt;serving_responses.py&lt;/code&gt; 又会据此决定：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;要不要创建 tool session&lt;/li&gt;
+&lt;li&gt;要不要把工具描述注入系统消息&lt;/li&gt;
+&lt;li&gt;background / streaming 模式下是否直接拒绝某些 MCP 工具&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明这里已经不是“模型输出一个工具调用 JSON”那么简单，而是一层真正的工作流接口。&lt;/p&gt;
+&lt;h2 id="一张图工具并不是在模型之外平行运行而是被-responses-工作流显式调度"&gt;一张图：工具并不是在模型之外平行运行，而是被 Responses 工作流显式调度&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%b7%a5%e5%85%b7%e5%b9%b6%e4%b8%8d%e6%98%af%e5%9c%a8%e6%a8%a1%e5%9e%8b%e4%b9%8b%e5%a4%96%e5%b9%b3%e8%a1%8c%e8%bf%90%e8%a1%8c%e8%80%8c%e6%98%af%e8%a2%ab-responses-%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%98%be%e5%bc%8f%e8%b0%83%e5%ba%a6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人把工具系统想成外部插件，但当前实现更像“Responses API 主流程显式管理的上下文资源”。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;ResponsesRequest + tools&amp;#34;] --&amp;gt; Server[&amp;#34;tool_server / MCPToolServer / DemoToolServer&amp;#34;]
+ Server --&amp;gt; Session[&amp;#34;tool session(s)&amp;#34;]
+ Session --&amp;gt; Ctx[&amp;#34;HarmonyContext / StreamingHarmonyContext&amp;#34;]
+ Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：工具不是后处理附属物，而是会在请求开始前就进入上下文。&lt;/p&gt;</description></item><item><title>7.5 通过 tests 反向理解系统行为</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</guid><description>&lt;h1 id="通过-tests-反向理解系统行为"&gt;通过 tests 反向理解系统行为&lt;a class="anchor" href="#%e9%80%9a%e8%bf%87-tests-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;很多读者读代码时只看实现文件，直到某个行为看不懂时才想起去找测试。这种顺序当然可行，但它经常让人忽略一个重要事实：测试文件不只是验证实现，它们本身也在告诉你维护者认为哪些行为是“必须稳定存在的语义”。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把 tests 从“最后才顺手看”的材料，提升成代码导读中的正式入口。&lt;/p&gt;
@@ -1684,7 +2052,34 @@
  C --&amp;gt; D[&amp;#34;验证路径\nunit tests / server tests / bench_one_batch / benchmark&amp;#34;]
  D --&amp;gt; E[&amp;#34;贡献路径\npre-commit / CI / PR / review&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释了一点：扩展并不是“改完源码再说”，而是一条从设计入口到验证入口再到贡献入口的闭环。也正因为这样，本章会把测试和贡献流程看成扩展点的一部分，而不是附录。&lt;/p&gt;
 &lt;h2 id="模型扩展与协议扩展分别落在哪里"&gt;模型扩展与协议扩展分别落在哪里&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e6%89%a9%e5%b1%95%e4%b8%8e%e5%8d%8f%e8%ae%ae%e6%89%a9%e5%b1%95%e5%88%86%e5%88%ab%e8%90%bd%e5%9c%a8%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item><item><title>8.3 一线排障与发布前检查清单</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</guid><description>&lt;h1 id="一线排障与发布前检查清单"&gt;一线排障与发布前检查清单&lt;a class="anchor" href="#%e4%b8%80%e7%ba%bf%e6%8e%92%e9%9a%9c%e4%b8%8e%e5%8f%91%e5%b8%83%e5%89%8d%e6%a3%80%e6%9f%a5%e6%b8%85%e5%8d%95"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;模型扩展更偏 &lt;code&gt;python/sglang/srt/models/&lt;/code&gt;、相关 config、processor 和测试路径。&lt;code&gt;support_new_models.md&lt;/code&gt; 还给出了调试建议：用 Hugging Face 参考输出与 &lt;code&gt;python3 -m sglang.bench_one_batch --correct --model ...&lt;/code&gt; 进行对比，并把模型加入测试套件与 benchmark。这说明扩展不是只让代码“能跑”，而是要让它进入长期维护路径。&lt;/p&gt;</description></item><item><title>7.13 读 observability 源码树：从 RequestStage 到 exporter</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-observability-source-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-observability-source-tree/</guid><description>&lt;h1 id="读-observability-源码树从-requeststage-到-exporter"&gt;读 observability 源码树：从 RequestStage 到 exporter&lt;a class="anchor" href="#%e8%af%bb-observability-%e6%ba%90%e7%a0%81%e6%a0%91%e4%bb%8e-requeststage-%e5%88%b0-exporter"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经教读者如何从入口读到 runtime、如何顺着 protocol 和 &lt;code&gt;io_struct.py&lt;/code&gt; 看对象形状、如何用 &lt;code&gt;bench_one_batch.py&lt;/code&gt; 当显微镜。但整本书后半程已经引入了非常多观测与证据相关的能力：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;RequestStage&lt;/code&gt; / &lt;code&gt;ReqTimeStats&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;metrics collector&lt;/li&gt;
+&lt;li&gt;request logger&lt;/li&gt;
+&lt;li&gt;request metrics exporter&lt;/li&gt;
+&lt;li&gt;watchdog / health check&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果代码导读不把这些源码树重新收一遍，前面的 observability 章节就更像“功能说明”，而不是一条可回到源码的阅读路径。&lt;/p&gt;
+&lt;p&gt;这一章就是把 observability 源码树补进代码导读。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为在复杂 runtime 里，观测代码并不是边角料。很多时候，它才是最能揭示系统边界与作者意图的地方。比如：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些阶段被正式命名为 &lt;code&gt;RequestStage&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;哪些统计被认为值得长期导出&lt;/li&gt;
+&lt;li&gt;哪些字段被认为值得落盘&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些都不是“顺手打几个日志”能表达的。&lt;/p&gt;
+&lt;h2 id="一张图observability-源码树本身也有稳定层次"&gt;一张图：observability 源码树本身也有稳定层次&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beobservability-%e6%ba%90%e7%a0%81%e6%a0%91%e6%9c%ac%e8%ba%ab%e4%b9%9f%e6%9c%89%e7%a8%b3%e5%ae%9a%e5%b1%82%e6%ac%a1"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者看到 &lt;code&gt;observability/&lt;/code&gt; 会只想到 metrics，而不是一棵更完整的证据树。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Obs[&amp;#34;observability source tree&amp;#34;] --&amp;gt; Time[&amp;#34;req_time_stats.py / RequestStage&amp;#34;]
+ Obs --&amp;gt; Metrics[&amp;#34;metrics_collector.py / scheduler metrics&amp;#34;]
+ Obs --&amp;gt; Trace[&amp;#34;trace.py / tracing context&amp;#34;]
+ Obs --&amp;gt; Log[&amp;#34;request_logger.py&amp;#34;]
+ Obs --&amp;gt; Export[&amp;#34;request_metrics_exporter.py&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：observability 源码树不是单文件功能，而是一组彼此衔接的证据层。&lt;/p&gt;</description></item><item><title>8.3 一线排障与发布前检查清单</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/operational-checklists/</guid><description>&lt;h1 id="一线排障与发布前检查清单"&gt;一线排障与发布前检查清单&lt;a class="anchor" href="#%e4%b8%80%e7%ba%bf%e6%8e%92%e9%9a%9c%e4%b8%8e%e5%8f%91%e5%b8%83%e5%89%8d%e6%a3%80%e6%9f%a5%e6%b8%85%e5%8d%95"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前两章已经把 observability、trace、dump / replay、扩展点与维护路径讲清楚了，但对很多读者来说，最后仍然缺一件东西：当问题真的发生在生产或交付节点时，应该按什么顺序检查，才能避免在大量路径之间来回切换。&lt;/p&gt;
 &lt;p&gt;这一章就是把前面所有理解压成更像“值班清单”或“发布清单”的形式。它不替代前文原理，而是把原理收束成可执行顺序。&lt;/p&gt;
@@ -1717,7 +2112,37 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- schema / regex / parser / API surface 是否仍对齐
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;Code walkthrough / extension:
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- docs / examples / tests / benchmark 是否仍能支撑当前理解&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这份框架的意义，不在于面面俱到，而在于它让读者看到：发布前检查本质上就是把前面章节各自的“关键判断”重新走一遍。&lt;/p&gt;</description></item><item><title>8.4 测试、CI 与回归路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</guid><description>&lt;h1 id="测试ci-与回归路径"&gt;测试、CI 与回归路径&lt;a class="anchor" href="#%e6%b5%8b%e8%af%95ci-%e4%b8%8e%e5%9b%9e%e5%bd%92%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;- docs / examples / tests / benchmark 是否仍能支撑当前理解&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这份框架的意义，不在于面面俱到，而在于它让读者看到：发布前检查本质上就是把前面章节各自的“关键判断”重新走一遍。&lt;/p&gt;</description></item><item><title>7.14 读 disaggregation 源码树：prefill、decode 与 transfer backend</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-disaggregation-source-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-disaggregation-source-tree/</guid><description>&lt;h1 id="读-disaggregation-源码树prefilldecode-与-transfer-backend"&gt;读 disaggregation 源码树：prefill、decode 与 transfer backend&lt;a class="anchor" href="#%e8%af%bb-disaggregation-%e6%ba%90%e7%a0%81%e6%a0%91prefilldecode-%e4%b8%8e-transfer-backend"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把入口、协议、scheduler、&lt;code&gt;bench_one_batch.py&lt;/code&gt; 和 observability 树都拉回主线了，但还有一棵很容易让读者直接迷路的源码树没有被正式导读：&lt;code&gt;python/sglang/srt/disaggregation/&lt;/code&gt;。这里面同时有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;prefill.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;decode.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;encode_receiver.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;common/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;base/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fake/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;mooncake/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nixl/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;mori/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ascend/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这棵树的阅读顺序讲清楚，它很容易看起来像一堆传输后端杂糅在一起。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 disaggregation 在整本书里已经不是边角料了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调度章节已经写了 bootstrap/prealloc/transfer 队列&lt;/li&gt;
+&lt;li&gt;RequestStage 章节已经写了 transfer 相关阶段&lt;/li&gt;
+&lt;li&gt;扩展与调试章节也写了 disaggregation 排障工作流&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;既然它已经进入主线，那么代码导读也应该给它一条清晰的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="一张图这棵树不是横向散开的而是有层次的"&gt;一张图：这棵树不是横向散开的，而是有层次的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e6%a3%b5%e6%a0%91%e4%b8%8d%e6%98%af%e6%a8%aa%e5%90%91%e6%95%a3%e5%bc%80%e7%9a%84%e8%80%8c%e6%98%af%e6%9c%89%e5%b1%82%e6%ac%a1%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人第一次看 &lt;code&gt;disaggregation/&lt;/code&gt; 目录时，只能看到很多 backend 名字，却看不出主干层次。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Root[&amp;#34;disaggregation/&amp;#34;] --&amp;gt; Core[&amp;#34;prefill.py / decode.py / utils.py&amp;#34;]
+ Root --&amp;gt; Base[&amp;#34;base/ / common/&amp;#34;]
+ Root --&amp;gt; Backend[&amp;#34;fake / mooncake / nixl / mori / ascend&amp;#34;]
+ Root --&amp;gt; Encode[&amp;#34;encode_receiver.py / encode_server.py&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：backend 不是主线的起点，真正更稳的入口是 &lt;code&gt;prefill.py&lt;/code&gt; / &lt;code&gt;decode.py&lt;/code&gt; 与 &lt;code&gt;base/common&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>8.4 测试、CI 与回归路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/testing-and-regression-paths/</guid><description>&lt;h1 id="测试ci-与回归路径"&gt;测试、CI 与回归路径&lt;a class="anchor" href="#%e6%b5%8b%e8%af%95ci-%e4%b8%8e%e5%9b%9e%e5%bd%92%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;如果一章技术书只讲系统如何工作，却不讲“怎么证明它还工作”，那它对维护者来说仍然是不完整的。SGLang 的测试和 CI 体系之所以值得单独成章，就是因为它直接定义了哪些行为被认为是必须长期成立的。&lt;/p&gt;
 &lt;p&gt;这一章解决的问题，不是“怎样写一条测试命令”，而是“为什么测试和 CI 应该被看作系统语义的一部分”。这对 runtime 项目尤其重要，因为很多错误不是接口错误，而是性能、状态、并发或边界条件的回归。&lt;/p&gt;
@@ -1743,7 +2168,37 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;改动后：
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;1. 先跑最小 unit / local test
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;2. 再跑对应 suite 或 registered 路径
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;3. 必要时补 benchmark / accuracy / nightly 验证&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这张清单的价值不在于它足够完整，而在于它能把“我改了代码”立刻转成“我应该怎么证明这次改动没有伤到主线”。这正是 maintainer 视角和普通读者视角的分水岭。&lt;/p&gt;</description></item><item><title>8.5 常见故障场景与第一反应</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</guid><description>&lt;h1 id="常见故障场景与第一反应"&gt;常见故障场景与第一反应&lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e6%95%85%e9%9a%9c%e5%9c%ba%e6%99%af%e4%b8%8e%e7%ac%ac%e4%b8%80%e5%8f%8d%e5%ba%94"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;3. 必要时补 benchmark / accuracy / nightly 验证&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这张清单的价值不在于它足够完整，而在于它能把“我改了代码”立刻转成“我应该怎么证明这次改动没有伤到主线”。这正是 maintainer 视角和普通读者视角的分水岭。&lt;/p&gt;</description></item><item><title>7.15 读 models/ 与 layers/：模型定义与执行砖块</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-models-and-layers-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-models-and-layers-tree/</guid><description>&lt;h1 id="读-models-与-layers模型定义与执行砖块"&gt;读 models/ 与 layers/：模型定义与执行砖块&lt;a class="anchor" href="#%e8%af%bb-models-%e4%b8%8e-layers%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e4%b8%8e%e6%89%a7%e8%a1%8c%e7%a0%96%e5%9d%97"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经给出了从入口到 scheduler、从 observability 到 disaggregation 的多条稳定阅读路径，但还有两棵最容易让人“越看越散”的源码树没有被正式导读：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/models/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/layers/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这两棵树重新收成一条更稳的阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树特别容易读散"&gt;为什么这两棵树特别容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e7%89%b9%e5%88%ab%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它们都很大，而且看起来都很重要：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;models/&lt;/code&gt; 里塞满了具体模型实现&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/&lt;/code&gt; 里又塞满了 attention backend、sampler、quantization、moe、rotary embedding 等执行砖块&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有阅读策略，读者很容易在这里陷入“文件越多越核心”的错觉，而失去对整本书主线的把握。&lt;/p&gt;
+&lt;h2 id="一张图这两棵树在整本书里的角色并不对称"&gt;一张图：这两棵树在整本书里的角色并不对称&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%9c%a8%e6%95%b4%e6%9c%ac%e4%b9%a6%e9%87%8c%e7%9a%84%e8%a7%92%e8%89%b2%e5%b9%b6%e4%b8%8d%e5%af%b9%e7%a7%b0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 想成平行目录，而从运行时角度看，它们其实分别站在“模型定义层”和“执行砖块层”。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Models[&amp;#34;models/&amp;#34;] --&amp;gt; Runner[&amp;#34;ModelRunner&amp;#34;]
+ Layers[&amp;#34;layers/&amp;#34;] --&amp;gt; Runner
+ Runner --&amp;gt; Worker[&amp;#34;TpModelWorker / draft worker&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：你不应该直接把这两棵树当成“谁都可以先读”的入口，而更适合先知道它们在整体架构里是如何汇合的。&lt;/p&gt;
+&lt;h2 id="读-models-的正确心态"&gt;读 &lt;code&gt;models/&lt;/code&gt; 的正确心态&lt;a class="anchor" href="#%e8%af%bb-models-%e7%9a%84%e6%ad%a3%e7%a1%ae%e5%bf%83%e6%80%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;models/&lt;/code&gt; 最适合回答的问题不是“系统怎么跑”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;某个模型的特殊语义在哪里实现&lt;/li&gt;
+&lt;li&gt;哪些模型是 generation / multimodal / rerank / classification 变体&lt;/li&gt;
+&lt;li&gt;哪些模型需要特殊的 logits processor、vision projector、audio path、MTP 分支&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它更像“模型人格差异的具体落点”，而不是执行主循环本身。&lt;/p&gt;
+&lt;h2 id="为什么-layers-更像执行砖块仓库"&gt;为什么 &lt;code&gt;layers/&lt;/code&gt; 更像执行砖块仓库&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-layers-%e6%9b%b4%e5%83%8f%e6%89%a7%e8%a1%8c%e7%a0%96%e5%9d%97%e4%bb%93%e5%ba%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从目录就能看出来，&lt;code&gt;layers/&lt;/code&gt; 至少包括：&lt;/p&gt;</description></item><item><title>8.5 常见故障场景与第一反应</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/failure-scenarios-and-first-questions/</guid><description>&lt;h1 id="常见故障场景与第一反应"&gt;常见故障场景与第一反应&lt;a class="anchor" href="#%e5%b8%b8%e8%a7%81%e6%95%85%e9%9a%9c%e5%9c%ba%e6%99%af%e4%b8%8e%e7%ac%ac%e4%b8%80%e5%8f%8d%e5%ba%94"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前几章已经给了调试工具、扩展路径和发布前清单，但很多读者在真正遇到问题时，仍然会卡在第一步：到底先问什么问题？优秀技术书到最后常常会补这种“现场感很强”的章节，因为它能把前面的抽象知识真正压成可执行动作。&lt;/p&gt;
 &lt;p&gt;这一章解决的，就是“问题刚发生时，先问哪几个问题，才能少走弯路”。&lt;/p&gt;
@@ -1760,7 +2215,28 @@
 &lt;h2 id="场景三结构化输出偶尔失稳"&gt;场景三：结构化输出偶尔失稳&lt;a class="anchor" href="#%e5%9c%ba%e6%99%af%e4%b8%89%e7%bb%93%e6%9e%84%e5%8c%96%e8%be%93%e5%87%ba%e5%81%b6%e5%b0%94%e5%a4%b1%e7%a8%b3"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;第一问：约束真的进入了 generation path，还是只停留在请求表面？&lt;br&gt;
 第二问：这是 grammar backend 的问题，还是 parser / tool result 回填的问题？&lt;br&gt;
-第三问：失败表现是“格式不合法”“格式合法但语义不对”，还是“tool call 回路不闭合”？&lt;/p&gt;</description></item><item><title>8.6 Profiling、trace 采样与性能回归证据</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</guid><description>&lt;h1 id="profilingtrace-采样与性能回归证据"&gt;Profiling、trace 采样与性能回归证据&lt;a class="anchor" href="#profilingtrace-%e9%87%87%e6%a0%b7%e4%b8%8e%e6%80%a7%e8%83%bd%e5%9b%9e%e5%bd%92%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+第三问：失败表现是“格式不合法”“格式合法但语义不对”，还是“tool call 回路不闭合”？&lt;/p&gt;</description></item><item><title>7.16 读 distributed/parallel_state.py：并行组真正从哪里来</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-distributed-parallel-state/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-distributed-parallel-state/</guid><description>&lt;h1 id="读-distributedparallel_statepy并行组真正从哪里来"&gt;读 distributed/parallel_state.py：并行组真正从哪里来&lt;a class="anchor" href="#%e8%af%bb-distributedparallel_statepy%e5%b9%b6%e8%a1%8c%e7%bb%84%e7%9c%9f%e6%ad%a3%e4%bb%8e%e5%93%aa%e9%87%8c%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经给了 &lt;code&gt;disaggregation/&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 的多条阅读路径，但还有一棵对多并行理解极其关键的源码树没有被正式导读：&lt;code&gt;python/sglang/srt/distributed/parallel_state.py&lt;/code&gt; 以及它周围的 &lt;code&gt;distributed/&lt;/code&gt; 目录。&lt;/p&gt;
+&lt;p&gt;如果不把这棵树讲清楚，读者会知道 &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;PP&lt;/code&gt; / world group 存在，却不知道它们在源码里究竟从哪里来、谁在维护它们，以及后续通信算子为什么总是反复去 &lt;code&gt;get_tp_group()&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为对于多并行 runtime 来说，这棵树本身就是“通信现实”的总入口。你后面看到的很多东西都在依赖它：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;scheduler / tp_worker 初始化&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;communication_op.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;graph capture context&lt;/li&gt;
+&lt;li&gt;group-aware all-reduce / all-gather&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这不是只给分布式专家看的目录，而是整本书运行时边界非常重要的一棵树。&lt;/p&gt;
+&lt;h2 id="一张图parallel_statepy-在整本系统里更像并行地基"&gt;一张图：&lt;code&gt;parallel_state.py&lt;/code&gt; 在整本系统里更像“并行地基”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beparallel_statepy-%e5%9c%a8%e6%95%b4%e6%9c%ac%e7%b3%bb%e7%bb%9f%e9%87%8c%e6%9b%b4%e5%83%8f%e5%b9%b6%e8%a1%8c%e5%9c%b0%e5%9f%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;parallel_state.py&lt;/code&gt; 当成后台工具，而不是认为它是后面大量执行边界的地基。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Dist[&amp;#34;distributed/parallel_state.py&amp;#34;] --&amp;gt; Groups[&amp;#34;world / tp / pp / moe groups&amp;#34;]
+ Groups --&amp;gt; Worker[&amp;#34;scheduler / tp_worker&amp;#34;]
+ Groups --&amp;gt; Comm[&amp;#34;communication_op.py&amp;#34;]
+ Groups --&amp;gt; Graph[&amp;#34;graph_capture context&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：后面很多看似分散的执行与通信路径，实际上都在依赖同一棵地基树。&lt;/p&gt;
+&lt;h2 id="为什么应该先读文件头而不是直接找某个-get__group"&gt;为什么应该先读文件头而不是直接找某个 &lt;code&gt;get_*_group()&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e8%af%bb%e6%96%87%e4%bb%b6%e5%a4%b4%e8%80%8c%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e6%89%be%e6%9f%90%e4%b8%aa-get__group"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;文件开头已经把 workflow 写得很清楚：&lt;/p&gt;</description></item><item><title>8.6 Profiling、trace 采样与性能回归证据</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/profiling-and-performance-evidence/</guid><description>&lt;h1 id="profilingtrace-采样与性能回归证据"&gt;Profiling、trace 采样与性能回归证据&lt;a class="anchor" href="#profilingtrace-%e9%87%87%e6%a0%b7%e4%b8%8e%e6%80%a7%e8%83%bd%e5%9b%9e%e5%bd%92%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;很多系统在讲完 observability 和 testing 之后，仍然会缺一块：如果你怀疑是性能问题，或者你做了一次优化，究竟拿什么证明“它真的更快了、或者至少没有更慢”？这类问题并不完全属于 metrics，也不完全属于 benchmark，它更像“证据链”问题。&lt;/p&gt;
 &lt;p&gt;这一章要解决的，就是把 profiling、trace 采样和性能回归证据拉回整本书主线里。这样一来，扩展与调试部分就不只是“出了问题怎么看”，还会继续回答“改完之后拿什么证明变化是真的”。&lt;/p&gt;
@@ -1776,7 +2252,30 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 需要更细粒度分析时打开 profiler
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 用 bench_one_batch / bench_serving / benchmark 文档组织输入
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 产出 trace / profile / benchmark 结果
-&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 对比前后变化&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链本质上是在回答：当你怀疑系统慢了，或者觉得自己把它优化快了，到底怎样避免“只凭直觉得出结论”。&lt;/p&gt;</description></item><item><title>8.7 从故障现象到根因：一条完整维护者路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</guid><description>&lt;h1 id="从故障现象到根因一条完整维护者路径"&gt;从故障现象到根因：一条完整维护者路径&lt;a class="anchor" href="#%e4%bb%8e%e6%95%85%e9%9a%9c%e7%8e%b0%e8%b1%a1%e5%88%b0%e6%a0%b9%e5%9b%a0%e4%b8%80%e6%9d%a1%e5%ae%8c%e6%95%b4%e7%bb%b4%e6%8a%a4%e8%80%85%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; -&amp;gt; 对比前后变化&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这条链本质上是在回答：当你怀疑系统慢了，或者觉得自己把它优化快了，到底怎样避免“只凭直觉得出结论”。&lt;/p&gt;</description></item><item><title>7.17 读 parser/ 与 function_call/：模板、reasoning 与 detector 树</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-parser-and-function-call-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-parser-and-function-call-tree/</guid><description>&lt;h1 id="读-parser-与-function_call模板reasoning-与-detector-树"&gt;读 parser/ 与 function_call/：模板、reasoning 与 detector 树&lt;a class="anchor" href="#%e8%af%bb-parser-%e4%b8%8e-function_call%e6%a8%a1%e6%9d%bfreasoning-%e4%b8%8e-detector-%e6%a0%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把 &lt;code&gt;entrypoints/openai&lt;/code&gt;、&lt;code&gt;protocol.py&lt;/code&gt;、&lt;code&gt;io_struct.py&lt;/code&gt;、&lt;code&gt;observability/&lt;/code&gt;、&lt;code&gt;disaggregation/&lt;/code&gt; 和 &lt;code&gt;models/&lt;/code&gt; / &lt;code&gt;layers/&lt;/code&gt; 树都串起来了，但还有两棵和结构化生成强相关、同时又特别容易让人读散的目录没有正式导读：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/parser/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/function_call/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这两棵树重新收成一条稳健的阅读顺序。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树容易读散"&gt;为什么这两棵树容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它们都不是单一主题目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;parser/&lt;/code&gt; 里既有 conversation/template，也有 reasoning parser、harmony parser、code completion parser、jinja utilities&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;function_call/&lt;/code&gt; 里既有通用 parser，也有很多模型专属 detector&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有导读，读者很容易在 detector 名字和模板工具之间来回跳，却始终不知道这两棵树在整本系统里的角色。&lt;/p&gt;
+&lt;h2 id="一张图这两棵树分别站在解释和检测两侧"&gt;一张图：这两棵树分别站在“解释”和“检测”两侧&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%88%86%e5%88%ab%e7%ab%99%e5%9c%a8%e8%a7%a3%e9%87%8a%e5%92%8c%e6%a3%80%e6%b5%8b%e4%b8%a4%e4%be%a7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 parser 和 function_call 混成一个目录层，而从系统角度看，它们分别承担不同工作。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Parser[&amp;#34;parser/&amp;#34;] --&amp;gt; Surface[&amp;#34;template / reasoning / conversation interpretation&amp;#34;]
+ FC[&amp;#34;function_call/&amp;#34;] --&amp;gt; Detect[&amp;#34;tool-call detector / constraint builder&amp;#34;]
+ Surface --&amp;gt; OpenAI[&amp;#34;serving_chat / responses&amp;#34;]
+ Detect --&amp;gt; OpenAI&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：一棵树更偏解释输入与上下文，一棵树更偏解释模型输出里的工具调用模式。&lt;/p&gt;
+&lt;h2 id="为什么应该先读-parser"&gt;为什么应该先读 &lt;code&gt;parser/&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e8%af%bb-parser"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它更像“进入 structured / tool / reasoning 语义之前的解释层”。&lt;/p&gt;</description></item><item><title>8.7 从故障现象到根因：一条完整维护者路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/from-symptom-to-root-cause/</guid><description>&lt;h1 id="从故障现象到根因一条完整维护者路径"&gt;从故障现象到根因：一条完整维护者路径&lt;a class="anchor" href="#%e4%bb%8e%e6%95%85%e9%9a%9c%e7%8e%b0%e8%b1%a1%e5%88%b0%e6%a0%b9%e5%9b%a0%e4%b8%80%e6%9d%a1%e5%ae%8c%e6%95%b4%e7%bb%b4%e6%8a%a4%e8%80%85%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;排障章节如果只列工具、只列清单，读者仍然可能不知道真正的顺序是什么。真正困难的地方往往不是“有没有工具”，而是“从现象出发，怎样一步步走到根因，而不是在系统里乱撞”。这一章就是把前面所有维护层章节，重新压成一条完整路径。&lt;/p&gt;
 &lt;h2 id="一条更真实的维护者路径"&gt;一条更真实的维护者路径&lt;a class="anchor" href="#%e4%b8%80%e6%9d%a1%e6%9b%b4%e7%9c%9f%e5%ae%9e%e7%9a%84%e7%bb%b4%e6%8a%a4%e8%80%85%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
@@ -1793,7 +2292,42 @@
 &lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章本质上回指前文所有关键锚点：&lt;code&gt;launch_server.py&lt;/code&gt;、&lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt;、&lt;code&gt;DetokenizerManager&lt;/code&gt;、&lt;code&gt;ForwardBatch&lt;/code&gt;、&lt;code&gt;SamplingParams&lt;/code&gt;、&lt;code&gt;req_time_stats.py&lt;/code&gt;、&lt;code&gt;run_suite.py&lt;/code&gt;、&lt;code&gt;benchmark_and_profiling.md&lt;/code&gt;、&lt;code&gt;support_new_models.md&lt;/code&gt; 等。&lt;/p&gt;
 &lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;如果一本书最后能让读者形成“从现象到根因”的完整工作流，它就已经不只是一本导读书，而开始像一本真正能带着进现场的技术书。这一章承担的就是这个作用。&lt;/p&gt;</description></item><item><title>8.8 分层缓存、存储后端与更深的运行时故障面</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</guid><description>&lt;h1 id="分层缓存存储后端与更深的运行时故障面"&gt;分层缓存、存储后端与更深的运行时故障面&lt;a class="anchor" href="#%e5%88%86%e5%b1%82%e7%bc%93%e5%ad%98%e5%ad%98%e5%82%a8%e5%90%8e%e7%ab%af%e4%b8%8e%e6%9b%b4%e6%b7%b1%e7%9a%84%e8%bf%90%e8%a1%8c%e6%97%b6%e6%95%85%e9%9a%9c%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;如果一本书最后能让读者形成“从现象到根因”的完整工作流，它就已经不只是一本导读书，而开始像一本真正能带着进现场的技术书。这一章承担的就是这个作用。&lt;/p&gt;</description></item><item><title>7.18 读 http_server.py：接口森林与 app.state 装配</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-http-server-route-forest/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-http-server-route-forest/</guid><description>&lt;h1 id="读-http_serverpy接口森林与-appstate-装配"&gt;读 http_server.py：接口森林与 app.state 装配&lt;a class="anchor" href="#%e8%af%bb-http_serverpy%e6%8e%a5%e5%8f%a3%e6%a3%ae%e6%9e%97%e4%b8%8e-appstate-%e8%a3%85%e9%85%8d"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经单独讲了 &lt;code&gt;entrypoints/openai&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;protocol.py&lt;/code&gt; 和分布式地基树，但还有一个文件虽然被频繁提到，却仍然值得单独成章：&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;。这是整套系统最像“接口森林”的地方，里面不仅挂着 OpenAI-compatible 路由，还挂着：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Responses API&lt;/li&gt;
+&lt;li&gt;Ollama-compatible 接口&lt;/li&gt;
+&lt;li&gt;Anthropic-compatible 接口&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;/freeze_gc&lt;/code&gt;、&lt;code&gt;/set_internal_state&lt;/code&gt;、&lt;code&gt;/open_session&lt;/code&gt; 等维护端点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这棵森林重新整理成一条更稳的阅读顺序。&lt;/p&gt;
+&lt;h2 id="为什么这个文件特别容易读散"&gt;为什么这个文件特别容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%aa%e6%96%87%e4%bb%b6%e7%89%b9%e5%88%ab%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它同时承担了两类工作：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在 &lt;code&gt;lifespan&lt;/code&gt; / 初始化阶段把各种 serving handler 放到 &lt;code&gt;app.state&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;在后半段挂一整片 HTTP 路由森林&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果你没有先建立“初始化森林”和“路由森林”这两层区分，就很容易把这个文件读成一长串路由定义，而不是系统对外表面的总入口。&lt;/p&gt;
+&lt;h2 id="一张图http_serverpy-其实在做两件事"&gt;一张图：&lt;code&gt;http_server.py&lt;/code&gt; 其实在做两件事&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%behttp_serverpy-%e5%85%b6%e5%ae%9e%e5%9c%a8%e5%81%9a%e4%b8%a4%e4%bb%b6%e4%ba%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把它当成一个单纯路由文件，而忽略前半段的 handler 装配和后半段的路由映射是两层不同逻辑。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Init[&amp;#34;lifespan / app.state initialization&amp;#34;] --&amp;gt; Handlers[&amp;#34;OpenAI / Responses / Ollama / Anthropic handlers&amp;#34;]
+ Handlers --&amp;gt; Routes[&amp;#34;HTTP route forest&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：你读这个文件时，应该先看“装了哪些 handler”，再看“这些 handler 分别挂在哪些路径上”。&lt;/p&gt;
+&lt;h2 id="为什么应该先看-appstate-初始化"&gt;为什么应该先看 &lt;code&gt;app.state&lt;/code&gt; 初始化&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e7%9c%8b-appstate-%e5%88%9d%e5%a7%8b%e5%8c%96"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;http_server.py&lt;/code&gt; 很早就会把这些对象挂到 &lt;code&gt;app.state&lt;/code&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_completion&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_chat&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_embedding&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_classify&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_score&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_rerank&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_responses&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ollama_serving&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;anthropic_serving&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一步特别重要，因为它说明后面的路由并不直接实现逻辑，而是只是把请求转给一组已经装配好的 handler。也就是说，路由层更像调度表，而不是行为本体。&lt;/p&gt;</description></item><item><title>8.8 分层缓存、存储后端与更深的运行时故障面</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/hierarchical-cache-and-storage-backends/</guid><description>&lt;h1 id="分层缓存存储后端与更深的运行时故障面"&gt;分层缓存、存储后端与更深的运行时故障面&lt;a class="anchor" href="#%e5%88%86%e5%b1%82%e7%bc%93%e5%ad%98%e5%ad%98%e5%82%a8%e5%90%8e%e7%ab%af%e4%b8%8e%e6%9b%b4%e6%b7%b1%e7%9a%84%e8%bf%90%e8%a1%8c%e6%97%b6%e6%95%85%e9%9a%9c%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;当书已经走到维护层时，还会剩下一类更深、更不适合塞进前面主线章节的问题：如果系统启用了更复杂的分层缓存、storage backend 或远端缓存路径，很多异常就不再只是 scheduler、KV cache 或单机 observability 可以解释的了。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把这些“更深层但仍属于主线延伸”的故障面单独拉出来。这样一来，整本书就不会只覆盖常见路径，而会开始触及更复杂运行时配置下的维护现实。&lt;/p&gt;
@@ -1936,4 +2470,58 @@
  Stage --&amp;gt; Queue[&amp;#34;bootstrap / prealloc / transfer queues&amp;#34;]
  Queue --&amp;gt; Backend[&amp;#34;transfer backend / staging / mooncake&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这类问题不是单层问题，而是需要按层级逐步收敛。&lt;/p&gt;
 &lt;h2 id="第一步先看-placement-signal-是否已经不合理"&gt;第一步：先看 placement signal 是否已经不合理&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e6%ad%a5%e5%85%88%e7%9c%8b-placement-signal-%e6%98%af%e5%90%a6%e5%b7%b2%e7%bb%8f%e4%b8%8d%e5%90%88%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;先确认：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;先确认：&lt;/p&gt;</description></item><item><title>8.16 围绕单个 rid 串起证据链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/single-request-evidence-stitching/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/single-request-evidence-stitching/</guid><description>&lt;h1 id="围绕单个-rid-串起证据链"&gt;围绕单个 rid 串起证据链&lt;a class="anchor" href="#%e5%9b%b4%e7%bb%95%e5%8d%95%e4%b8%aa-rid-%e4%b8%b2%e8%b5%b7%e8%af%81%e6%8d%ae%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试这一节前面已经分别讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;RequestStage&lt;/code&gt; / &lt;code&gt;ReqTimeStats&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;request logger&lt;/li&gt;
+&lt;li&gt;request metrics exporter&lt;/li&gt;
+&lt;li&gt;crash dump / straggler&lt;/li&gt;
+&lt;li&gt;trace&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但维护者在现场排障时经常面对的并不是“某一类工具怎么用”，而是更具体的问题：我现在已经锁定一个 &lt;code&gt;rid&lt;/code&gt;，怎样把它在不同证据系统里的痕迹串起来，形成一条完整证据链？&lt;/p&gt;
+&lt;p&gt;这一章就是把这件事讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么单个-rid-视角特别重要"&gt;为什么单个 &lt;code&gt;rid&lt;/code&gt; 视角特别重要&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%8d%95%e4%b8%aa-rid-%e8%a7%86%e8%a7%92%e7%89%b9%e5%88%ab%e9%87%8d%e8%a6%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为很多最难的问题并不是系统整体坏了，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;某一条请求特别慢&lt;/li&gt;
+&lt;li&gt;某一条请求在结构化结果上异常&lt;/li&gt;
+&lt;li&gt;某一条请求在 transfer / queue / detokenize 边界上表现异常&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这种时候，如果你只能分别看 metrics、logger、trace、dump，而不能把它们对到同一个 request identity 上，排障效率会很低。&lt;/p&gt;
+&lt;h2 id="一张图单条请求的证据不在一个地方而在多条证据链上同时存在"&gt;一张图：单条请求的证据不在一个地方，而在多条证据链上同时存在&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%8d%95%e6%9d%a1%e8%af%b7%e6%b1%82%e7%9a%84%e8%af%81%e6%8d%ae%e4%b8%8d%e5%9c%a8%e4%b8%80%e4%b8%aa%e5%9c%b0%e6%96%b9%e8%80%8c%e5%9c%a8%e5%a4%9a%e6%9d%a1%e8%af%81%e6%8d%ae%e9%93%be%e4%b8%8a%e5%90%8c%e6%97%b6%e5%ad%98%e5%9c%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会默认“拿到 rid 就能在某个地方看到完整真相”，而真实系统更像多份局部证据的拼接。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ RID[&amp;#34;rid&amp;#34;] --&amp;gt; Stage[&amp;#34;ReqTimeStats / RequestStage&amp;#34;]
+ RID --&amp;gt; Log[&amp;#34;RequestLogger&amp;#34;]
+ RID --&amp;gt; Export[&amp;#34;request metrics exporter&amp;#34;]
+ RID --&amp;gt; Dump[&amp;#34;dump / crash dump / straggler&amp;#34;]
+ RID --&amp;gt; Trace[&amp;#34;trace / spans / events&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：单个请求的“完整故事”天然分布在多个证据系统里。&lt;/p&gt;</description></item><item><title>8.17 internal state、dumper_control 与 freeze_gc 控制路径</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/internal-state-and-low-level-controls/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/internal-state-and-low-level-controls/</guid><description>&lt;h1 id="internal-statedumper_control-与-freeze_gc-控制路径"&gt;internal state、dumper_control 与 freeze_gc 控制路径&lt;a class="anchor" href="#internal-statedumper_control-%e4%b8%8e-freeze_gc-%e6%8e%a7%e5%88%b6%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;扩展与调试部分前面已经讲了 logger、exporter、watchdog、loads、single-rid 证据链，但还缺一类更偏底层维护与实验性的控制能力：如果你要直接拉内部状态快照、控制 dumper、或者冻结 GC，这些路径是怎样进入系统的？它们应该被看成调试工具、控制面，还是危急情况下的手术刀？&lt;/p&gt;
+&lt;p&gt;这一章专门把这类低层控制路径收进主线。&lt;/p&gt;
+&lt;h2 id="为什么这层值得成章"&gt;为什么这层值得成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为这些能力虽然不属于日常用户路径，但对维护者和平台工程师很有价值：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;get_internal_state()&lt;/code&gt; / &lt;code&gt;set_internal_state()&lt;/code&gt; 提供更直接的内部视图与注入能力&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dumper_control()&lt;/code&gt; 控制更底层证据采集&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;freeze_gc()&lt;/code&gt; 影响运行时垃圾回收行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这类能力一旦存在，就说明系统作者已经把“深入观察和人工干预”当成正式维护需求，而不是临时加的 debug hack。&lt;/p&gt;
+&lt;h2 id="一张图这类低层控制不是从日志系统旁路进去而是走正式-communicator-控制面"&gt;一张图：这类低层控制不是从日志系统旁路进去，而是走正式 communicator 控制面&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%b1%bb%e4%bd%8e%e5%b1%82%e6%8e%a7%e5%88%b6%e4%b8%8d%e6%98%af%e4%bb%8e%e6%97%a5%e5%bf%97%e7%b3%bb%e7%bb%9f%e6%97%81%e8%b7%af%e8%bf%9b%e5%8e%bb%e8%80%8c%e6%98%af%e8%b5%b0%e6%ad%a3%e5%bc%8f-communicator-%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会以为这些低层控制是本地函数直调，而源码实际让它们走和其他控制请求一致的 manager 通道。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Tool[&amp;#34;maintainer control request&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager communicator&amp;#34;]
+ TM --&amp;gt; SCH[&amp;#34;Scheduler control handlers&amp;#34;]
+ SCH --&amp;gt; Dump[&amp;#34;dumper / internal state / freeze_gc&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这些命令不是偷偷直连某个对象，而是作为正式控制消息进入运行时。&lt;/p&gt;
+&lt;h2 id="tokenizermanager-这一侧提供了哪些入口"&gt;&lt;code&gt;TokenizerManager&lt;/code&gt; 这一侧提供了哪些入口&lt;a class="anchor" href="#tokenizermanager-%e8%bf%99%e4%b8%80%e4%be%a7%e6%8f%90%e4%be%9b%e4%ba%86%e5%93%aa%e4%ba%9b%e5%85%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt; 已经把这些能力显式暴露成 async 控制方法：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;get_internal_state()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;set_internal_state()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;dumper_control()&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明对外控制面并不只有 flush/load/profile，也包括更偏内部观测的控制动作。&lt;/p&gt;
+&lt;h2 id="get_internal_state-为什么很有价值"&gt;&lt;code&gt;get_internal_state()&lt;/code&gt; 为什么很有价值&lt;a class="anchor" href="#get_internal_state-%e4%b8%ba%e4%bb%80%e4%b9%88%e5%be%88%e6%9c%89%e4%bb%b7%e5%80%bc"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;它会通过 communicator 发 &lt;code&gt;GetInternalStateReq()&lt;/code&gt;，然后收各 rank 返回的 &lt;code&gt;GetInternalStateReqOutput&lt;/code&gt;。这意味着内部状态快照不是本地线程里临时打印一下，而是可以跨 rank 正式收集。&lt;/p&gt;</description></item></channel></rss>

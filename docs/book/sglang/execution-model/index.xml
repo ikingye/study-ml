@@ -178,4 +178,73 @@
  Params[&amp;#34;SamplingParams / response_format / tool constraint&amp;#34;] --&amp;gt; SBI[&amp;#34;SamplingBatchInfo&amp;#34;]
  SBI --&amp;gt; Mask[&amp;#34;vocab_mask + apply_mask_func&amp;#34;]
  Mask --&amp;gt; Logits[&amp;#34;masked logits&amp;#34;]
- Logits --&amp;gt; Sample[&amp;#34;Sampler token selection&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：约束一旦进入 execution，不再是“对输出结果做检查”，而是直接改写 logits 空间。&lt;/p&gt;</description></item></channel></rss>
+ Logits --&amp;gt; Sample[&amp;#34;Sampler token selection&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：约束一旦进入 execution，不再是“对输出结果做检查”，而是直接改写 logits 空间。&lt;/p&gt;</description></item><item><title>5.13 SamplingParams 的规范化、互斥约束与 stop 语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</guid><description>&lt;h1 id="samplingparams-的规范化互斥约束与-stop-语义"&gt;SamplingParams 的规范化、互斥约束与 stop 语义&lt;a class="anchor" href="#samplingparams-%e7%9a%84%e8%a7%84%e8%8c%83%e5%8c%96%e4%ba%92%e6%96%a5%e7%ba%a6%e6%9d%9f%e4%b8%8e-stop-%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面已经讲了 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask、grammar sync 和 structure-aware sampling，但还有一层很基础、同时又特别容易被忽略的内容没有单独讲：&lt;code&gt;SamplingParams&lt;/code&gt; 自己在进入 batch 之前，会做哪些规范化、互斥检查和 stop 语义预处理？&lt;/p&gt;
+&lt;p&gt;没有这一章，读者会知道采样参数很重要，却不清楚：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些字段在进入执行前就已经被改写&lt;/li&gt;
+&lt;li&gt;哪些组合会被显式拒绝&lt;/li&gt;
+&lt;li&gt;stop string / stop regex 为什么需要先做长度上界估计&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;SamplingParams&lt;/code&gt; 不是一个被动结构体。&lt;code&gt;__init__()&lt;/code&gt;、&lt;code&gt;verify()&lt;/code&gt;、&lt;code&gt;normalize()&lt;/code&gt; 已经在做非常实质性的工作：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;把接近 greedy 的温度归一化&lt;/li&gt;
+&lt;li&gt;把 &lt;code&gt;top_k = -1&lt;/code&gt; 改写成 &lt;code&gt;TOP_K_ALL&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;限制 grammar 字段互斥&lt;/li&gt;
+&lt;li&gt;预处理 stop string / stop regex 的长度上界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明很多执行层行为，在 sampler 真正启动之前就已经被配置层改写过了。&lt;/p&gt;
+&lt;h2 id="一张图请求里的采样字段在真正进入-sampler-之前还要先经历一次参数语义整理"&gt;一张图：请求里的采样字段在真正进入 sampler 之前，还要先经历一次“参数语义整理”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e9%87%8c%e7%9a%84%e9%87%87%e6%a0%b7%e5%ad%97%e6%ae%b5%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5-sampler-%e4%b9%8b%e5%89%8d%e8%bf%98%e8%a6%81%e5%85%88%e7%bb%8f%e5%8e%86%e4%b8%80%e6%ac%a1%e5%8f%82%e6%95%b0%e8%af%ad%e4%b9%89%e6%95%b4%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 sampler 直接消费原始采样字段，而实际上中间还有一层参数规范化。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Raw[&amp;#34;raw sampling fields&amp;#34;] --&amp;gt; SP[&amp;#34;SamplingParams&amp;#34;]
+ SP --&amp;gt; Verify[&amp;#34;verify()&amp;#34;]
+ SP --&amp;gt; Norm[&amp;#34;normalize()&amp;#34;]
+ Verify --&amp;gt; SBI[&amp;#34;SamplingBatchInfo&amp;#34;]
+ Norm --&amp;gt; SBI
+ SBI --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：执行层真正看到的是“经过验证与规范化之后的采样语义”。&lt;/p&gt;</description></item><item><title>5.14 penalty、logit_bias 与 custom logit processor 的汇合</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</guid><description>&lt;h1 id="penaltylogit_bias-与-custom-logit-processor-的汇合"&gt;penalty、logit_bias 与 custom logit processor 的汇合&lt;a class="anchor" href="#penaltylogit_bias-%e4%b8%8e-custom-logit-processor-%e7%9a%84%e6%b1%87%e5%90%88"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面已经把 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask 和结构化约束怎样进入 sampler 讲得比较深了，但还缺最后一层很关键的“采样前改写汇合点”：&lt;code&gt;presence_penalty&lt;/code&gt;、&lt;code&gt;frequency_penalty&lt;/code&gt;、&lt;code&gt;repetition_penalty&lt;/code&gt;、&lt;code&gt;logit_bias&lt;/code&gt; 和 &lt;code&gt;custom_logit_processor&lt;/code&gt; 到底怎样在真正采样之前被统一施加到 logits 上。&lt;/p&gt;
+&lt;p&gt;如果不把这层讲出来，读者会知道这些参数存在，却仍然会把它们理解成几种互不相关的功能开关，而不是同一个采样前置变换管线中的不同来源。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为从执行角度看，这几类东西虽然来源不同，但最后都在回答同一个问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在 sampler 真正选择 token 之前，要怎样改写 logits 空间？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;其中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;penalties 更像“根据历史输出动态调节”&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logit_bias&lt;/code&gt; 更像“调用方显式推拉某些 token”&lt;/li&gt;
+&lt;li&gt;custom processor 更像“用户自定义的额外规则”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这三层如果不放在一起讲，读者很难建立完整的“采样前变换栈”心智模型。&lt;/p&gt;
+&lt;h2 id="一张图采样前其实有一条明确的-logits-改写栈"&gt;一张图：采样前其实有一条明确的 logits 改写栈&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%87%87%e6%a0%b7%e5%89%8d%e5%85%b6%e5%ae%9e%e6%9c%89%e4%b8%80%e6%9d%a1%e6%98%8e%e7%a1%ae%e7%9a%84-logits-%e6%94%b9%e5%86%99%e6%a0%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 sampler 看成“直接吃 logits 做 softmax / argmax”，而实际上中间有一条明显的改写管线。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Raw[&amp;#34;raw logits&amp;#34;] --&amp;gt; Custom[&amp;#34;custom logit processor&amp;#34;]
+ Custom --&amp;gt; Penalty[&amp;#34;additive/scaling penalties&amp;#34;]
+ Penalty --&amp;gt; Mask[&amp;#34;grammar vocab mask&amp;#34;]
+ Mask --&amp;gt; Bias[&amp;#34;logit_bias&amp;#34;]
+ Bias --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：这些机制不是各自独立地“偶尔起作用”，而是共同构成了 sampler 之前的一条统一变换栈。&lt;/p&gt;</description></item><item><title>5.15 embedding、pooling 与 rerank 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</guid><description>&lt;h1 id="embeddingpooling-与-rerank-执行路径"&gt;embedding、pooling 与 rerank 执行路径&lt;a class="anchor" href="#embeddingpooling-%e4%b8%8e-rerank-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;到目前为止，执行模型章节几乎都围绕 token generation loop 展开：forward、sampling、finish、output processing、grammar mask、penalties。这样的主线是对的，但如果一本更厚的技术书只讲生成路径，就仍然会缺一个很真实的空白：同一套 runtime 还支持 embedding、classification、score、rerank，这些非生成请求在 execution 层到底怎么走？&lt;/p&gt;
+&lt;p&gt;这一章就是把这条非生成执行路径补进来。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为从运行时角度看，embedding / rerank 路径并不是“生成路径减掉 sampler”这么简单。它会显式改变：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;request object（&lt;code&gt;EmbeddingReqInput&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;scheduler 对 batch 的理解（&lt;code&gt;is_prefill_only&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;worker 的执行调用（&lt;code&gt;forward_batch_embedding(...)&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;输出对象（&lt;code&gt;EmbeddingBatchResult&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/pooler.py&lt;/code&gt; 中的池化与 score head 行为&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它已经是 execution model 的正式分支，而不是附录。&lt;/p&gt;
+&lt;h2 id="一张图非生成执行路径的核心不是-sample而是-pool--score"&gt;一张图：非生成执行路径的核心不是 sample，而是 pool / score&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%9d%9e%e7%94%9f%e6%88%90%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84%e7%9a%84%e6%a0%b8%e5%bf%83%e4%b8%8d%e6%98%af-sample%e8%80%8c%e6%98%af-pool--score"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认所有执行路径都要经过 &lt;code&gt;sample()&lt;/code&gt;，而源码清楚地表明 embedding/rerank 路径是在这里分叉的。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;EmbeddingReqInput / cross-encoder pairs&amp;#34;] --&amp;gt; Batch[&amp;#34;ModelWorkerBatch (prefill-only)&amp;#34;]
+ Batch --&amp;gt; Fwd[&amp;#34;ModelRunner.forward()&amp;#34;]
+ Fwd --&amp;gt; Pool[&amp;#34;pooler / score head / embeddings&amp;#34;]
+ Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item></channel></rss>

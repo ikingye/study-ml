@@ -227,4 +227,170 @@
  Input[&amp;#34;prepare prompts / ids&amp;#34;] --&amp;gt; Req[&amp;#34;Req / ScheduleBatch&amp;#34;]
  Req --&amp;gt; Fwd[&amp;#34;ForwardBatch / ModelRunner.forward()&amp;#34;]
  Fwd --&amp;gt; Sample[&amp;#34;model_runner.sample()&amp;#34;]
- Sample --&amp;gt; Measure[&amp;#34;latency / profile / correctness output&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：这个脚本不是在跑“另一套逻辑”，而是在把完整 runtime 的执行脊梁压缩成更适合观察的一小段。&lt;/p&gt;</description></item></channel></rss>
+ Sample --&amp;gt; Measure[&amp;#34;latency / profile / correctness output&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：这个脚本不是在跑“另一套逻辑”，而是在把完整 runtime 的执行脊梁压缩成更适合观察的一小段。&lt;/p&gt;</description></item><item><title>7.13 读 observability 源码树：从 RequestStage 到 exporter</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-observability-source-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-observability-source-tree/</guid><description>&lt;h1 id="读-observability-源码树从-requeststage-到-exporter"&gt;读 observability 源码树：从 RequestStage 到 exporter&lt;a class="anchor" href="#%e8%af%bb-observability-%e6%ba%90%e7%a0%81%e6%a0%91%e4%bb%8e-requeststage-%e5%88%b0-exporter"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经教读者如何从入口读到 runtime、如何顺着 protocol 和 &lt;code&gt;io_struct.py&lt;/code&gt; 看对象形状、如何用 &lt;code&gt;bench_one_batch.py&lt;/code&gt; 当显微镜。但整本书后半程已经引入了非常多观测与证据相关的能力：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;RequestStage&lt;/code&gt; / &lt;code&gt;ReqTimeStats&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;metrics collector&lt;/li&gt;
+&lt;li&gt;request logger&lt;/li&gt;
+&lt;li&gt;request metrics exporter&lt;/li&gt;
+&lt;li&gt;watchdog / health check&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果代码导读不把这些源码树重新收一遍，前面的 observability 章节就更像“功能说明”，而不是一条可回到源码的阅读路径。&lt;/p&gt;
+&lt;p&gt;这一章就是把 observability 源码树补进代码导读。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为在复杂 runtime 里，观测代码并不是边角料。很多时候，它才是最能揭示系统边界与作者意图的地方。比如：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些阶段被正式命名为 &lt;code&gt;RequestStage&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;哪些统计被认为值得长期导出&lt;/li&gt;
+&lt;li&gt;哪些字段被认为值得落盘&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些都不是“顺手打几个日志”能表达的。&lt;/p&gt;
+&lt;h2 id="一张图observability-源码树本身也有稳定层次"&gt;一张图：observability 源码树本身也有稳定层次&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beobservability-%e6%ba%90%e7%a0%81%e6%a0%91%e6%9c%ac%e8%ba%ab%e4%b9%9f%e6%9c%89%e7%a8%b3%e5%ae%9a%e5%b1%82%e6%ac%a1"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者看到 &lt;code&gt;observability/&lt;/code&gt; 会只想到 metrics，而不是一棵更完整的证据树。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Obs[&amp;#34;observability source tree&amp;#34;] --&amp;gt; Time[&amp;#34;req_time_stats.py / RequestStage&amp;#34;]
+ Obs --&amp;gt; Metrics[&amp;#34;metrics_collector.py / scheduler metrics&amp;#34;]
+ Obs --&amp;gt; Trace[&amp;#34;trace.py / tracing context&amp;#34;]
+ Obs --&amp;gt; Log[&amp;#34;request_logger.py&amp;#34;]
+ Obs --&amp;gt; Export[&amp;#34;request_metrics_exporter.py&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：observability 源码树不是单文件功能，而是一组彼此衔接的证据层。&lt;/p&gt;</description></item><item><title>7.14 读 disaggregation 源码树：prefill、decode 与 transfer backend</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-disaggregation-source-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-disaggregation-source-tree/</guid><description>&lt;h1 id="读-disaggregation-源码树prefilldecode-与-transfer-backend"&gt;读 disaggregation 源码树：prefill、decode 与 transfer backend&lt;a class="anchor" href="#%e8%af%bb-disaggregation-%e6%ba%90%e7%a0%81%e6%a0%91prefilldecode-%e4%b8%8e-transfer-backend"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把入口、协议、scheduler、&lt;code&gt;bench_one_batch.py&lt;/code&gt; 和 observability 树都拉回主线了，但还有一棵很容易让读者直接迷路的源码树没有被正式导读：&lt;code&gt;python/sglang/srt/disaggregation/&lt;/code&gt;。这里面同时有：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;prefill.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;decode.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;encode_receiver.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;common/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;base/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;fake/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;mooncake/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;nixl/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;mori/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ascend/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这棵树的阅读顺序讲清楚，它很容易看起来像一堆传输后端杂糅在一起。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 disaggregation 在整本书里已经不是边角料了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调度章节已经写了 bootstrap/prealloc/transfer 队列&lt;/li&gt;
+&lt;li&gt;RequestStage 章节已经写了 transfer 相关阶段&lt;/li&gt;
+&lt;li&gt;扩展与调试章节也写了 disaggregation 排障工作流&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;既然它已经进入主线，那么代码导读也应该给它一条清晰的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="一张图这棵树不是横向散开的而是有层次的"&gt;一张图：这棵树不是横向散开的，而是有层次的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e6%a3%b5%e6%a0%91%e4%b8%8d%e6%98%af%e6%a8%aa%e5%90%91%e6%95%a3%e5%bc%80%e7%9a%84%e8%80%8c%e6%98%af%e6%9c%89%e5%b1%82%e6%ac%a1%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人第一次看 &lt;code&gt;disaggregation/&lt;/code&gt; 目录时，只能看到很多 backend 名字，却看不出主干层次。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Root[&amp;#34;disaggregation/&amp;#34;] --&amp;gt; Core[&amp;#34;prefill.py / decode.py / utils.py&amp;#34;]
+ Root --&amp;gt; Base[&amp;#34;base/ / common/&amp;#34;]
+ Root --&amp;gt; Backend[&amp;#34;fake / mooncake / nixl / mori / ascend&amp;#34;]
+ Root --&amp;gt; Encode[&amp;#34;encode_receiver.py / encode_server.py&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：backend 不是主线的起点，真正更稳的入口是 &lt;code&gt;prefill.py&lt;/code&gt; / &lt;code&gt;decode.py&lt;/code&gt; 与 &lt;code&gt;base/common&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>7.15 读 models/ 与 layers/：模型定义与执行砖块</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-models-and-layers-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-models-and-layers-tree/</guid><description>&lt;h1 id="读-models-与-layers模型定义与执行砖块"&gt;读 models/ 与 layers/：模型定义与执行砖块&lt;a class="anchor" href="#%e8%af%bb-models-%e4%b8%8e-layers%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e4%b8%8e%e6%89%a7%e8%a1%8c%e7%a0%96%e5%9d%97"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经给出了从入口到 scheduler、从 observability 到 disaggregation 的多条稳定阅读路径，但还有两棵最容易让人“越看越散”的源码树没有被正式导读：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/models/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/layers/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这两棵树重新收成一条更稳的阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树特别容易读散"&gt;为什么这两棵树特别容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e7%89%b9%e5%88%ab%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它们都很大，而且看起来都很重要：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;models/&lt;/code&gt; 里塞满了具体模型实现&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/&lt;/code&gt; 里又塞满了 attention backend、sampler、quantization、moe、rotary embedding 等执行砖块&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有阅读策略，读者很容易在这里陷入“文件越多越核心”的错觉，而失去对整本书主线的把握。&lt;/p&gt;
+&lt;h2 id="一张图这两棵树在整本书里的角色并不对称"&gt;一张图：这两棵树在整本书里的角色并不对称&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%9c%a8%e6%95%b4%e6%9c%ac%e4%b9%a6%e9%87%8c%e7%9a%84%e8%a7%92%e8%89%b2%e5%b9%b6%e4%b8%8d%e5%af%b9%e7%a7%b0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 想成平行目录，而从运行时角度看，它们其实分别站在“模型定义层”和“执行砖块层”。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Models[&amp;#34;models/&amp;#34;] --&amp;gt; Runner[&amp;#34;ModelRunner&amp;#34;]
+ Layers[&amp;#34;layers/&amp;#34;] --&amp;gt; Runner
+ Runner --&amp;gt; Worker[&amp;#34;TpModelWorker / draft worker&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：你不应该直接把这两棵树当成“谁都可以先读”的入口，而更适合先知道它们在整体架构里是如何汇合的。&lt;/p&gt;
+&lt;h2 id="读-models-的正确心态"&gt;读 &lt;code&gt;models/&lt;/code&gt; 的正确心态&lt;a class="anchor" href="#%e8%af%bb-models-%e7%9a%84%e6%ad%a3%e7%a1%ae%e5%bf%83%e6%80%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;models/&lt;/code&gt; 最适合回答的问题不是“系统怎么跑”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;某个模型的特殊语义在哪里实现&lt;/li&gt;
+&lt;li&gt;哪些模型是 generation / multimodal / rerank / classification 变体&lt;/li&gt;
+&lt;li&gt;哪些模型需要特殊的 logits processor、vision projector、audio path、MTP 分支&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它更像“模型人格差异的具体落点”，而不是执行主循环本身。&lt;/p&gt;
+&lt;h2 id="为什么-layers-更像执行砖块仓库"&gt;为什么 &lt;code&gt;layers/&lt;/code&gt; 更像执行砖块仓库&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-layers-%e6%9b%b4%e5%83%8f%e6%89%a7%e8%a1%8c%e7%a0%96%e5%9d%97%e4%bb%93%e5%ba%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从目录就能看出来，&lt;code&gt;layers/&lt;/code&gt; 至少包括：&lt;/p&gt;</description></item><item><title>7.16 读 distributed/parallel_state.py：并行组真正从哪里来</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-distributed-parallel-state/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-distributed-parallel-state/</guid><description>&lt;h1 id="读-distributedparallel_statepy并行组真正从哪里来"&gt;读 distributed/parallel_state.py：并行组真正从哪里来&lt;a class="anchor" href="#%e8%af%bb-distributedparallel_statepy%e5%b9%b6%e8%a1%8c%e7%bb%84%e7%9c%9f%e6%ad%a3%e4%bb%8e%e5%93%aa%e9%87%8c%e6%9d%a5"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经给了 &lt;code&gt;disaggregation/&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 的多条阅读路径，但还有一棵对多并行理解极其关键的源码树没有被正式导读：&lt;code&gt;python/sglang/srt/distributed/parallel_state.py&lt;/code&gt; 以及它周围的 &lt;code&gt;distributed/&lt;/code&gt; 目录。&lt;/p&gt;
+&lt;p&gt;如果不把这棵树讲清楚，读者会知道 &lt;code&gt;TP&lt;/code&gt; / &lt;code&gt;PP&lt;/code&gt; / world group 存在，却不知道它们在源码里究竟从哪里来、谁在维护它们，以及后续通信算子为什么总是反复去 &lt;code&gt;get_tp_group()&lt;/code&gt;。&lt;/p&gt;
+&lt;h2 id="为什么这层值得专门成章"&gt;为什么这层值得专门成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e4%b8%93%e9%97%a8%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为对于多并行 runtime 来说，这棵树本身就是“通信现实”的总入口。你后面看到的很多东西都在依赖它：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;scheduler / tp_worker 初始化&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;communication_op.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;graph capture context&lt;/li&gt;
+&lt;li&gt;group-aware all-reduce / all-gather&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这不是只给分布式专家看的目录，而是整本书运行时边界非常重要的一棵树。&lt;/p&gt;
+&lt;h2 id="一张图parallel_statepy-在整本系统里更像并行地基"&gt;一张图：&lt;code&gt;parallel_state.py&lt;/code&gt; 在整本系统里更像“并行地基”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beparallel_statepy-%e5%9c%a8%e6%95%b4%e6%9c%ac%e7%b3%bb%e7%bb%9f%e9%87%8c%e6%9b%b4%e5%83%8f%e5%b9%b6%e8%a1%8c%e5%9c%b0%e5%9f%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;parallel_state.py&lt;/code&gt; 当成后台工具，而不是认为它是后面大量执行边界的地基。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Dist[&amp;#34;distributed/parallel_state.py&amp;#34;] --&amp;gt; Groups[&amp;#34;world / tp / pp / moe groups&amp;#34;]
+ Groups --&amp;gt; Worker[&amp;#34;scheduler / tp_worker&amp;#34;]
+ Groups --&amp;gt; Comm[&amp;#34;communication_op.py&amp;#34;]
+ Groups --&amp;gt; Graph[&amp;#34;graph_capture context&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：后面很多看似分散的执行与通信路径，实际上都在依赖同一棵地基树。&lt;/p&gt;
+&lt;h2 id="为什么应该先读文件头而不是直接找某个-get__group"&gt;为什么应该先读文件头而不是直接找某个 &lt;code&gt;get_*_group()&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e8%af%bb%e6%96%87%e4%bb%b6%e5%a4%b4%e8%80%8c%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e6%89%be%e6%9f%90%e4%b8%aa-get__group"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;文件开头已经把 workflow 写得很清楚：&lt;/p&gt;</description></item><item><title>7.17 读 parser/ 与 function_call/：模板、reasoning 与 detector 树</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-parser-and-function-call-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-parser-and-function-call-tree/</guid><description>&lt;h1 id="读-parser-与-function_call模板reasoning-与-detector-树"&gt;读 parser/ 与 function_call/：模板、reasoning 与 detector 树&lt;a class="anchor" href="#%e8%af%bb-parser-%e4%b8%8e-function_call%e6%a8%a1%e6%9d%bfreasoning-%e4%b8%8e-detector-%e6%a0%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经把 &lt;code&gt;entrypoints/openai&lt;/code&gt;、&lt;code&gt;protocol.py&lt;/code&gt;、&lt;code&gt;io_struct.py&lt;/code&gt;、&lt;code&gt;observability/&lt;/code&gt;、&lt;code&gt;disaggregation/&lt;/code&gt; 和 &lt;code&gt;models/&lt;/code&gt; / &lt;code&gt;layers/&lt;/code&gt; 树都串起来了，但还有两棵和结构化生成强相关、同时又特别容易让人读散的目录没有正式导读：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/parser/&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/function_call/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这两棵树重新收成一条稳健的阅读顺序。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树容易读散"&gt;为什么这两棵树容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它们都不是单一主题目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;parser/&lt;/code&gt; 里既有 conversation/template，也有 reasoning parser、harmony parser、code completion parser、jinja utilities&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;function_call/&lt;/code&gt; 里既有通用 parser，也有很多模型专属 detector&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有导读，读者很容易在 detector 名字和模板工具之间来回跳，却始终不知道这两棵树在整本系统里的角色。&lt;/p&gt;
+&lt;h2 id="一张图这两棵树分别站在解释和检测两侧"&gt;一张图：这两棵树分别站在“解释”和“检测”两侧&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%88%86%e5%88%ab%e7%ab%99%e5%9c%a8%e8%a7%a3%e9%87%8a%e5%92%8c%e6%a3%80%e6%b5%8b%e4%b8%a4%e4%be%a7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多人会把 parser 和 function_call 混成一个目录层，而从系统角度看，它们分别承担不同工作。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Parser[&amp;#34;parser/&amp;#34;] --&amp;gt; Surface[&amp;#34;template / reasoning / conversation interpretation&amp;#34;]
+ FC[&amp;#34;function_call/&amp;#34;] --&amp;gt; Detect[&amp;#34;tool-call detector / constraint builder&amp;#34;]
+ Surface --&amp;gt; OpenAI[&amp;#34;serving_chat / responses&amp;#34;]
+ Detect --&amp;gt; OpenAI&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：一棵树更偏解释输入与上下文，一棵树更偏解释模型输出里的工具调用模式。&lt;/p&gt;
+&lt;h2 id="为什么应该先读-parser"&gt;为什么应该先读 &lt;code&gt;parser/&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e8%af%bb-parser"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它更像“进入 structured / tool / reasoning 语义之前的解释层”。&lt;/p&gt;</description></item><item><title>7.18 读 http_server.py：接口森林与 app.state 装配</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-http-server-route-forest/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-http-server-route-forest/</guid><description>&lt;h1 id="读-http_serverpy接口森林与-appstate-装配"&gt;读 http_server.py：接口森林与 app.state 装配&lt;a class="anchor" href="#%e8%af%bb-http_serverpy%e6%8e%a5%e5%8f%a3%e6%a3%ae%e6%9e%97%e4%b8%8e-appstate-%e8%a3%85%e9%85%8d"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;代码导读前面已经单独讲了 &lt;code&gt;entrypoints/openai&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt;、&lt;code&gt;protocol.py&lt;/code&gt; 和分布式地基树，但还有一个文件虽然被频繁提到，却仍然值得单独成章：&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;。这是整套系统最像“接口森林”的地方，里面不仅挂着 OpenAI-compatible 路由，还挂着：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Responses API&lt;/li&gt;
+&lt;li&gt;Ollama-compatible 接口&lt;/li&gt;
+&lt;li&gt;Anthropic-compatible 接口&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;/freeze_gc&lt;/code&gt;、&lt;code&gt;/set_internal_state&lt;/code&gt;、&lt;code&gt;/open_session&lt;/code&gt; 等维护端点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一章的目标，就是把这棵森林重新整理成一条更稳的阅读顺序。&lt;/p&gt;
+&lt;h2 id="为什么这个文件特别容易读散"&gt;为什么这个文件特别容易读散&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%aa%e6%96%87%e4%bb%b6%e7%89%b9%e5%88%ab%e5%ae%b9%e6%98%93%e8%af%bb%e6%95%a3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它同时承担了两类工作：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;在 &lt;code&gt;lifespan&lt;/code&gt; / 初始化阶段把各种 serving handler 放到 &lt;code&gt;app.state&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;在后半段挂一整片 HTTP 路由森林&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;如果你没有先建立“初始化森林”和“路由森林”这两层区分，就很容易把这个文件读成一长串路由定义，而不是系统对外表面的总入口。&lt;/p&gt;
+&lt;h2 id="一张图http_serverpy-其实在做两件事"&gt;一张图：&lt;code&gt;http_server.py&lt;/code&gt; 其实在做两件事&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%behttp_serverpy-%e5%85%b6%e5%ae%9e%e5%9c%a8%e5%81%9a%e4%b8%a4%e4%bb%b6%e4%ba%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把它当成一个单纯路由文件，而忽略前半段的 handler 装配和后半段的路由映射是两层不同逻辑。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Init[&amp;#34;lifespan / app.state initialization&amp;#34;] --&amp;gt; Handlers[&amp;#34;OpenAI / Responses / Ollama / Anthropic handlers&amp;#34;]
+ Handlers --&amp;gt; Routes[&amp;#34;HTTP route forest&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：你读这个文件时，应该先看“装了哪些 handler”，再看“这些 handler 分别挂在哪些路径上”。&lt;/p&gt;
+&lt;h2 id="为什么应该先看-appstate-初始化"&gt;为什么应该先看 &lt;code&gt;app.state&lt;/code&gt; 初始化&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ba%94%e8%af%a5%e5%85%88%e7%9c%8b-appstate-%e5%88%9d%e5%a7%8b%e5%8c%96"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;http_server.py&lt;/code&gt; 很早就会把这些对象挂到 &lt;code&gt;app.state&lt;/code&gt;：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_completion&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_chat&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_embedding&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_classify&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_score&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_rerank&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;openai_serving_responses&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ollama_serving&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;anthropic_serving&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这一步特别重要，因为它说明后面的路由并不直接实现逻辑，而是只是把请求转给一组已经装配好的 handler。也就是说，路由层更像调度表，而不是行为本体。&lt;/p&gt;</description></item></channel></rss>
