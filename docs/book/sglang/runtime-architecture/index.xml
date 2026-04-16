@@ -417,4 +417,77 @@
  WaitW --&amp;gt; Warm[&amp;#34;execute_server_warmup()&amp;#34;]
  Warm --&amp;gt; Status[&amp;#34;TokenizerManager.server_status = Up&amp;#34;]
  Status --&amp;gt; Ready[&amp;#34;ready to serve traffic&amp;#34;]
- Warm --&amp;gt; Unhealthy[&amp;#34;warmup failed -&amp;gt; UnHealthy / kill process tree&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：readiness 是一条时序化的门禁链，而不是一个布尔标志。&lt;/p&gt;</description></item></channel></rss>
+ Warm --&amp;gt; Unhealthy[&amp;#34;warmup failed -&amp;gt; UnHealthy / kill process tree&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：readiness 是一条时序化的门禁链，而不是一个布尔标志。&lt;/p&gt;</description></item><item><title>3.18 engine info bootstrap 与远端 transfer 协调</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/engine-info-bootstrap-and-transfer-coordination/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/engine-info-bootstrap-and-transfer-coordination/</guid><description>&lt;h1 id="engine-info-bootstrap-与远端-transfer-协调"&gt;engine info bootstrap 与远端 transfer 协调&lt;a class="anchor" href="#engine-info-bootstrap-%e4%b8%8e%e8%bf%9c%e7%ab%af-transfer-%e5%8d%8f%e8%b0%83"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构章节已经把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;入口装配&lt;/li&gt;
+&lt;li&gt;端口分配&lt;/li&gt;
+&lt;li&gt;并行身份&lt;/li&gt;
+&lt;li&gt;warmup / readiness&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;讲得比较完整了，但还有一层非常像“分布式控制引导面”的机制没有被单独收束：当系统需要做远端实例间的 transfer engine 协调时，为什么还要额外起一个 &lt;code&gt;engine_info_bootstrap&lt;/code&gt; 小服务？它在整体架构里到底起什么作用，又和普通 HTTP server、scheduler、&lt;code&gt;ModelRunner&lt;/code&gt; 分别是什么关系？&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;EngineInfoBootstrapServer&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;remote_instance_transfer_engine_info&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;engine_info_bootstrap_port&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner._register_to_engine_info_bootstrap()&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;收成一条正式的运行时引导链。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是普通“调试接口”，也不是主服务的另一个别名。它更像是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;多节点 / 远端实例协同场景下的轻量控制引导面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有这一章，读者在源码里会先后看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;engine.py&lt;/code&gt; 里起 bootstrap server&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;model_runner.py&lt;/code&gt; 里往它注册 transfer engine info&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;http_server.py&lt;/code&gt; 里又提供查询接口&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;却很难准确判断：这到底是配置脚手架、调试通道，还是架构里真正有职责的一层。&lt;/p&gt;
+&lt;h2 id="一张图这不是主业务路径而是一条分布式控制引导链"&gt;一张图：这不是主业务路径，而是一条分布式控制引导链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%8d%e6%98%af%e4%b8%bb%e4%b8%9a%e5%8a%a1%e8%b7%af%e5%be%84%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e5%88%86%e5%b8%83%e5%bc%8f%e6%8e%a7%e5%88%b6%e5%bc%95%e5%af%bc%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 bootstrap server 误读成“主 HTTP server 的辅助端点”，但它其实更接近一条独立控制引导面。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Engine[&amp;#34;Engine._launch_subprocesses()&amp;#34;] --&amp;gt; Bootstrap[&amp;#34;EngineInfoBootstrapServer&amp;#34;]
+ Runner[&amp;#34;ModelRunner._register_to_engine_info_bootstrap()&amp;#34;] --&amp;gt; Bootstrap
+ Bootstrap --&amp;gt; Query[&amp;#34;/remote_instance_transfer_engine_info&amp;#34;]
+ Query --&amp;gt; Loader[&amp;#34;remote instance / loader / operator&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这条链不在普通请求生命周期中间，而是在服务装配和远端协调之间横着存在。&lt;/p&gt;</description></item><item><title>3.19 PortArgs、IPC 名称与 shared memory 引导</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/port-args-and-bootstrap-handoff/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/port-args-and-bootstrap-handoff/</guid><description>&lt;h1 id="portargsipc-名称与-shared-memory-引导"&gt;PortArgs、IPC 名称与 shared memory 引导&lt;a class="anchor" href="#portargsipc-%e5%90%8d%e7%a7%b0%e4%b8%8e-shared-memory-%e5%bc%95%e5%af%bc"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构章节已经讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Engine&lt;/code&gt; 怎样装配进程&lt;/li&gt;
+&lt;li&gt;typed IPC 怎样组织 manager 间消息&lt;/li&gt;
+&lt;li&gt;多 worker 入口怎样把请求汇入 shared runtime&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还有一层非常关键的“连接信息编译与传递”没有被单独讲透：这些进程与 worker 到底怎样拿到同一套端口、IPC 名称和 bootstrap 参数？特别是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;PortArgs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tokenizer_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;scheduler_input_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;detokenizer_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;multi-tokenizer 模式下的 shared memory 参数传递&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这一层讲清楚，前面的装配图和多 worker 图仍然会显得像“组件会自动找到彼此”，而不是一套被明确编译和传递的连接信息。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为在运行时系统里，“谁和谁通过什么名字连起来”从来不是小事。它既决定：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;启动是否稳定&lt;/li&gt;
+&lt;li&gt;端口是否冲突&lt;/li&gt;
+&lt;li&gt;多 worker 是否能各自获得正确的返回通道&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也决定你排障时该去看：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;主服务逻辑&lt;/li&gt;
+&lt;li&gt;还是连接信息根本没编对&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此 &lt;code&gt;PortArgs&lt;/code&gt; 和 shared-memory bootstrap 不是实现细枝末节，而是运行时拓扑如何被真正落成的关键一步。&lt;/p&gt;
+&lt;h2 id="一张图运行时连接信息并不是天然存在而是先被编译再被传播"&gt;一张图：运行时连接信息并不是天然存在，而是先被编译、再被传播&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%90%e8%a1%8c%e6%97%b6%e8%bf%9e%e6%8e%a5%e4%bf%a1%e6%81%af%e5%b9%b6%e4%b8%8d%e6%98%af%e5%a4%a9%e7%84%b6%e5%ad%98%e5%9c%a8%e8%80%8c%e6%98%af%e5%85%88%e8%a2%ab%e7%bc%96%e8%af%91%e5%86%8d%e8%a2%ab%e4%bc%a0%e6%92%ad"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认各进程天生知道彼此地址，实际上系统是先编译一套连接信息，再把它传给不同进程和 worker。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Args[&amp;#34;ServerArgs&amp;#34;] --&amp;gt; Ports[&amp;#34;PortArgs.init_new(...)&amp;#34;]
+ Ports --&amp;gt; Engine[&amp;#34;Engine / scheduler / detokenizer&amp;#34;]
+ Ports --&amp;gt; SHM[&amp;#34;shared memory bootstrap&amp;#34;]
+ SHM --&amp;gt; Worker[&amp;#34;TokenizerWorker / Granian worker&amp;#34;]
+ Worker --&amp;gt; IPC[&amp;#34;worker-local tokenizer_ipc_name&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：运行时连接信息也是一条正式的“编译 -&amp;gt; 分发 -&amp;gt; 本地化”链，而不是隐式环境状态。&lt;/p&gt;</description></item></channel></rss>

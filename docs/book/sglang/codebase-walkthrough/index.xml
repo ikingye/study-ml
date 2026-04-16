@@ -424,4 +424,399 @@
  Grpc --&amp;gt;|yes| GrpcSrv[&amp;#34;entrypoints.grpc_server.serve_grpc&amp;#34;]
  Grpc --&amp;gt;|no| Ray[&amp;#34;use_ray ?&amp;#34;]
  Ray --&amp;gt;|yes| RaySrv[&amp;#34;ray.http_server.launch_server&amp;#34;]
- Ray --&amp;gt;|no| Http[&amp;#34;entrypoints.http_server.launch_server&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：默认 HTTP 路径只是分叉树的一枝，而不是唯一现实。&lt;/p&gt;</description></item></channel></rss>
+ Ray --&amp;gt;|no| Http[&amp;#34;entrypoints.http_server.launch_server&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：默认 HTTP 路径只是分叉树的一枝，而不是唯一现实。&lt;/p&gt;</description></item><item><title>7.20 读 tokenizer_manager.py：入口、状态桥与回包收敛</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tokenizer-manager-as-bridge/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tokenizer-manager-as-bridge/</guid><description>&lt;h1 id="读-tokenizer_managerpy入口状态桥与回包收敛"&gt;读 tokenizer_manager.py：入口、状态桥与回包收敛&lt;a class="anchor" href="#%e8%af%bb-tokenizer_managerpy%e5%85%a5%e5%8f%a3%e7%8a%b6%e6%80%81%e6%a1%a5%e4%b8%8e%e5%9b%9e%e5%8c%85%e6%94%b6%e6%95%9b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经覆盖了 &lt;code&gt;http_server.py&lt;/code&gt;、OpenAI entrypoints、&lt;code&gt;protocol.py&lt;/code&gt;、&lt;code&gt;Engine&lt;/code&gt; API 和 &lt;code&gt;scheduler.py&lt;/code&gt;，但还有一个全书几乎处处会提到、却还没有被单独当作“稳定阅读入口”的文件：&lt;code&gt;python/sglang/srt/managers/tokenizer_manager.py&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这是一个很容易被读散的文件。因为它同时承担了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求入口&lt;/li&gt;
+&lt;li&gt;请求状态表维护&lt;/li&gt;
+&lt;li&gt;向 scheduler 发送对象&lt;/li&gt;
+&lt;li&gt;从 detokenizer 收结果&lt;/li&gt;
+&lt;li&gt;abort / pause / session / profile / weights / LoRA 等控制面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有一章专门讲“该怎样读这棵树”，读者很容易把它看成一个什么都做的巨型 manager，最后只能记住一些函数名，却很难形成稳定心智模型。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;tokenizer_manager.py&lt;/code&gt; 压成一条可读的骨架。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从全书主线看，&lt;code&gt;TokenizerManager&lt;/code&gt; 处在一个非常特殊的位置：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;request lifecycle 里，它是入口与回包的首尾收敛点&lt;/li&gt;
+&lt;li&gt;runtime architecture 里，它是主进程控制面的核心 manager&lt;/li&gt;
+&lt;li&gt;extension/debugging 里，很多 live control 都最终会落到它&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着它不是某个局部机制的实现文件，而是一棵真正的“交叉节点源码树”。优秀技术书在这里不能只说“去看看 tokenizer_manager.py”，而应该给出一个正式的阅读框架。&lt;/p&gt;
+&lt;h2 id="一张图为什么-tokenizermanager-是全书级桥梁文件"&gt;一张图：为什么 &lt;code&gt;TokenizerManager&lt;/code&gt; 是全书级桥梁文件&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%ba%e4%bb%80%e4%b9%88-tokenizermanager-%e6%98%af%e5%85%a8%e4%b9%a6%e7%ba%a7%e6%a1%a5%e6%a2%81%e6%96%87%e4%bb%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者知道 &lt;code&gt;TokenizerManager&lt;/code&gt; 很重要，但不知道它重要在哪几条轴线上。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ HTTP[&amp;#34;HTTP / Engine / surface entry&amp;#34;] --&amp;gt; Gen[&amp;#34;generate_request(...)&amp;#34;]
+ Gen --&amp;gt; State[&amp;#34;rid_to_state + ReqState&amp;#34;]
+ State --&amp;gt; Send[&amp;#34;send_to_scheduler&amp;#34;]
+ Send --&amp;gt; Wait[&amp;#34;_wait_one_response(...)&amp;#34;]
+ Wait --&amp;gt; Recv[&amp;#34;handle_loop / recv_from_detokenizer&amp;#34;]
+ Recv --&amp;gt; Out[&amp;#34;response / metrics / request log&amp;#34;]
+ Control[&amp;#34;abort / pause / profile / weights / LoRA&amp;#34;] --&amp;gt; Send
+ Control --&amp;gt; State&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;TokenizerManager&lt;/code&gt; 不是单向入口，而是一个双向桥，同时还挂着很多控制面分支。&lt;/p&gt;</description></item><item><title>7.21 读输出尾部：scheduler output processor 与 detokenizer</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</guid><description>&lt;h1 id="读输出尾部scheduler-output-processor-与-detokenizer"&gt;读输出尾部：scheduler output processor 与 detokenizer&lt;a class="anchor" href="#%e8%af%bb%e8%be%93%e5%87%ba%e5%b0%be%e9%83%a8scheduler-output-processor-%e4%b8%8e-detokenizer"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经把 &lt;code&gt;TokenizerManager&lt;/code&gt; 收成了一棵正式的桥梁树，但还有一段同样关键、却更容易被忽略的尾部链路没有被单独讲清：模型前向结束、sampler 给出下一个 token 之后，系统到底怎样把这些执行层结果整理成可回包的输出？这里真正负责收尾的并不是单个函数，而是两棵紧密咬合的树：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;detokenizer_manager.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这两棵树合起来读，很多读者会在 execution model 章节里知道 &lt;code&gt;BatchTokenIDOutput&lt;/code&gt; 和 &lt;code&gt;BatchStrOutput&lt;/code&gt; 这两个名字，却不知道它们在源码里怎样被生产、传递和消费。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把输出尾部压成一条稳定的阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树应该配对阅读"&gt;为什么这两棵树应该配对阅读&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%ba%94%e8%af%a5%e9%85%8d%e5%af%b9%e9%98%85%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;单读 &lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt;，你会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;output ids 怎样写回 request state&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;finish_reason&lt;/code&gt; 怎样被检查&lt;/li&gt;
+&lt;li&gt;output logprobs 与 reasoning token 怎样被附着&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchTokenIDOutput&lt;/code&gt; 怎样发往下游&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;单读 &lt;code&gt;detokenizer_manager.py&lt;/code&gt;，你会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;BatchTokenIDOutput&lt;/code&gt; 怎样被 decode&lt;/li&gt;
+&lt;li&gt;stop trim 怎样发生&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;decode_status&lt;/code&gt; 怎样跨 chunk 保存状态&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchStrOutput&lt;/code&gt; 怎样再送回 tokenizer 侧&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;真正的工程意义只会在两者配对时出现：前者把“执行结果”整理成“token 级输出对象”，后者再把“token 级输出对象”整理成“文本级输出对象”。这就是整个 runtime 尾部收敛的核心。&lt;/p&gt;
+&lt;h2 id="一张图输出尾部真正发生了什么"&gt;一张图：输出尾部真正发生了什么&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%be%93%e5%87%ba%e5%b0%be%e9%83%a8%e7%9c%9f%e6%ad%a3%e5%8f%91%e7%94%9f%e4%ba%86%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会自然地把“sample 完了”当成输出已经结束，但源码里 sample 之后还有一整条正式 pipeline。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Exec[&amp;#34;forward + sample&amp;#34;] --&amp;gt; Proc[&amp;#34;scheduler_output_processor_mixin&amp;#34;]
+ Proc --&amp;gt; Tok[&amp;#34;BatchTokenIDOutput&amp;#34;]
+ Tok --&amp;gt; IPC[&amp;#34;send_to_detokenizer.send_output(...)&amp;#34;]
+ IPC --&amp;gt; Det[&amp;#34;DetokenizerManager.event_loop()&amp;#34;]
+ Det --&amp;gt; Str[&amp;#34;BatchStrOutput&amp;#34;]
+ Str --&amp;gt; TM[&amp;#34;TokenizerManager handle_loop&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：sample 之后并不是立刻回到调用方，中间还有一个 token 输出层和一个文本收口层。&lt;/p&gt;</description></item><item><title>7.22 读 io_struct.py：请求对象、批对象与输出对象家族</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</guid><description>&lt;h1 id="读-io_structpy请求对象批对象与输出对象家族"&gt;读 io_struct.py：请求对象、批对象与输出对象家族&lt;a class="anchor" href="#%e8%af%bb-io_structpy%e8%af%b7%e6%b1%82%e5%af%b9%e8%b1%a1%e6%89%b9%e5%af%b9%e8%b1%a1%e4%b8%8e%e8%be%93%e5%87%ba%e5%af%b9%e8%b1%a1%e5%ae%b6%e6%97%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经在 &lt;a href="./protocol-and-io-struct-bridge/"&gt;7.9 读 &lt;code&gt;protocol.py&lt;/code&gt; 与 &lt;code&gt;io_struct.py&lt;/code&gt;&lt;/a&gt; 里解释了“公开协议怎样变成内部对象”，但还有一层更适合单独讲清的内容：&lt;code&gt;io_struct.py&lt;/code&gt; 自己并不是一堆零散 dataclass，而是一套层次非常稳定的对象家族。&lt;/p&gt;
+&lt;p&gt;如果只知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;GenerateReqInput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TokenizedGenerateReqInput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchTokenIDOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchStrOutput&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些名字存在，却不知道它们为什么要分成这么多层，那么整本书前面建立的 request lifecycle、调度、执行和输出链路，到了源码级就仍然会显得割裂。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;io_struct.py&lt;/code&gt; 压成一张对象家族地图。&lt;/p&gt;
+&lt;h2 id="为什么-io_structpy-值得再单独成章"&gt;为什么 &lt;code&gt;io_struct.py&lt;/code&gt; 值得再单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-io_structpy-%e5%80%bc%e5%be%97%e5%86%8d%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;7.9 更关注的是“协议桥”，也就是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;protocol.py&lt;/code&gt; 里的对外 schema&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;serving_*._convert_to_internal_request(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;io_struct.py&lt;/code&gt; 里的内部对象&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;而这章更关注 &lt;code&gt;io_struct.py&lt;/code&gt; 内部自身的分层逻辑：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些对象面向入口请求&lt;/li&gt;
+&lt;li&gt;哪些对象面向 tokenized request&lt;/li&gt;
+&lt;li&gt;哪些对象面向 batch&lt;/li&gt;
+&lt;li&gt;哪些对象面向输出与控制面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;换句话说，上一章讲“怎么进来”，这一章讲“进来之后对象怎样沿 runtime 主线继续演化”。&lt;/p&gt;
+&lt;h2 id="一张图io_structpy-里的对象不是平铺列表而是家族树"&gt;一张图：&lt;code&gt;io_struct.py&lt;/code&gt; 里的对象不是平铺列表，而是家族树&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beio_structpy-%e9%87%8c%e7%9a%84%e5%af%b9%e8%b1%a1%e4%b8%8d%e6%98%af%e5%b9%b3%e9%93%ba%e5%88%97%e8%a1%a8%e8%80%8c%e6%98%af%e5%ae%b6%e6%97%8f%e6%a0%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者第一次打开 &lt;code&gt;io_struct.py&lt;/code&gt;，会把它看成一大串 dataclass 清单，但源码其实已经按 runtime 阶段自然分层。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Base[&amp;#34;BaseReq / BaseBatchReq&amp;#34;] --&amp;gt; Req[&amp;#34;GenerateReqInput / EmbeddingReqInput&amp;#34;]
+ Req --&amp;gt; Tok[&amp;#34;Tokenized*ReqInput&amp;#34;]
+ Tok --&amp;gt; Batch[&amp;#34;BatchTokenized*ReqInput&amp;#34;]
+ Batch --&amp;gt; Exec[&amp;#34;Schedule / Forward / runtime processing&amp;#34;]
+ Exec --&amp;gt; Out1[&amp;#34;BatchTokenIDOutput&amp;#34;]
+ Out1 --&amp;gt; Out2[&amp;#34;BatchStrOutput / BatchEmbeddingOutput&amp;#34;]
+ Base --&amp;gt; Ctl[&amp;#34;AbortReq / PauseGenerationReqInput / OpenSessionReqInput ...&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;io_struct.py&lt;/code&gt; 里的类不是按“功能模块”随意摆放，而是按 runtime 阶段分层。&lt;/p&gt;</description></item><item><title>7.23 读 detokenizer_manager.py：decode_status、stop trim 与文本收口</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</guid><description>&lt;h1 id="读-detokenizer_managerpydecode_statusstop-trim-与文本收口"&gt;读 detokenizer_manager.py：decode_status、stop trim 与文本收口&lt;a class="anchor" href="#%e8%af%bb-detokenizer_managerpydecode_statusstop-trim-%e4%b8%8e%e6%96%87%e6%9c%ac%e6%94%b6%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经在 &lt;a href="./reading-output-tail-pipeline/"&gt;7.21 读输出尾部&lt;/a&gt; 里把 &lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt; 和 &lt;code&gt;detokenizer_manager.py&lt;/code&gt; 配对成了一条尾部链路，但如果你真的打开 &lt;code&gt;python/sglang/srt/managers/detokenizer_manager.py&lt;/code&gt;，仍然会遇到一个具体问题：这棵文件树本身应该怎么读？&lt;/p&gt;
+&lt;p&gt;因为这棵树里虽然只有一条主 loop，但它同时牵涉：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;decode_status&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_grouped_batch_decode(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;trim_matched_stop(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchTokenIDOutput -&amp;gt; BatchStrOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;watchdog 与多 worker detokenizer 路径&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有一章专门把“面对这棵文件树时该先抓什么”讲清楚，读者很容易只记住“它会 decode”，却不知道它到底吸收了哪些尾部复杂度。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;detokenizer_manager.py&lt;/code&gt; 本身压成一条可读的骨架。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;在全书主线里，&lt;code&gt;DetokenizerManager&lt;/code&gt; 很容易被误判成“尾部工具进程”，但源码显示它承担的是更正式的角色：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;它有自己的 IPC 边界&lt;/li&gt;
+&lt;li&gt;有自己的状态表 &lt;code&gt;decode_status&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;有自己的 dispatcher&lt;/li&gt;
+&lt;li&gt;有自己的 soft watchdog&lt;/li&gt;
+&lt;li&gt;还负责 stop trim 与 grouped batch decode&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它不是“把 token 转成文本”这么简单，而是 runtime 输出尾部的专门收口层。&lt;/p&gt;
+&lt;p&gt;从技术书角度看，这种“看似单一职责，实则吸收大量尾部复杂度”的文件，特别值得单独做导读。&lt;/p&gt;
+&lt;h2 id="一张图detokenizer_managerpy-在输出尾部的真实位置"&gt;一张图：&lt;code&gt;detokenizer_manager.py&lt;/code&gt; 在输出尾部的真实位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bedetokenizer_managerpy-%e5%9c%a8%e8%be%93%e5%87%ba%e5%b0%be%e9%83%a8%e7%9a%84%e7%9c%9f%e5%ae%9e%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者知道它位于 scheduler 和 tokenizer 之间，但不知道它到底把哪些复杂度截留在自己这里。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Tok[&amp;#34;BatchTokenIDOutput&amp;#34;] --&amp;gt; Loop[&amp;#34;DetokenizerManager.event_loop()&amp;#34;]
+ Loop --&amp;gt; State[&amp;#34;decode_status&amp;#34;]
+ State --&amp;gt; Group[&amp;#34;_grouped_batch_decode(...)&amp;#34;]
+ Group --&amp;gt; Trim[&amp;#34;trim_matched_stop(...)&amp;#34;]
+ Trim --&amp;gt; Str[&amp;#34;BatchStrOutput&amp;#34;]
+ Str --&amp;gt; Back[&amp;#34;send_to_tokenizer.send_pyobj(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：detokenizer 的真正价值不只是 decode，而是“带状态地 decode、trim、整理并回送”。&lt;/p&gt;</description></item><item><title>7.24 读 multi_tokenizer_mixin.py：多 worker 入口与回包拆分</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-multi-tokenizer-routing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-multi-tokenizer-routing/</guid><description>&lt;h1 id="读-multi_tokenizer_mixinpy多-worker-入口与回包拆分"&gt;读 multi_tokenizer_mixin.py：多 worker 入口与回包拆分&lt;a class="anchor" href="#%e8%af%bb-multi_tokenizer_mixinpy%e5%a4%9a-worker-%e5%85%a5%e5%8f%a3%e4%b8%8e%e5%9b%9e%e5%8c%85%e6%8b%86%e5%88%86"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经在 &lt;a href="../request-lifecycle/multi-worker-routing-and-http-surfaces/"&gt;2.6 多 tokenizer worker、Router 与 HTTP 入口放大&lt;/a&gt; 里解释了多 worker 模式的主路径，但如果你真正打开源码，会发现这条支线最容易读散的文件其实是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/managers/multi_tokenizer_mixin.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这棵树同时承载了三件事：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TokenizerWorker&lt;/code&gt; 怎样给请求附着 worker 身份&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MultiTokenizerRouter&lt;/code&gt; 怎样把多入口请求汇总到 shared scheduler&lt;/li&gt;
+&lt;li&gt;detokenizer 回包怎样再按 worker 拆回去&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有一章专门讲“这棵树该怎么读”，多 worker 支线在源码层仍然会显得像几段互不相关的胶水代码。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把多 worker 入口和回包拆分的源码骨架正式讲清楚。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这是一个典型的“看起来像实现细节，实际上决定系统拓扑边界”的文件。&lt;/p&gt;
+&lt;p&gt;如果你只看 &lt;code&gt;http_server.py&lt;/code&gt;，你能知道多 worker 模式存在；但真正决定：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求如何标记来源 worker&lt;/li&gt;
+&lt;li&gt;输出如何按来源 worker 再拆开&lt;/li&gt;
+&lt;li&gt;socket 怎样懒注册和复用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;的核心逻辑，在 &lt;code&gt;multi_tokenizer_mixin.py&lt;/code&gt; 里。&lt;/p&gt;
+&lt;p&gt;从技术书角度看，这种文件特别值得做成导读章，因为它解释的不是单个算法，而是系统拓扑在源码层怎样落地。&lt;/p&gt;
+&lt;h2 id="一张图多-worker-源码树真正要解决什么"&gt;一张图：多 worker 源码树真正要解决什么&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a-worker-%e6%ba%90%e7%a0%81%e6%a0%91%e7%9c%9f%e6%ad%a3%e8%a6%81%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：多 worker 模式看起来像“多个 tokenizer worker + 一个 router”，但源码里的关键难点其实是如何把输出准确送回原始 worker。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ HW1[&amp;#34;HTTP worker / TokenizerWorker 1&amp;#34;] --&amp;gt; Tag[&amp;#34;attach http_worker_ipc&amp;#34;]
+ HW2[&amp;#34;HTTP worker / TokenizerWorker 2&amp;#34;] --&amp;gt; Tag
+ Tag --&amp;gt; Router[&amp;#34;MultiTokenizerRouter&amp;#34;]
+ Router --&amp;gt; Sch[&amp;#34;shared Scheduler&amp;#34;]
+ Sch --&amp;gt; Det[&amp;#34;DetokenizerManager&amp;#34;]
+ Det --&amp;gt; Split[&amp;#34;_handle_output_by_index(...)&amp;#34;]
+ Split --&amp;gt; Sock[&amp;#34;SocketMapping.send_output(...)&amp;#34;]
+ Sock --&amp;gt; HW1
+ Sock --&amp;gt; HW2&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：多 worker 的真正复杂度不在“多开几个入口”，而在“同一批输出怎样按 worker 精确扇回去”。&lt;/p&gt;</description></item><item><title>7.25 读 session_controller.py 与 SessionAwareCache</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-session-controller-and-session-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-session-controller-and-session-cache/</guid><description>&lt;h1 id="读-session_controllerpy-与-sessionawarecache"&gt;读 session_controller.py 与 SessionAwareCache&lt;a class="anchor" href="#%e8%af%bb-session_controllerpy-%e4%b8%8e-sessionawarecache"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的 request lifecycle 已经在 &lt;a href="../request-lifecycle/session-state-timeouts-and-aborts/"&gt;2.3 会话、超时与中止路径&lt;/a&gt; 里解释了 session 为什么会改变请求生命周期，调度与内存部分也在 &lt;a href="../scheduling-and-memory/runtime-checkers-and-session-aware-cache/"&gt;4.5 Runtime checker、SessionAwareCache 与内存不变量&lt;/a&gt; 里解释了 &lt;code&gt;SessionAwareCache&lt;/code&gt; 为什么要接管 streaming session 的 KV 生命周期。但如果你真正打开源码，仍然会遇到一个更具体的问题：&lt;/p&gt;
+&lt;p&gt;session 相关实现到底应该从哪几棵树开始读，怎样把它们接起来？&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;session_controller.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;session_aware_cache.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;收成一条稳定的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树必须配对读"&gt;为什么这两棵树必须配对读&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%bf%85%e9%a1%bb%e9%85%8d%e5%af%b9%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;单读 &lt;code&gt;session_controller.py&lt;/code&gt;，你会知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;session 怎样被打开 / 关闭&lt;/li&gt;
+&lt;li&gt;append / replace / drop_previous_output 怎样改变请求链&lt;/li&gt;
+&lt;li&gt;streaming session 有哪些限制&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;单读 &lt;code&gt;session_aware_cache.py&lt;/code&gt;，你会知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;SessionSlot&lt;/code&gt; 怎样接管 &lt;code&gt;req_pool_idx&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;match_prefix(...)&lt;/code&gt; 怎样恢复会话态 KV&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;release_session(...)&lt;/code&gt; 怎样释放 slot 占用的资源&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但只有把两者配在一起，你才会真正看清一件事：&lt;/p&gt;
+&lt;p&gt;session 不只是“请求之间共享逻辑上下文”，它还会改变 KV 所有权与缓存生命周期。&lt;/p&gt;
+&lt;p&gt;这就是为什么它不是一个轻量 API 特性，而是一条贯穿请求、缓存和回收的系统支线。&lt;/p&gt;
+&lt;h2 id="一张图session-在源码里并不是单树问题"&gt;一张图：session 在源码里并不是单树问题&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besession-%e5%9c%a8%e6%ba%90%e7%a0%81%e9%87%8c%e5%b9%b6%e4%b8%8d%e6%98%af%e5%8d%95%e6%a0%91%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 session 理解成 &lt;code&gt;SessionController&lt;/code&gt; 自己的一棵树，但真正的实现其实横跨请求链和缓存链。&lt;/p&gt;</description></item><item><title>7.26 读 health_generate：探活请求怎样穿过 runtime</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-health-check-path/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-health-check-path/</guid><description>&lt;h1 id="读-health_generate探活请求怎样穿过-runtime"&gt;读 health_generate：探活请求怎样穿过 runtime&lt;a class="anchor" href="#%e8%af%bb-health_generate%e6%8e%a2%e6%b4%bb%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e7%a9%bf%e8%bf%87-runtime"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的章节已经分别从两个角度讲过 health check：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;request lifecycle 里，它被归为“非生成请求、探测与控制请求分叉”的一部分&lt;/li&gt;
+&lt;li&gt;extension/debugging 里，它被归为 liveness 链的一部分&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但如果你真的要顺着源码读进去，仍然会碰到一个具体问题：&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;/health&lt;/code&gt; / &lt;code&gt;/health_generate&lt;/code&gt; 这类请求，究竟是普通生成请求的缩小版，还是一条被 runtime 明确特判的特殊路径？&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把这条探活源码链单独讲清。&lt;/p&gt;
+&lt;h2 id="为什么这条链值得单独成章"&gt;为什么这条链值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%9d%a1%e9%93%be%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果不把它单独讲出来，读者很容易形成两种都不准确的理解：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;以为 health check 就是随便发一条普通请求看看能不能回&lt;/li&gt;
+&lt;li&gt;以为 health check 只是 HTTP server 自己返回个 200，不真正经过 runtime&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;源码实际走的是第三种更有工程意味的路径：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;健康检查确实会构造真实请求对象进入 runtime&lt;/li&gt;
+&lt;li&gt;但 scheduler 又会在 busy 场景下对它做特殊处理，避免它被长 prefill 阻塞&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明它是一条“部分真实、部分特判”的探活路径。这样的设计非常值得一本技术书专门解释。&lt;/p&gt;
+&lt;h2 id="一张图health-check-不是单纯-http-200也不是完全普通请求"&gt;一张图：health check 不是单纯 HTTP 200，也不是完全普通请求&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%behealth-check-%e4%b8%8d%e6%98%af%e5%8d%95%e7%ba%af-http-200%e4%b9%9f%e4%b8%8d%e6%98%af%e5%ae%8c%e5%85%a8%e6%99%ae%e9%80%9a%e8%af%b7%e6%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把探活链路想成普通生成请求的微缩版，但 scheduler 中间 actually 有专门的 shortcut。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ HC[&amp;#34;/health or /health_generate&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager.generate_request(...)&amp;#34;]
+ TM --&amp;gt; SCH[&amp;#34;Scheduler.process_input_requests(...)&amp;#34;]
+ SCH --&amp;gt;|busy| Sig[&amp;#34;return_health_check_ipcs + HealthCheckOutput&amp;#34;]
+ SCH --&amp;gt;|idle| Normal[&amp;#34;normal request dispatch&amp;#34;]
+ Sig --&amp;gt; TM2[&amp;#34;TokenizerManager.last_receive_tstamp&amp;#34;]
+ Normal --&amp;gt; DET[&amp;#34;Detokenizer / normal return path&amp;#34;]
+ DET --&amp;gt; TM2&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：health check 同时具备两种人格。&lt;/p&gt;</description></item><item><title>7.27 读 BasePrefixCache 与 radix_cache.py</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-prefix-cache-tree/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-prefix-cache-tree/</guid><description>&lt;h1 id="读-baseprefixcache-与-radix_cachepy"&gt;读 BasePrefixCache 与 radix_cache.py&lt;a class="anchor" href="#%e8%af%bb-baseprefixcache-%e4%b8%8e-radix_cachepy"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的调度与内存章节已经把 prefix match、&lt;code&gt;cache_protected_len&lt;/code&gt;、host hit 和 load-back 讲得比较深了，但如果你真正打开源码，仍然会遇到一个很具体的问题：&lt;/p&gt;
+&lt;p&gt;prefix cache 这条主线到底该从哪两个文件开始读，怎样把“抽象 trait”和“真正的 radix tree 实现”接起来？&lt;/p&gt;
+&lt;p&gt;这条线最核心的两个入口其实是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;base_prefix_cache.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;radix_cache.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把这两棵树收成一条稳定阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这两棵树必须配对读"&gt;为什么这两棵树必须配对读&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%a4%e6%a3%b5%e6%a0%91%e5%bf%85%e9%a1%bb%e9%85%8d%e5%af%b9%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;单读 &lt;code&gt;base_prefix_cache.py&lt;/code&gt;，你会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MatchPrefixParams&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MatchResult&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;InsertParams&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;EvictParams&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;inc_lock_ref(...)&lt;/code&gt; / &lt;code&gt;dec_lock_ref(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但你还不知道这些抽象在真实树结构里怎样落地。&lt;/p&gt;
+&lt;p&gt;单读 &lt;code&gt;radix_cache.py&lt;/code&gt;，你会看到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TreeNode&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;RadixKey&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;match_prefix(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_match_prefix_helper(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cache_unfinished_req(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cache_finished_req(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但你又容易在具体实现细节里迷路，看不清哪些是“prefix cache 家族通用接口”，哪些才是 radix tree 的特化行为。&lt;/p&gt;
+&lt;p&gt;所以更稳的方式是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;先用 &lt;code&gt;BasePrefixCache&lt;/code&gt; 建立抽象边界&lt;/li&gt;
+&lt;li&gt;再用 &lt;code&gt;RadixCache&lt;/code&gt; 看这套抽象怎样真正落地&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图prefix-cache-这棵树为什么分成抽象边界和具体实现两层"&gt;一张图：prefix cache 这棵树为什么分成“抽象边界”和“具体实现”两层&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beprefix-cache-%e8%bf%99%e6%a3%b5%e6%a0%91%e4%b8%ba%e4%bb%80%e4%b9%88%e5%88%86%e6%88%90%e6%8a%bd%e8%b1%a1%e8%be%b9%e7%95%8c%e5%92%8c%e5%85%b7%e4%bd%93%e5%ae%9e%e7%8e%b0%e4%b8%a4%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会直接钻进 &lt;code&gt;RadixCache.match_prefix(...)&lt;/code&gt;，结果一开始就被树节点和 split 细节淹没。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Base[&amp;#34;BasePrefixCache\ntrait + params + results&amp;#34;] --&amp;gt; Ops[&amp;#34;match / insert / evict / lock&amp;#34;]
+ Ops --&amp;gt; Radix[&amp;#34;RadixCache&amp;#34;]
+ Radix --&amp;gt; Node[&amp;#34;TreeNode / RadixKey&amp;#34;]
+ Radix --&amp;gt; Reuse[&amp;#34;cache_unfinished_req / cache_finished_req&amp;#34;]
+ Radix --&amp;gt; Evict[&amp;#34;evictable / protected / eviction policy&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;radix_cache.py&lt;/code&gt; 不是孤立大文件，它是在实现 &lt;code&gt;BasePrefixCache&lt;/code&gt; 这一层统一语义。&lt;/p&gt;</description></item><item><title>7.28 读运行时控制面：logging、weights group 与 expert record</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</guid><description>&lt;h1 id="读运行时控制面loggingweights-group-与-expert-record"&gt;读运行时控制面：logging、weights group 与 expert record&lt;a class="anchor" href="#%e8%af%bb%e8%bf%90%e8%a1%8c%e6%97%b6%e6%8e%a7%e5%88%b6%e9%9d%a2loggingweights-group-%e4%b8%8e-expert-record"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求主线&lt;/li&gt;
+&lt;li&gt;输出尾部&lt;/li&gt;
+&lt;li&gt;prefix cache&lt;/li&gt;
+&lt;li&gt;多 worker&lt;/li&gt;
+&lt;li&gt;session&lt;/li&gt;
+&lt;li&gt;health check&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些主要脊梁都落回了源码，但还有一类对维护者非常重要、却仍然散落在 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 与若干 util 文件里的控制面没有被正式收束：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;configure_logging&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;init_weights_update_group&lt;/code&gt; / &lt;code&gt;destroy_weights_update_group&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;start_expert_distribution_record&lt;/code&gt; / &lt;code&gt;dump_expert_distribution_record&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;remote_instance_transfer_engine_info&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些不是普通业务 API，也不是最底层 debug hack，而是运行时真正对外暴露的维护和协调动作。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把这组运行时控制面收成一条可读的源码路径。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为技术书如果只讲：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;请求怎样跑&lt;/li&gt;
+&lt;li&gt;模型怎样执行&lt;/li&gt;
+&lt;li&gt;指标怎样看&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;却不讲“维护者怎样通过正式控制面改变系统行为”，整本书最终还是会偏向架构概览，而不是能带去现场用的系统书。&lt;/p&gt;
+&lt;p&gt;这些控制面共同回答的是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;你怎样切换请求日志与 dump 行为&lt;/li&gt;
+&lt;li&gt;你怎样初始化远端权重更新组&lt;/li&gt;
+&lt;li&gt;你怎样打开 / 关闭 expert distribution 记录&lt;/li&gt;
+&lt;li&gt;你怎样查询远端 transfer 协调信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，它们构成了“系统运行中怎样被控制和协同”的另一条脊梁。&lt;/p&gt;
+&lt;h2 id="一张图这组控制面不是平铺端点而是三类维护动作"&gt;一张图：这组控制面不是平铺端点，而是三类维护动作&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%bb%84%e6%8e%a7%e5%88%b6%e9%9d%a2%e4%b8%8d%e6%98%af%e5%b9%b3%e9%93%ba%e7%ab%af%e7%82%b9%e8%80%8c%e6%98%af%e4%b8%89%e7%b1%bb%e7%bb%b4%e6%8a%a4%e5%8a%a8%e4%bd%9c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把这些 API 看成一串零散运维端点，但它们实际上可以分成三个稳定簇。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Log[&amp;#34;日志与证据控制\nconfigure_logging&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager&amp;#34;]
+ Weights[&amp;#34;远端权重协调\nweights_update_group / transfer info&amp;#34;] --&amp;gt; Comm[&amp;#34;Communicator / tp_worker / model_runner&amp;#34;]
+ Experts[&amp;#34;专家分布记录\nstart/stop/dump expert record&amp;#34;] --&amp;gt; Rec[&amp;#34;scheduler / expert_distribution recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这组控制面不是同一层级的“杂项端点”，而是三类不同的维护动作。&lt;/p&gt;</description></item><item><title>7.29 读 request_logger 与 schedule_simulator</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</guid><description>&lt;h1 id="读-request_logger-与-schedule_simulator"&gt;读 request_logger 与 schedule_simulator&lt;a class="anchor" href="#%e8%af%bb-request_logger-%e4%b8%8e-schedule_simulator"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的代码导读已经把请求主线、cache 树、输出尾部和运行时控制面都落回了源码，但还有一条很有工程价值、同时也很像“大书后半程才会出现”的闭环没有被放进代码导读：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;线上请求日志怎样真正落盘&lt;/li&gt;
+&lt;li&gt;这些日志怎样再被离线调度模拟器消费&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，如果你已经抓到了线上 request 日志，源码里下一步该去哪里读，才能把它变成调度策略实验材料？&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;srt/utils/request_logger.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TokenizerManager.configure_logging(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;debug_utils/schedule_simulator/&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;收成一条正式的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这条链值得放进代码导读"&gt;为什么这条链值得放进代码导读&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%9d%a1%e9%93%be%e5%80%bc%e5%be%97%e6%94%be%e8%bf%9b%e4%bb%a3%e7%a0%81%e5%af%bc%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是纯维护技巧，也不是纯工具手册，而是一条真实的源码工作流：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;运行时怎样决定日志口径&lt;/li&gt;
+&lt;li&gt;日志里哪些字段会被保留下来&lt;/li&gt;
+&lt;li&gt;这些字段怎样被 loader 缩成模拟请求&lt;/li&gt;
+&lt;li&gt;模拟器又怎样把它们送进 router / scheduler policy&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从技术书角度看，这条链特别有价值，因为它说明：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;线上证据并不是终点&lt;/li&gt;
+&lt;li&gt;还可以继续变成离线实验输入&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图这不是两件工具而是一条连续链"&gt;一张图：这不是两件工具，而是一条连续链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e4%b8%8d%e6%98%af%e4%b8%a4%e4%bb%b6%e5%b7%a5%e5%85%b7%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e8%bf%9e%e7%bb%ad%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 request logger 和 simulator 看成两套完全分开的工具，实际上它们在源码里是可以接起来的。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;runtime request&amp;#34;] --&amp;gt; Log[&amp;#34;RequestLogger.log_finished_request(...)&amp;#34;]
+ Log --&amp;gt; File[&amp;#34;request.finished JSON lines&amp;#34;]
+ File --&amp;gt; Loader[&amp;#34;load_from_request_logger(...)&amp;#34;]
+ Loader --&amp;gt; Sim[&amp;#34;schedule_simulator&amp;#34;]
+ Sim --&amp;gt; Policy[&amp;#34;router / scheduler policy replay&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：日志不是只给人看，也可以成为策略实验的输入格式。&lt;/p&gt;
+&lt;h2 id="第一棵树requestlogger-应该怎么读"&gt;第一棵树：&lt;code&gt;RequestLogger&lt;/code&gt; 应该怎么读&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e6%a3%b5%e6%a0%91requestlogger-%e5%ba%94%e8%af%a5%e6%80%8e%e4%b9%88%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果要稳，最先抓的其实只有三处：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;configure(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;log_received_request(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;log_finished_request(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;这样读的好处是，你会立刻看清：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;运行中日志行为是否可变&lt;/li&gt;
+&lt;li&gt;首尾日志分别保留了什么&lt;/li&gt;
+&lt;li&gt;finished request 为什么会成为后续模拟的样本源&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="metadata-为什么是-requestlogger-的真正核心"&gt;&lt;code&gt;metadata&lt;/code&gt; 为什么是 &lt;code&gt;RequestLogger&lt;/code&gt; 的真正核心&lt;a class="anchor" href="#metadata-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af-requestlogger-%e7%9a%84%e7%9c%9f%e6%ad%a3%e6%a0%b8%e5%bf%83"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;RequestLogger&lt;/code&gt; 初始化时会立刻算：&lt;/p&gt;</description></item><item><title>7.30 读 TemplateManager 与请求渲染链</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-template-manager-and-request-rendering/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-template-manager-and-request-rendering/</guid><description>&lt;h1 id="读-templatemanager-与请求渲染链"&gt;读 TemplateManager 与请求渲染链&lt;a class="anchor" href="#%e8%af%bb-templatemanager-%e4%b8%8e%e8%af%b7%e6%b1%82%e6%b8%b2%e6%9f%93%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构已经在 &lt;a href="../runtime-architecture/template-manager-and-request-rendering/"&gt;3.6 TemplateManager、chat template 与请求解释边界&lt;/a&gt; 里解释了模板层为什么重要，但如果你真正要顺着源码读进去，仍然会遇到一个更具体的问题：&lt;/p&gt;
+&lt;p&gt;这条“请求解释层”到底该从哪些文件开始读，怎样把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TemplateManager&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;chat / completion template&lt;/li&gt;
+&lt;li&gt;serving handler&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;GenerateReqInput&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;连成一条稳定源码路径？&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把这条请求渲染链正式收成代码导读的一章。&lt;/p&gt;
+&lt;h2 id="为什么这条链值得放进代码导读"&gt;为什么这条链值得放进代码导读&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%9d%a1%e9%93%be%e5%80%bc%e5%be%97%e6%94%be%e8%bf%9b%e4%bb%a3%e7%a0%81%e5%af%bc%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它正好站在一个很微妙、又非常重要的位置：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;它不是纯 API 协议层&lt;/li&gt;
+&lt;li&gt;也不是 scheduler / execution 那种后半段 runtime 逻辑&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它回答的问题更像：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;用户给了一串 messages / prompt / suffix&lt;/li&gt;
+&lt;li&gt;系统到底怎样把它们解释成真正会进入 tokenizer 和 runtime 的东西&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这类问题如果没有一章正式导读，读者很容易在：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;serving_chat.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;template_manager.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;tokenizer 的 &lt;code&gt;apply_chat_template(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;之间来回跳，却始终不清楚真正的解释边界在哪里。&lt;/p&gt;
+&lt;h2 id="一张图请求渲染链比协议转对象多了一层语义解释"&gt;一张图：请求渲染链比“协议转对象”多了一层语义解释&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e6%b8%b2%e6%9f%93%e9%93%be%e6%af%94%e5%8d%8f%e8%ae%ae%e8%bd%ac%e5%af%b9%e8%b1%a1%e5%a4%9a%e4%ba%86%e4%b8%80%e5%b1%82%e8%af%ad%e4%b9%89%e8%a7%a3%e9%87%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把请求渲染误解成“协议对象转内部对象”的同义词，但中间其实还隔着模板与内容格式解释层。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Req[&amp;#34;messages / prompt / suffix&amp;#34;] --&amp;gt; Handler[&amp;#34;serving_chat / serving_completions&amp;#34;]
+ Handler --&amp;gt; Tpl[&amp;#34;TemplateManager&amp;#34;]
+ Tpl --&amp;gt; Render[&amp;#34;apply_chat_template / completion template&amp;#34;]
+ Render --&amp;gt; Obj[&amp;#34;GenerateReqInput&amp;#34;]
+ Obj --&amp;gt; TM[&amp;#34;TokenizerManager.generate_request()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：handler 不只是简单把协议字段塞进对象，而是会先经过一层“请求解释”。&lt;/p&gt;</description></item></channel></rss>

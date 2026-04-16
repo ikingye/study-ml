@@ -14,7 +14,7 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 Scheduler 看的不是单个请求，而是“当前批次状态”# python/sglang/srt/managers/scheduler.py 里的 Scheduler 初始化时会建立等待队列、running_batch、last_batch、tree_cache、req_to_token_pool 等状态。它不是简单地从队列里拿一个请求就调用模型，而是持续维护“现在已经在跑什么、下一轮还能塞什么、哪些请求应该进入 prefill、哪些请求应该继续 decode”。
 get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 timeout、过滤完成请求、把上一轮 prefill batch 合并进 running_batch，然后决定本轮是取新的 prefill batch，还是推进已有 decode batch。也就是说，调度器真正管理的是 batch 生命周期，而不是单个 request 生命周期。
 继续往下看 get_new_batch_prefill() 和 _get_new_batch_prefill_raw()，你会看到 PrefillAdder 被用来在 token 预算、batch 大小、LoRA 约束、priority scheduling 与 chunked prefill 之间做折中。这里的重点不是把每个条件背下来，而是理解：SGLang 把“能不能接新请求”建模成一次 batch 构造问题，而不是某个全局开关。
-这部分如果只靠文字，很容易把 Scheduler、ScheduleBatch 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。"><meta itemprop=dateModified content="2026-04-12T18:00:16+08:00"><meta itemprop=wordCount content="375"><title>4.1 Scheduler、批次与 KV Cache | Machine Learning 学习笔记</title><link rel=icon href=/study-ml/favicon.png><link rel=manifest href=/study-ml/manifest.json><link rel=canonical href=https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/><link rel=stylesheet href=/study-ml/book.min.46a132acdffaa83609c8bcda7351cde310472c2dedd1120c5defca88220e9054.css integrity="sha256-RqEyrN/6qDYJyLzac1HN4xBHLC3t0RIMXe/KiCIOkFQ=" crossorigin=anonymous><script defer src=/study-ml/fuse.min.js></script><script defer src=/study-ml/en.search.min.2e39bab9090afc149be590329d6a2e8e024c37d41111910d964273acafa61fc7.js integrity="sha256-Ljm6uQkK/BSb5ZAynWoujgJMN9QREZENlkJzrK+mH8c=" crossorigin=anonymous></script></head><body dir=ltr><input type=checkbox class="hidden toggle" id=menu-control>
+这部分如果只靠文字，很容易把 Scheduler、ScheduleBatch 和 cache 看成三块并列知识。下面这张图专门用来解释它们之间的状态流转关系：请求怎样从 waiting queue 进入 batch，batch 怎样触发前向，cache 怎样在这个过程中决定复用和回收。"><meta itemprop=dateModified content="2026-04-12T18:00:16+08:00"><meta itemprop=wordCount content="375"><title>4.1 Scheduler、批次与 KV Cache | Machine Learning 学习笔记</title><link rel=icon href=/study-ml/favicon.png><link rel=manifest href=/study-ml/manifest.json><link rel=canonical href=https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/scheduler-and-kv-cache/><link rel=stylesheet href=/study-ml/book.min.46a132acdffaa83609c8bcda7351cde310472c2dedd1120c5defca88220e9054.css integrity="sha256-RqEyrN/6qDYJyLzac1HN4xBHLC3t0RIMXe/KiCIOkFQ=" crossorigin=anonymous><script defer src=/study-ml/fuse.min.js></script><script defer src=/study-ml/en.search.min.840c316f8c305caf6e85a9691a728c22b30b17c7d091fd165080d79bcfd95685.js integrity="sha256-hAwxb4wwXK9uhalpGnKMIrMLF8fQkf0WUIDXm8/ZVoU=" crossorigin=anonymous></script></head><body dir=ltr><input type=checkbox class="hidden toggle" id=menu-control>
 <input type=checkbox class="hidden toggle" id=toc-control><main class="container flex"><aside class=book-menu><div class=book-menu-content><nav><h2 class=book-brand><a class="flex align-center" href=/study-ml/><span>Machine Learning 学习笔记</span></a></h2><div class="book-search hidden"><input id=book-search-input type=text placeholder=Search aria-label=Search maxlength=64 data-hotkeys=s/><div class="book-search-spinner hidden"></div><ul id=book-search-results></ul></div><script>document.querySelector(".book-search").classList.remove("hidden")</script><ul><li><a href=https://kingye.me target=_blank rel="noopener noreferrer">博客</a></li><li><a href=https://cdn.jsdelivr.net/gh/ikingye/imagehost/picgo/20200417021727.png target=_blank rel="noopener noreferrer">公众号</a></li><li><a href=https://github.com/ikingye target=_blank rel="noopener noreferrer">Github</a></li><li><a href=https://weibo.com/kingyip15215 target=_blank rel="noopener noreferrer">微博</a></li><li><a href=https://www.zhihu.com/people/wutongyip target=_blank rel="noopener noreferrer">知乎</a></li></ul><hr><ul><li><input type=checkbox id=section-0e7c6033074e643ad3449f9478bde242 class=toggle>
 <label for=section-0e7c6033074e643ad3449f9478bde242 class=flex><a href=/study-ml/docs/basic/>第一部分 基础入门</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><a href=/study-ml/docs/basic/huggingface/>HuggingFace</a></li><li><input type=checkbox id=section-ed5496782889686f445cb507ae96de51 class=toggle>
@@ -55,6 +55,8 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-128a168954bf939bc24767c2e2f67ddc class=flex><a href=/study-ml/docs/book/sglang/overview/core-invariants-and-reading-checkpoints/>1.4 贯穿全书的核心不变量与阅读检查点</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-4605ab0466c0e36505a055c81880dd3e class=toggle>
 <label for=section-4605ab0466c0e36505a055c81880dd3e class=flex><a href=/study-ml/docs/book/sglang/overview/reading-tracks-by-role/>1.5 按角色阅读：平台、推理与框架工程师的三条路径</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-46189b72c9b6c12310bb60bf09cde4e0 class=toggle>
+<label for=section-46189b72c9b6c12310bb60bf09cde4e0 class=flex><a href=/study-ml/docs/book/sglang/overview/source-map-and-anchor-index/>1.6 全书源码锚点地图与跳转索引</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li><li><input type=checkbox id=section-08a819739d208914db9cdcb4a13c765e class=toggle>
 <label for=section-08a819739d208914db9cdcb4a13c765e class=flex><a href=/study-ml/docs/book/sglang/request-lifecycle/>2. 请求生命周期</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-384871f5063e25110fb4d63b3eef6a7c class=toggle>
@@ -113,6 +115,10 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-fe1e0615c844356501b7dfce443978e6 class=flex><a href=/study-ml/docs/book/sglang/runtime-architecture/distributed-group-initialization/>3.16 分布式 group 初始化与通信边界</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-026f4381c2f544afdbc4cb0be1925287 class=toggle>
 <label for=section-026f4381c2f544afdbc4cb0be1925287 class=flex><a href=/study-ml/docs/book/sglang/runtime-architecture/warmup-and-readiness-gates/>3.17 warmup、权重就绪与 readiness 门</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-adecb6a50427e88fe572b5b5e7d80e3e class=toggle>
+<label for=section-adecb6a50427e88fe572b5b5e7d80e3e class=flex><a href=/study-ml/docs/book/sglang/runtime-architecture/engine-info-bootstrap-and-transfer-coordination/>3.18 engine info bootstrap 与远端 transfer 协调</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-332bca9d1e8f8327aec30b8e5dec1079 class=toggle>
+<label for=section-332bca9d1e8f8327aec30b8e5dec1079 class=flex><a href=/study-ml/docs/book/sglang/runtime-architecture/port-args-and-bootstrap-handoff/>3.19 PortArgs、IPC 名称与 shared memory 引导</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li><li><input type=checkbox id=section-f60ddbbc2f0438caab5ba74de4be5f30 class=toggle checked>
 <label for=section-f60ddbbc2f0438caab5ba74de4be5f30 class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/>4. 调度与内存</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-3adf0a6c0776c26d41605155cbc1bb7d class=toggle checked>
@@ -137,6 +143,14 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-d62b0a96510989638330fb6df196111f class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/batch-state-machine-and-result-absorption/>4.10 running_batch、cur_batch、last_batch 的状态机</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-2faf314b1950d69f3a708afda7b2912f class=toggle>
 <label for=section-2faf314b1950d69f3a708afda7b2912f class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/req-to-token-and-kv-index-lifecycle/>4.11 ReqToTokenPool、KV 索引表与释放生命周期</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-53dfd8ead6e717fb2e24120c324bc53a class=toggle>
+<label for=section-53dfd8ead6e717fb2e24120c324bc53a class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/prefix-match-locking-and-protected-cache/>4.12 prefix match、lock ref 与 cache_protected_len</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-35b3264105e9e7ff4efec6a5ba6056ac class=toggle>
+<label for=section-35b3264105e9e7ff4efec6a5ba6056ac class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/host-loadback-and-prefix-tiering/>4.13 host hit、load-back 与前缀分层复用</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-53fcfee7c575ab4b0cdae8c5e866c9e9 class=toggle>
+<label for=section-53fcfee7c575ab4b0cdae8c5e866c9e9 class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/eviction-policies-and-priority-aware-release/>4.14 eviction policy、protected_size 与优先级驱逐</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-494c64f822f8c05b234d11ba57e96576 class=toggle>
+<label for=section-494c64f822f8c05b234d11ba57e96576 class=flex><a href=/study-ml/docs/book/sglang/scheduling-and-memory/req-object-state-evolution/>4.15 Req 对象：从 origin_input_ids 到 output_ids</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li><li><input type=checkbox id=section-5f5d9c07265b6d21417988abd93bb23b class=toggle>
 <label for=section-5f5d9c07265b6d21417988abd93bb23b class=flex><a href=/study-ml/docs/book/sglang/execution-model/>5. 执行模型</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-ca74d2ba32f183400c674e037360182d class=toggle>
@@ -169,6 +183,14 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-3f915a9c77f5274ea95d2e87997ee632 class=flex><a href=/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/>5.14 penalty、logit_bias 与 custom logit processor 的汇合</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-af28f0a595b6fae42fba28c8810af38e class=toggle>
 <label for=section-af28f0a595b6fae42fba28c8810af38e class=flex><a href=/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/>5.15 embedding、pooling 与 rerank 执行路径</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-9ba5ff4370b8a81f3fd4774e496b8963 class=toggle>
+<label for=section-9ba5ff4370b8a81f3fd4774e496b8963 class=flex><a href=/study-ml/docs/book/sglang/execution-model/hidden-states-and-routed-experts-returns/>5.16 hidden states、routed experts 与旁路返回语义</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-495797e5a0f43194b831fb66de9ca569 class=toggle>
+<label for=section-495797e5a0f43194b831fb66de9ca569 class=flex><a href=/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/>5.17 MoE 路由、expert dispatch 与执行侧证据</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-5be8dfd4250e4d0995ebe0a7a5d6c72e class=toggle>
+<label for=section-5be8dfd4250e4d0995ebe0a7a5d6c72e class=flex><a href=/study-ml/docs/book/sglang/execution-model/logits-metadata-and-pruned-state-selection/>5.18 LogitsMetadata、裁剪状态与选择性算 logits</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-2cbe12fc0e48b6381deb3f758be12fc5 class=toggle>
+<label for=section-2cbe12fc0e48b6381deb3f758be12fc5 class=flex><a href=/study-ml/docs/book/sglang/execution-model/speculative-acceptance-and-finish-propagation/>5.19 speculative acceptance、new_accepted_len 与 finish 传播</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li><li><input type=checkbox id=section-a22c9bcff82e6007f80c5fe6e25756dc class=toggle>
 <label for=section-a22c9bcff82e6007f80c5fe6e25756dc class=flex><a href=/study-ml/docs/book/sglang/structured-generation-and-api/>6. 结构化生成与 API</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-18866f3f2f2357b721b88ca969796f8a class=toggle>
@@ -245,6 +267,28 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-ff862a6d73daa830b383217929ff4e4b class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-http-server-route-forest/>7.18 读 http_server.py：接口森林与 app.state 装配</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-72d34451f6cf8ed57a675f6ed23bc263 class=toggle>
 <label for=section-72d34451f6cf8ed57a675f6ed23bc263 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-launch-server-and-mode-switches/>7.19 读 launch_server.py：模式分叉怎样决定全书入口</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-dad37e23a31f85146bf5fd4074c28971 class=toggle>
+<label for=section-dad37e23a31f85146bf5fd4074c28971 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-tokenizer-manager-as-bridge/>7.20 读 tokenizer_manager.py：入口、状态桥与回包收敛</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-4bc91468c9d12a60856f0e3f9abe245c class=toggle>
+<label for=section-4bc91468c9d12a60856f0e3f9abe245c class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/>7.21 读输出尾部：scheduler output processor 与 detokenizer</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-4bc6becf71aa82ed7365e6d252a23dee class=toggle>
+<label for=section-4bc6becf71aa82ed7365e6d252a23dee class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/>7.22 读 io_struct.py：请求对象、批对象与输出对象家族</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-4577b7a1433787156110b9624969d518 class=toggle>
+<label for=section-4577b7a1433787156110b9624969d518 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/>7.23 读 detokenizer_manager.py：decode_status、stop trim 与文本收口</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-429325f2db4e207bce8307800162e625 class=toggle>
+<label for=section-429325f2db4e207bce8307800162e625 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-multi-tokenizer-routing/>7.24 读 multi_tokenizer_mixin.py：多 worker 入口与回包拆分</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-2c51e89fc6c49e6912b1ae819fbcdfc3 class=toggle>
+<label for=section-2c51e89fc6c49e6912b1ae819fbcdfc3 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-session-controller-and-session-cache/>7.25 读 session_controller.py 与 SessionAwareCache</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-63f40f00d5fc978808515994bfe39fb7 class=toggle>
+<label for=section-63f40f00d5fc978808515994bfe39fb7 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-health-check-path/>7.26 读 health_generate：探活请求怎样穿过 runtime</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-99ea4c0adb5e757a07b841278356e397 class=toggle>
+<label for=section-99ea4c0adb5e757a07b841278356e397 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-prefix-cache-tree/>7.27 读 BasePrefixCache 与 radix_cache.py</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-b6c71ffed48ca72fe6cd8bbb1e981d28 class=toggle>
+<label for=section-b6c71ffed48ca72fe6cd8bbb1e981d28 class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/>7.28 读运行时控制面：logging、weights group 与 expert record</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-58bc4fed639819b2bd6aeee690c1f91a class=toggle>
+<label for=section-58bc4fed639819b2bd6aeee690c1f91a class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/>7.29 读 request_logger 与 schedule_simulator</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-a0c50f361606305c90c028c13c59edfd class=toggle>
+<label for=section-a0c50f361606305c90c028c13c59edfd class=flex><a href=/study-ml/docs/book/sglang/codebase-walkthrough/reading-template-manager-and-request-rendering/>7.30 读 TemplateManager 与请求渲染链</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li><li><input type=checkbox id=section-45be0170a3f2f68ba4a8db2fd23c7914 class=toggle>
 <label for=section-45be0170a3f2f68ba4a8db2fd23c7914 class=flex><a href=/study-ml/docs/book/sglang/extension-and-debugging/>8. 扩展与调试</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-d47dfa7d313c56706e2028ca056ff289 class=toggle>
@@ -283,6 +327,10 @@ get_next_batch_to_run() 很适合当作阅读入口。这个方法先处理 time
 <label for=section-f68bd9dc2467bbd0fd1845dacd34cdcb class=flex><a href=/study-ml/docs/book/sglang/extension-and-debugging/internal-state-and-low-level-controls/>8.17 internal state、dumper_control 与 freeze_gc 控制路径</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-de4ecf6c952e1055c915b7977e2eba17 class=toggle>
 <label for=section-de4ecf6c952e1055c915b7977e2eba17 class=flex><a href=/study-ml/docs/book/sglang/extension-and-debugging/introspection-and-live-control-surfaces/>8.18 model_info、server_info 与在线控制面</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-460e5904d770cd4673d1de3b34762de4 class=toggle>
+<label for=section-460e5904d770cd4673d1de3b34762de4 class=flex><a href=/study-ml/docs/book/sglang/extension-and-debugging/latency-metric-semantics-and-misreads/>8.19 queue time、TTFT 与完成时间的口径差异</a>
+<img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li><li><input type=checkbox id=section-b33e1197f5d63b33d8035ad594e29fbf class=toggle>
+<label for=section-b33e1197f5d63b33d8035ad594e29fbf class=flex><a href=/study-ml/docs/book/sglang/extension-and-debugging/request-logs-to-schedule-simulation/>8.20 request logger、schedule simulator 与离线复盘</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label></li></ul></li></ul></li></ul></li><li><input type=checkbox id=section-c3d2fd1a986d2ffda1b7999ca5b60d9a class=toggle>
 <label for=section-c3d2fd1a986d2ffda1b7999ca5b60d9a class=flex><a role=button>第五部分 附录</a>
 <img src=/study-ml/icons/chevron-right.svg class=book-icon alt=Expand></label><ul><li><input type=checkbox id=section-640400a8d075847018a6ae6b69af2ded class=toggle>

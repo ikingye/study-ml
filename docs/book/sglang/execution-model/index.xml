@@ -247,4 +247,143 @@
  Req[&amp;#34;EmbeddingReqInput / cross-encoder pairs&amp;#34;] --&amp;gt; Batch[&amp;#34;ModelWorkerBatch (prefill-only)&amp;#34;]
  Batch --&amp;gt; Fwd[&amp;#34;ModelRunner.forward()&amp;#34;]
  Fwd --&amp;gt; Pool[&amp;#34;pooler / score head / embeddings&amp;#34;]
- Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item></channel></rss>
+ Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item><item><title>5.16 hidden states、routed experts 与旁路返回语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/hidden-states-and-routed-experts-returns/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/hidden-states-and-routed-experts-returns/</guid><description>&lt;h1 id="hidden-statesrouted-experts-与旁路返回语义"&gt;hidden states、routed experts 与旁路返回语义&lt;a class="anchor" href="#hidden-statesrouted-experts-%e4%b8%8e%e6%97%81%e8%b7%af%e8%bf%94%e5%9b%9e%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经把 token generation、sampling、finish、output processor 和非生成路径讲得比较完整了，但还有一类很容易被误读成“只是调试附加项”的返回语义没有单独讲清：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;return_hidden_states&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;return_routed_experts&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这两个开关并不会改变主执行循环的骨架，却会显著改变输出对象携带的信息密度，也会把执行层的一部分内部证据旁路带回调用方。&lt;/p&gt;
+&lt;p&gt;如果不把这一层单独讲出来，读者很容易出现两种误判：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;以为它们只是 API 层多加了几个字段&lt;/li&gt;
+&lt;li&gt;以为它们会另外开一条独立执行路径&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;源码表明，两者都不准确。它们更像是附着在主执行链上的“旁路返回语义”。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它处在一个很有书写价值的位置：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不像主生成链那样决定 token 怎样被选出来&lt;/li&gt;
+&lt;li&gt;但也不是单纯的 surface 包装&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它真正做的是：把 execution layer 内部本来就存在的一部分中间证据，有选择地带回输出对象里。这对调试、分析、模型观测和专家路由研究都很有价值。&lt;/p&gt;
+&lt;p&gt;优秀技术书在这里应该给读者一个稳定判断框架：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;主执行链负责“生成什么”&lt;/li&gt;
+&lt;li&gt;旁路返回语义负责“额外暴露什么证据”&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图旁路返回语义怎样挂在主执行链上"&gt;一张图：旁路返回语义怎样挂在主执行链上&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%97%81%e8%b7%af%e8%bf%94%e5%9b%9e%e8%af%ad%e4%b9%89%e6%80%8e%e6%a0%b7%e6%8c%82%e5%9c%a8%e4%b8%bb%e6%89%a7%e8%a1%8c%e9%93%be%e4%b8%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 hidden states / routed experts 想成独立输出流，但源码里它们其实挂在同一条输出对象链上。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Fwd[&amp;#34;forward / logits processor&amp;#34;] --&amp;gt; Main[&amp;#34;main output semantics&amp;#34;]
+ Fwd --&amp;gt; Hidden[&amp;#34;hidden states capture&amp;#34;]
+ Fwd --&amp;gt; Experts[&amp;#34;routed experts capture&amp;#34;]
+ Main --&amp;gt; Proc[&amp;#34;scheduler_output_processor_mixin&amp;#34;]
+ Hidden --&amp;gt; Proc
+ Experts --&amp;gt; Proc
+ Proc --&amp;gt; Tok[&amp;#34;BatchTokenIDOutput&amp;#34;]
+ Tok --&amp;gt; Str[&amp;#34;BatchStrOutput / meta_info&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这不是“主输出之外另开一条 IPC”，而是把附加证据附着进同一条输出对象链。&lt;/p&gt;</description></item><item><title>5.17 MoE 路由、expert dispatch 与执行侧证据</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</guid><description>&lt;h1 id="moe-路由expert-dispatch-与执行侧证据"&gt;MoE 路由、expert dispatch 与执行侧证据&lt;a class="anchor" href="#moe-%e8%b7%af%e7%94%b1expert-dispatch-%e4%b8%8e%e6%89%a7%e8%a1%8c%e4%be%a7%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经把主生成循环、采样、输出尾部、hidden states 和 routed experts 的旁路返回语义讲了出来，但如果系统底层是 MoE 模型，仍然还有一层很关键的执行现实没有被单独说透：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;token 到底怎样被路由到专家&lt;/li&gt;
+&lt;li&gt;专家选择结果怎样在执行层继续传播&lt;/li&gt;
+&lt;li&gt;request 级 &lt;code&gt;return_routed_experts&lt;/code&gt; 和 runtime 级 expert distribution record 为什么是两条不同但相连的链&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有这一章，读者虽然知道“可以返回 routed experts”，却仍然很难回答：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这些专家 id 从哪里来&lt;/li&gt;
+&lt;li&gt;它们是在执行链哪个位置被捕获&lt;/li&gt;
+&lt;li&gt;为什么同一条执行链上既会有 request-level 旁路返回，又会有全局 recorder&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它正好站在执行模型一个很有价值的位置：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;不是单纯 API surface 的字段&lt;/li&gt;
+&lt;li&gt;也不是单纯维护端点&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它真正属于：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;执行层自己在做路由和 dispatch&lt;/li&gt;
+&lt;li&gt;然后把部分证据向外暴露&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这非常像优秀系统书应该强调的一类结构：某个能力先在 runtime 内部自然存在，后来才被做成可返回、可记录、可运维控制的外部能力。&lt;/p&gt;
+&lt;h2 id="一张图moe-路由证据在执行链里如何分叉"&gt;一张图：MoE 路由证据在执行链里如何分叉&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bemoe-%e8%b7%af%e7%94%b1%e8%af%81%e6%8d%ae%e5%9c%a8%e6%89%a7%e8%a1%8c%e9%93%be%e9%87%8c%e5%a6%82%e4%bd%95%e5%88%86%e5%8f%89"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把专家路由看成“模型内部黑盒”，或者反过来只把它当成一个输出字段。源码其实已经把它分成了两条并行证据链。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Router[&amp;#34;moe/topk.py\nselect experts&amp;#34;] --&amp;gt; Dispatch[&amp;#34;token dispatcher / moe runner&amp;#34;]
+ Dispatch --&amp;gt; Main[&amp;#34;main forward result&amp;#34;]
+ Router --&amp;gt; Capture[&amp;#34;routed_experts_capturer&amp;#34;]
+ Router --&amp;gt; Record[&amp;#34;expert_distribution recorder&amp;#34;]
+ Capture --&amp;gt; Proc[&amp;#34;scheduler_output_processor_mixin&amp;#34;]
+ Proc --&amp;gt; Ret[&amp;#34;request-level returned experts&amp;#34;]
+ Record --&amp;gt; Dump[&amp;#34;runtime-level record / dump&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：同一份专家选择结果，在执行层里会自然分出两条下游：&lt;/p&gt;</description></item><item><title>5.18 LogitsMetadata、裁剪状态与选择性算 logits</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-metadata-and-pruned-state-selection/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-metadata-and-pruned-state-selection/</guid><description>&lt;h1 id="logitsmetadata裁剪状态与选择性算-logits"&gt;LogitsMetadata、裁剪状态与选择性算 logits&lt;a class="anchor" href="#logitsmetadata%e8%a3%81%e5%89%aa%e7%8a%b6%e6%80%81%e4%b8%8e%e9%80%89%e6%8b%a9%e6%80%a7%e7%ae%97-logits"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Sampler&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Req.check_finished()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;hidden states / routed experts 的旁路返回&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还有一层非常关键、又很容易被忽略的执行现实没有被单独讲清：&lt;/p&gt;
+&lt;p&gt;系统并不会对 batch 里每一个位置都一视同仁地算 logits、算 logprobs、保存 hidden states。真正决定“哪些位置要被拿出来继续处理”的，是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_get_pruned_states()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_get_hidden_states_to_store()&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把这条“选择性处理”链讲透。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它正好解释了很多前文反复出现、但若不拆开就会显得神秘的现象：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;为什么 decode 模式下有时只关心最后一个 token&lt;/li&gt;
+&lt;li&gt;为什么 prefill-only 和 return-logprob 路径会走完全不同的 logits 处理分支&lt;/li&gt;
+&lt;li&gt;为什么 &lt;code&gt;return_hidden_states&lt;/code&gt; 打开后，返回的仍然不一定是整段 full hidden states&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这层讲出来，读者虽然知道系统“能算 logits、能返 logprobs、能返 hidden states”，却仍然很难准确回答：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;到底是哪些位置进入了这些计算&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图不是所有-hidden-states-都会继续进入-logits-与返回链"&gt;一张图：不是所有 hidden states 都会继续进入 logits 与返回链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%8d%e6%98%af%e6%89%80%e6%9c%89-hidden-states-%e9%83%bd%e4%bc%9a%e7%bb%a7%e7%bb%ad%e8%bf%9b%e5%85%a5-logits-%e4%b8%8e%e8%bf%94%e5%9b%9e%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;hidden_states&lt;/code&gt; 想成“forward 出来多少，后面就处理多少”，但实际系统会先做一次裁剪和选择。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Hidden[&amp;#34;forward hidden_states&amp;#34;] --&amp;gt; Meta[&amp;#34;LogitsMetadata&amp;#34;]
+ Meta --&amp;gt; Prune[&amp;#34;_get_pruned_states()&amp;#34;]
+ Prune --&amp;gt; Logits[&amp;#34;positions for logits/logprobs&amp;#34;]
+ Prune --&amp;gt; Sample[&amp;#34;sample_indices&amp;#34;]
+ Prune --&amp;gt; InputLP[&amp;#34;input_logprob_indices&amp;#34;]
+ Prune --&amp;gt; Store[&amp;#34;_get_hidden_states_to_store()&amp;#34;]
+ Store --&amp;gt; Return[&amp;#34;optional returned hidden states&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：执行后半段首先解决的是“哪些位置值得继续处理”，而不是立刻对整段状态做统一操作。&lt;/p&gt;</description></item><item><title>5.19 speculative acceptance、new_accepted_len 与 finish 传播</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/speculative-acceptance-and-finish-propagation/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/speculative-acceptance-and-finish-propagation/</guid><description>&lt;h1 id="speculative-acceptancenew_accepted_len-与-finish-传播"&gt;speculative acceptance、new_accepted_len 与 finish 传播&lt;a class="anchor" href="#speculative-acceptancenew_accepted_len-%e4%b8%8e-finish-%e4%bc%a0%e6%92%ad"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经讲了 speculative decoding 的存在、&lt;code&gt;Spec V2&lt;/code&gt; 带来的复杂度升级，以及 &lt;code&gt;Req.check_finished()&lt;/code&gt; 怎样把输出序列转成结束语义，但还有一层非常关键的连接没有被单独讲透：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;speculative 路径到底怎样决定“这一轮真正接受了多少 token”&lt;/li&gt;
+&lt;li&gt;这个 accepted length 又怎样继续影响：
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;output_ids&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;finish 判断&lt;/li&gt;
+&lt;li&gt;logprobs / output processor&lt;/li&gt;
+&lt;li&gt;speculative 统计指标&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果不把这一层讲清楚，读者会知道 speculative 有 draft / verify 两步，却仍然很难准确回答：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;为什么 &lt;code&gt;new_accepted_len&lt;/code&gt; 会直接改变 finish 语义&lt;/li&gt;
+&lt;li&gt;为什么 &lt;code&gt;spec_accepted_tokens&lt;/code&gt;、&lt;code&gt;spec_verify_ct&lt;/code&gt; 和 acceptance histogram 必须在输出阶段继续被维护&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 speculative 执行的真正复杂度，不只在“多跑了一条 draft 路径”，而在于：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;它把“本轮到底算接受了几个 token”这件事变成了一个显式运行时状态&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;而这个状态又不会只停留在 speculative worker 内部。它会继续流入：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Req.output_ids&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Req.check_finished(new_accepted_len)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;BatchTokenIDOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;request-level speculative metrics&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着 acceptance 不是 speculative 的局部细节，而是执行后半段的核心传播变量。&lt;/p&gt;</description></item></channel></rss>

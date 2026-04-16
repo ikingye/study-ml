@@ -141,4 +141,39 @@
 &lt;li&gt;多 worker / 多 rank / 配置人格怎样影响系统&lt;/li&gt;
 &lt;li&gt;线上故障如何用系统级证据排查&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;那么更稳的顺序通常是：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;那么更稳的顺序通常是：&lt;/p&gt;</description></item><item><title>1.6 全书源码锚点地图与跳转索引</title><link>https://kingye.me/study-ml/docs/book/sglang/overview/source-map-and-anchor-index/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/overview/source-map-and-anchor-index/</guid><description>&lt;h1 id="全书源码锚点地图与跳转索引"&gt;全书源码锚点地图与跳转索引&lt;a class="anchor" href="#%e5%85%a8%e4%b9%a6%e6%ba%90%e7%a0%81%e9%94%9a%e7%82%b9%e5%9c%b0%e5%9b%be%e4%b8%8e%e8%b7%b3%e8%bd%ac%e7%b4%a2%e5%bc%95"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;随着章节越来越多，这本书已经不再只是“顺着读就行”的薄册子了。真正接近优秀技术书的作品，通常都会在开篇给出一种更高阶的帮助：不是只告诉你“先读哪章”，还告诉你“整本书反复回扣的核心源码锚点有哪些，它们分别在解释什么”。&lt;/p&gt;
+&lt;p&gt;这一章的目标，就是把整本书的核心源码入口压成一张索引地图。这样你无论是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;线性读到一半迷路&lt;/li&gt;
+&lt;li&gt;带着问题反查某个实现&lt;/li&gt;
+&lt;li&gt;还是准备把书里的理解重新落回源码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;都能更快找到正确入口。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为一本真正像“书”的技术作品，不能只靠左侧导航来承担全部索引功能。左侧导航擅长告诉你“章在这里”，但不擅长告诉你：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;全书哪些文件被反复当成主锚点&lt;/li&gt;
+&lt;li&gt;这些锚点各自属于哪条主线&lt;/li&gt;
+&lt;li&gt;如果你现在在追某个问题，最短路径该回到哪一组源码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这正是很多优秀计算机技术书会在前言或第一部分做的工作：给出一张“全书地图”，而不是只给目录。&lt;/p&gt;
+&lt;h2 id="一张图整本书反复回扣的源码主脊梁"&gt;一张图：整本书反复回扣的源码主脊梁&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%95%b4%e6%9c%ac%e4%b9%a6%e5%8f%8d%e5%a4%8d%e5%9b%9e%e6%89%a3%e7%9a%84%e6%ba%90%e7%a0%81%e4%b8%bb%e8%84%8a%e6%a2%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：随着章节增厚，读者容易把很多文件当成彼此平行的局部入口，而忽略它们其实组成了几条稳定主脊梁。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Entry[&amp;#34;入口脊梁\nlaunch_server.py -&amp;gt; http_server.py&amp;#34;] --&amp;gt; Lifecycle[&amp;#34;请求脊梁\ntokenizer_manager.py -&amp;gt; scheduler.py -&amp;gt; detokenizer_manager.py&amp;#34;]
+ Lifecycle --&amp;gt; Cache[&amp;#34;缓存脊梁\nschedule_batch.py -&amp;gt; memory_pool.py -&amp;gt; radix_cache.py&amp;#34;]
+ Lifecycle --&amp;gt; Exec[&amp;#34;执行脊梁\nforward_batch_info.py -&amp;gt; model_runner.py -&amp;gt; sampling_params.py&amp;#34;]
+ Exec --&amp;gt; Structured[&amp;#34;结构化脊梁\nprotocol.py -&amp;gt; serving_chat.py -&amp;gt; function_call/*&amp;#34;]
+ Lifecycle --&amp;gt; Evidence[&amp;#34;证据脊梁\nreq_time_stats.py -&amp;gt; request_logger.py -&amp;gt; exporter/trace&amp;#34;]
+ Cache --&amp;gt; Evidence
+ Structured --&amp;gt; Evidence&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：整本书虽然有很多章节，但回扣最多的其实只是几条稳定源码脊梁。&lt;/p&gt;
+&lt;h2 id="第一组锚点入口脊梁"&gt;第一组锚点：入口脊梁&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e7%bb%84%e9%94%9a%e7%82%b9%e5%85%a5%e5%8f%a3%e8%84%8a%e6%a2%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你想确认：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;服务从哪进入&lt;/li&gt;
+&lt;li&gt;为什么会落到默认 HTTP、gRPC、Ray 或 encoder-only 路径&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;app.state&lt;/code&gt; 和路由森林怎样被装起来&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;最重要的锚点是：&lt;/p&gt;</description></item></channel></rss>
