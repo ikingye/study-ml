@@ -2100,7 +2100,43 @@
 &lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章的锚点主要包括 &lt;code&gt;docs/supported_models/text_generation/multimodal_language_models.md&lt;/code&gt;、&lt;code&gt;docs/basic_usage/openai_api_vision.ipynb&lt;/code&gt;、相关 OpenAI-compatible 文档，以及扩展表面中涉及的 &lt;code&gt;response_format&lt;/code&gt; 与 native / HTTP 接口路径。&lt;/p&gt;
 &lt;h2 id="小结"&gt;小结&lt;a class="anchor" href="#%e5%b0%8f%e7%bb%93"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;把这一层补进来后，结构化生成与 API 这一大节就更接近一本完整技术书该有的视野：它讲的不是某一种调用习惯，而是一套可以跨输入形态复用的接口与结果设计思路。&lt;/p&gt;</description></item><item><title>6.10 Grammar backend、状态推进与回滚</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-backends-and-state-rollback/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-backends-and-state-rollback/</guid><description>&lt;h1 id="grammar-backend状态推进与回滚"&gt;Grammar backend、状态推进与回滚&lt;a class="anchor" href="#grammar-backend%e7%8a%b6%e6%80%81%e6%8e%a8%e8%bf%9b%e4%b8%8e%e5%9b%9e%e6%bb%9a"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;把这一层补进来后，结构化生成与 API 这一大节就更接近一本完整技术书该有的视野：它讲的不是某一种调用习惯，而是一套可以跨输入形态复用的接口与结果设计思路。&lt;/p&gt;</description></item><item><title>5.20 Sampler.forward()：采样分支与 logprob 回填</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</guid><description>&lt;h1 id="samplerforward采样分支与-logprob-回填"&gt;Sampler.forward()：采样分支与 logprob 回填&lt;a class="anchor" href="#samplerforward%e9%87%87%e6%a0%b7%e5%88%86%e6%94%af%e4%b8%8e-logprob-%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;speculative acceptance&lt;/li&gt;
+&lt;li&gt;finish 传播&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还有一棵非常关键、同时又最容易被“反正就是抽样”轻描淡写掉的代码树没有被单独讲透：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/layers/sampler.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;Sampler.forward()&lt;/code&gt; 这一棵树讲清楚：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;logits 在进入采样前还会经历什么改写&lt;/li&gt;
+&lt;li&gt;greedy、top-k/top-p/min-p、deterministic、Ascend backend 等分支怎样展开&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;return_logprob&lt;/code&gt; / &lt;code&gt;token_ids_logprobs&lt;/code&gt; 又怎样被回填进输出对象&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有这一章，执行模型虽然已经很厚，但在“真正选 token 的那一刻”仍然会少一块关键的代码级解释。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;Sampler.forward()&lt;/code&gt; 看起来像一个函数，实际却在承接多条主线：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;采样参数怎样影响 next token 选择&lt;/li&gt;
+&lt;li&gt;logprobs 怎样被回填&lt;/li&gt;
+&lt;li&gt;TP rank 之间怎样在必要时同步最终 token&lt;/li&gt;
+&lt;li&gt;为什么同样是 sampling，会有 greedy / probabilistic / deterministic / hardware-specific 多种人格&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从技术书角度看，这不是“后处理小节”，而是 execution model 的最后一个真正决策点。&lt;/p&gt;
+&lt;h2 id="一张图samplerforward-真正站在什么位置"&gt;一张图：&lt;code&gt;Sampler.forward()&lt;/code&gt; 真正站在什么位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besamplerforward-%e7%9c%9f%e6%ad%a3%e7%ab%99%e5%9c%a8%e4%bb%80%e4%b9%88%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把采样看成 &lt;code&gt;argmax&lt;/code&gt; 或 &lt;code&gt;multinomial&lt;/code&gt; 的一行代码，而忽略它其实站在一条更长的决策链中间。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ LP[&amp;#34;LogitsProcessorOutput.next_token_logits&amp;#34;] --&amp;gt; Pre[&amp;#34;_preprocess_logits(...)&amp;#34;]
+ Pre --&amp;gt; Branch[&amp;#34;greedy / probabilistic / deterministic / ascend&amp;#34;]
+ Branch --&amp;gt; IDs[&amp;#34;batch_next_token_ids&amp;#34;]
+ IDs --&amp;gt; Logprob[&amp;#34;attach logprobs / top logprobs / token-id logprobs&amp;#34;]
+ Logprob --&amp;gt; Sync[&amp;#34;_sync_token_ids_across_tp(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：采样不是单步决策，而是一条“预处理 -&amp;gt; 分支 -&amp;gt; 回填 -&amp;gt; 同步”的链。&lt;/p&gt;</description></item><item><title>6.10 Grammar backend、状态推进与回滚</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-backends-and-state-rollback/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/grammar-backends-and-state-rollback/</guid><description>&lt;h1 id="grammar-backend状态推进与回滚"&gt;Grammar backend、状态推进与回滚&lt;a class="anchor" href="#grammar-backend%e7%8a%b6%e6%80%81%e6%8e%a8%e8%bf%9b%e4%b8%8e%e5%9b%9e%e6%bb%9a"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;结构化生成前面的章节已经解释了 schema、regex、tool parser、reasoning roundtrip 和 surface 选择，但还有一层更靠近实现本体的内容没有单独展开：grammar backend 自己是怎样维护状态、接受 token、分配 vocab mask，并在 jump-forward、reasoning 或错误回退时做 rollback。&lt;/p&gt;
 &lt;p&gt;如果不把这一层讲透，结构化生成章节仍然会停在“约束会进入 generation path”，却说不清约束对象自身是怎样活着、怎样前进、怎样在出错时退回上一个一致状态。&lt;/p&gt;
@@ -3544,4 +3580,125 @@
 &lt;li&gt;&lt;code&gt;log_received_request(...)&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;log_finished_request(...)&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;对这章来说，更关键的是后者。因为 schedule simulator 的默认 loader 只消费：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;对这章来说，更关键的是后者。因为 schedule simulator 的默认 loader 只消费：&lt;/p&gt;</description></item><item><title>7.31 读 model_runner.py：执行壳的真正汇合点</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-model-runner-core/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-model-runner-core/</guid><description>&lt;h1 id="读-model_runnerpy执行壳的真正汇合点"&gt;读 model_runner.py：执行壳的真正汇合点&lt;a class="anchor" href="#%e8%af%bb-model_runnerpy%e6%89%a7%e8%a1%8c%e5%a3%b3%e7%9a%84%e7%9c%9f%e6%ad%a3%e6%b1%87%e5%90%88%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构和执行模型已经反复把 &lt;code&gt;ModelRunner&lt;/code&gt; 当成核心汇合点来讲，但代码导读里仍然缺一章真正面对这棵源码树本身：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/model_executor/model_runner.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果你真的打开它，会很容易被几类逻辑同时淹没：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;模型加载&lt;/li&gt;
+&lt;li&gt;KV cache 初始化&lt;/li&gt;
+&lt;li&gt;attention backend 初始化&lt;/li&gt;
+&lt;li&gt;distributed / MoE / expert recorder&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;forward()&lt;/code&gt; / &lt;code&gt;sample()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;hidden states 与 routed experts 旁路返回&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有一章专门讲“这棵树应该怎么读”，读者很容易只记住它是个大文件，而不是整本书真正最关键的执行壳。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;model_runner.py&lt;/code&gt; 压成一条稳定的源码阅读骨架。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它正好站在全书多条主线的交叉口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;运行时架构里，它是 worker 壳之内真正的执行汇合点&lt;/li&gt;
+&lt;li&gt;调度与内存里，它要把 batch 视图落成可执行状态&lt;/li&gt;
+&lt;li&gt;执行模型里，&lt;code&gt;forward()&lt;/code&gt; / &lt;code&gt;sample()&lt;/code&gt; 的真正入口就在这里&lt;/li&gt;
+&lt;li&gt;旁路返回语义里，hidden states / routed experts / MoE recorder 也都在这里汇合&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，这不是“又一个重要文件”，而是整本书里最接近“单文件缩影”的源码节点。&lt;/p&gt;
+&lt;h2 id="一张图modelrunner-为什么是执行壳而不是单纯-forward-封装"&gt;一张图：&lt;code&gt;ModelRunner&lt;/code&gt; 为什么是执行壳而不是单纯 forward 封装&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bemodelrunner-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e6%89%a7%e8%a1%8c%e5%a3%b3%e8%80%8c%e4%b8%8d%e6%98%af%e5%8d%95%e7%ba%af-forward-%e5%b0%81%e8%a3%85"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;ModelRunner&lt;/code&gt; 想成“包一层 &lt;code&gt;model.forward()&lt;/code&gt;”，但源码实际上让它承担了更广的汇合职责。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart TD
+ Load[&amp;#34;load_model()&amp;#34;] --&amp;gt; KV[&amp;#34;init_memory_pool()&amp;#34;]
+ KV --&amp;gt; Attn[&amp;#34;init_attention_backend()&amp;#34;]
+ Attn --&amp;gt; Fwd[&amp;#34;forward(forward_batch)&amp;#34;]
+ Fwd --&amp;gt; Sample[&amp;#34;sample(logits_output, forward_batch)&amp;#34;]
+ Fwd --&amp;gt; Side[&amp;#34;hidden states / routed experts / expert recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;ModelRunner&lt;/code&gt; 不是只站在执行后半段，而是从模型、缓存、后端、到输出语义都在同一处汇流。&lt;/p&gt;</description></item><item><title>7.32 读 model_loader：权重如何进入执行壳</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-model-loader-and-weight-loading/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-model-loader-and-weight-loading/</guid><description>&lt;h1 id="读-model_loader权重如何进入执行壳"&gt;读 model_loader：权重如何进入执行壳&lt;a class="anchor" href="#%e8%af%bb-model_loader%e6%9d%83%e9%87%8d%e5%a6%82%e4%bd%95%e8%bf%9b%e5%85%a5%e6%89%a7%e8%a1%8c%e5%a3%b3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构已经讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;模型定义和执行壳的边界&lt;/li&gt;
+&lt;li&gt;远端 transfer 协调&lt;/li&gt;
+&lt;li&gt;热更新控制面&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但如果你真正想在源码里回答“模型权重到底是怎样被装进执行壳”的问题，仍然还缺一个正式入口：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;model_runner.py::load_model()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;model_loader/loader.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这条链非常关键，因为很多运行时问题其实都发生在这里：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;load format 选择不对&lt;/li&gt;
+&lt;li&gt;远端实例权重加载没走通&lt;/li&gt;
+&lt;li&gt;默认 loader 和量化 loader 的行为差异&lt;/li&gt;
+&lt;li&gt;权重热更新为什么会回到 &lt;code&gt;DefaultModelLoader&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把“权重如何进入执行壳”收成一条稳定的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="为什么这条链值得单独成章"&gt;为什么这条链值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%9d%a1%e9%93%be%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为如果只看 &lt;code&gt;ModelRunner&lt;/code&gt;，你会知道它会 &lt;code&gt;load_model()&lt;/code&gt;；如果只看控制面，你会知道它能 &lt;code&gt;update_weights_from_*&lt;/code&gt;。但两者中间真正承接“怎么加载、从哪加载、用什么 loader 加载”的系统，却在：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;model_loader/loader.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;里。&lt;/p&gt;
+&lt;p&gt;这意味着：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;权重加载既不是外围工具&lt;/li&gt;
+&lt;li&gt;也不是 &lt;code&gt;ModelRunner&lt;/code&gt; 自己的局部细节&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;它是执行壳能否真正成立的地基之一。&lt;/p&gt;
+&lt;h2 id="一张图权重不是直接读盘给模型而是经过一条-loader-链"&gt;一张图：权重不是直接读盘给模型，而是经过一条 loader 链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%9d%83%e9%87%8d%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e8%af%bb%e7%9b%98%e7%bb%99%e6%a8%a1%e5%9e%8b%e8%80%8c%e6%98%af%e7%bb%8f%e8%bf%87%e4%b8%80%e6%9d%a1-loader-%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 &lt;code&gt;ModelRunner.load_model()&lt;/code&gt; 里就是几行读权重代码，但实际系统先编译 &lt;code&gt;LoadConfig&lt;/code&gt;，再选 loader，再进具体加载路径。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Args[&amp;#34;ServerArgs / LoadFormat&amp;#34;] --&amp;gt; Config[&amp;#34;LoadConfig&amp;#34;]
+ Config --&amp;gt; Select[&amp;#34;get_model_loader(...)&amp;#34;]
+ Select --&amp;gt; Loader[&amp;#34;Default / Remote / Quantized / Layered ...&amp;#34;]
+ Loader --&amp;gt; Model[&amp;#34;loader.load_model(...)&amp;#34;]
+ Model --&amp;gt; Runner[&amp;#34;ModelRunner execution shell&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：权重加载本身就是一条被显式建模的可插拔链路，而不是 &lt;code&gt;ModelRunner&lt;/code&gt; 内部不可见的一步。&lt;/p&gt;</description></item><item><title>7.33 读 forward_batch_info.py：执行对象如何真正落地</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-forward-batch-info/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-forward-batch-info/</guid><description>&lt;h1 id="读-forward_batch_infopy执行对象如何真正落地"&gt;读 forward_batch_info.py：执行对象如何真正落地&lt;a class="anchor" href="#%e8%af%bb-forward_batch_infopy%e6%89%a7%e8%a1%8c%e5%af%b9%e8%b1%a1%e5%a6%82%e4%bd%95%e7%9c%9f%e6%ad%a3%e8%90%bd%e5%9c%b0"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构和执行模型已经反复把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelWorkerBatch&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ForwardBatch&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;当成理解执行主线的关键对象，但代码导读里仍然缺一章真正面对：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/model_executor/forward_batch_info.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这棵树本身。&lt;/p&gt;
+&lt;p&gt;如果你真的打开这个文件，会发现它不只是一个 dataclass 集合，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;前向执行低层对象&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ForwardMode&lt;/code&gt; 语义中心&lt;/li&gt;
+&lt;li&gt;positions、extend、spec_info、LoRA、DP attention、mrope、多模态、split prefill&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些执行主线变量真正落地的汇合点。&lt;/p&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;forward_batch_info.py&lt;/code&gt; 收成一条可读的源码骨架。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它正好位于整本书几条主线的真正接缝上：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;调度与内存里，&lt;code&gt;ScheduleBatch&lt;/code&gt; 在这里降成执行视图&lt;/li&gt;
+&lt;li&gt;运行时架构里，&lt;code&gt;ModelRunner&lt;/code&gt; 正式消费的就是它&lt;/li&gt;
+&lt;li&gt;执行模型里，很多行为分支都先看 &lt;code&gt;ForwardMode&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，如果 &lt;code&gt;ModelRunner&lt;/code&gt; 是执行壳的汇合点，那 &lt;code&gt;ForwardBatch&lt;/code&gt; 就是执行壳真正吃下去的对象形状。&lt;/p&gt;
+&lt;p&gt;技术书如果不把这层单独讲出来，读者会在很多章节里反复看到它，却没有一个稳定的源码回落点。&lt;/p&gt;
+&lt;h2 id="一张图这棵树为什么是调度视图和执行视图之间的最后一层桥"&gt;一张图：这棵树为什么是调度视图和执行视图之间的最后一层桥&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e6%a3%b5%e6%a0%91%e4%b8%ba%e4%bb%80%e4%b9%88%e6%98%af%e8%b0%83%e5%ba%a6%e8%a7%86%e5%9b%be%e5%92%8c%e6%89%a7%e8%a1%8c%e8%a7%86%e5%9b%be%e4%b9%8b%e9%97%b4%e7%9a%84%e6%9c%80%e5%90%8e%e4%b8%80%e5%b1%82%e6%a1%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者知道有 &lt;code&gt;ForwardBatch&lt;/code&gt;，但并不真正清楚它和 &lt;code&gt;ScheduleBatch&lt;/code&gt; / &lt;code&gt;ModelWorkerBatch&lt;/code&gt; 的转换关系。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ S[&amp;#34;ScheduleBatch&amp;#34;] --&amp;gt; M[&amp;#34;ModelWorkerBatch&amp;#34;]
+ M --&amp;gt; F[&amp;#34;ForwardBatch.init_new(...)&amp;#34;]
+ F --&amp;gt; R[&amp;#34;ModelRunner.forward()&amp;#34;]
+ F --&amp;gt; Modes[&amp;#34;ForwardMode / CaptureHiddenMode / spec_info&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这棵树不是执行层里的独立小对象，而是调度与执行交界处真正的翻译层。&lt;/p&gt;
+&lt;h2 id="第一层为什么文件头注释本身就值得认真读"&gt;第一层：为什么文件头注释本身就值得认真读&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e5%b1%82%e4%b8%ba%e4%bb%80%e4%b9%88%e6%96%87%e4%bb%b6%e5%a4%b4%e6%b3%a8%e9%87%8a%e6%9c%ac%e8%ba%ab%e5%b0%b1%e5%80%bc%e5%be%97%e8%ae%a4%e7%9c%9f%e8%af%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这个文件一开头就把最重要的事写出来了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ScheduleBatch -&amp;gt; ModelWorkerBatch -&amp;gt; ForwardBatch&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;并且还明确说明：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt; 更偏 scheduler 侧的高层 CPU 视图&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelWorkerBatch&lt;/code&gt; 是给 worker 的 GPU 相关子集&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 则是 &lt;code&gt;ModelRunner&lt;/code&gt; 真正消费的低层 tensor 视图&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着优秀的阅读策略不是“把这个文件当作实现细节”，而是先把它当作：&lt;/p&gt;</description></item></channel></rss>

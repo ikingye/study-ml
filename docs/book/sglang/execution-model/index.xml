@@ -386,4 +386,40 @@
 &lt;li&gt;&lt;code&gt;BatchTokenIDOutput&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;request-level speculative metrics&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这意味着 acceptance 不是 speculative 的局部细节，而是执行后半段的核心传播变量。&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这意味着 acceptance 不是 speculative 的局部细节，而是执行后半段的核心传播变量。&lt;/p&gt;</description></item><item><title>5.20 Sampler.forward()：采样分支与 logprob 回填</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</guid><description>&lt;h1 id="samplerforward采样分支与-logprob-回填"&gt;Sampler.forward()：采样分支与 logprob 回填&lt;a class="anchor" href="#samplerforward%e9%87%87%e6%a0%b7%e5%88%86%e6%94%af%e4%b8%8e-logprob-%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面的章节已经讲了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;speculative acceptance&lt;/li&gt;
+&lt;li&gt;finish 传播&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还有一棵非常关键、同时又最容易被“反正就是抽样”轻描淡写掉的代码树没有被单独讲透：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/layers/sampler.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把 &lt;code&gt;Sampler.forward()&lt;/code&gt; 这一棵树讲清楚：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;logits 在进入采样前还会经历什么改写&lt;/li&gt;
+&lt;li&gt;greedy、top-k/top-p/min-p、deterministic、Ascend backend 等分支怎样展开&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;return_logprob&lt;/code&gt; / &lt;code&gt;token_ids_logprobs&lt;/code&gt; 又怎样被回填进输出对象&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有这一章，执行模型虽然已经很厚，但在“真正选 token 的那一刻”仍然会少一块关键的代码级解释。&lt;/p&gt;
+&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;Sampler.forward()&lt;/code&gt; 看起来像一个函数，实际却在承接多条主线：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;采样参数怎样影响 next token 选择&lt;/li&gt;
+&lt;li&gt;logprobs 怎样被回填&lt;/li&gt;
+&lt;li&gt;TP rank 之间怎样在必要时同步最终 token&lt;/li&gt;
+&lt;li&gt;为什么同样是 sampling，会有 greedy / probabilistic / deterministic / hardware-specific 多种人格&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;从技术书角度看，这不是“后处理小节”，而是 execution model 的最后一个真正决策点。&lt;/p&gt;
+&lt;h2 id="一张图samplerforward-真正站在什么位置"&gt;一张图：&lt;code&gt;Sampler.forward()&lt;/code&gt; 真正站在什么位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besamplerforward-%e7%9c%9f%e6%ad%a3%e7%ab%99%e5%9c%a8%e4%bb%80%e4%b9%88%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把采样看成 &lt;code&gt;argmax&lt;/code&gt; 或 &lt;code&gt;multinomial&lt;/code&gt; 的一行代码，而忽略它其实站在一条更长的决策链中间。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ LP[&amp;#34;LogitsProcessorOutput.next_token_logits&amp;#34;] --&amp;gt; Pre[&amp;#34;_preprocess_logits(...)&amp;#34;]
+ Pre --&amp;gt; Branch[&amp;#34;greedy / probabilistic / deterministic / ascend&amp;#34;]
+ Branch --&amp;gt; IDs[&amp;#34;batch_next_token_ids&amp;#34;]
+ IDs --&amp;gt; Logprob[&amp;#34;attach logprobs / top logprobs / token-id logprobs&amp;#34;]
+ Logprob --&amp;gt; Sync[&amp;#34;_sync_token_ids_across_tp(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：采样不是单步决策，而是一条“预处理 -&amp;gt; 分支 -&amp;gt; 回填 -&amp;gt; 同步”的链。&lt;/p&gt;</description></item></channel></rss>
