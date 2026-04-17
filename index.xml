@@ -3701,4 +3701,85 @@
 &lt;li&gt;&lt;code&gt;ModelWorkerBatch&lt;/code&gt; 是给 worker 的 GPU 相关子集&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 则是 &lt;code&gt;ModelRunner&lt;/code&gt; 真正消费的低层 tensor 视图&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这意味着优秀的阅读策略不是“把这个文件当作实现细节”，而是先把它当作：&lt;/p&gt;</description></item></channel></rss>
+&lt;p&gt;这意味着优秀的阅读策略不是“把这个文件当作实现细节”，而是先把它当作：&lt;/p&gt;</description></item><item><title>7.34 读 server_args.py 与 PortArgs</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-server-args-and-port-args/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-server-args-and-port-args/</guid><description>&lt;h1 id="读-server_argspy-与-portargs"&gt;读 server_args.py 与 PortArgs&lt;a class="anchor" href="#%e8%af%bb-server_argspy-%e4%b8%8e-portargs"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构已经在：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="../runtime-architecture/server-args-as-topology-compiler/"&gt;3.11 ServerArgs：把运行时选项编译成拓扑&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="../runtime-architecture/port-args-and-bootstrap-handoff/"&gt;3.19 PortArgs、IPC 名称与 shared memory 引导&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;里把配置人格和连接拓扑讲清楚了，但如果你真正想顺着源码读进去，仍然会遇到一个很具体的问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;这条“配置 -&amp;gt; 拓扑 -&amp;gt; 连接信息”的主线，到底该从 &lt;code&gt;server_args.py&lt;/code&gt; 的哪些位置开始读？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ServerArgs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_handle_*&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;check_server_args()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PortArgs&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;收成代码导读里的正式入口。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为它不是一本参数手册，而是整套运行时人格的编译器源码。&lt;/p&gt;
+&lt;p&gt;如果你只看前面的架构章节，会知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ServerArgs&lt;/code&gt; 很重要&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PortArgs&lt;/code&gt; 决定 IPC / TCP 名字&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但还不够知道：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;哪些字段会被自动改写&lt;/li&gt;
+&lt;li&gt;哪些组合会在 &lt;code&gt;check_server_args()&lt;/code&gt; 阶段被否掉&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;PortArgs&lt;/code&gt; 怎样根据 &lt;code&gt;enable_dp_attention&lt;/code&gt;、&lt;code&gt;tokenizer_worker_num&lt;/code&gt;、&lt;code&gt;dist_init_addr&lt;/code&gt; 编译出不同连接拓扑&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;因此，这章的价值不是重复概念，而是给出真正的源码阅读路径。&lt;/p&gt;
+&lt;h2 id="一张图server_argspy-不是参数表而是一次配置编译链"&gt;一张图：&lt;code&gt;server_args.py&lt;/code&gt; 不是参数表，而是一次配置编译链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beserver_argspy-%e4%b8%8d%e6%98%af%e5%8f%82%e6%95%b0%e8%a1%a8%e8%80%8c%e6%98%af%e4%b8%80%e6%ac%a1%e9%85%8d%e7%bd%ae%e7%bc%96%e8%af%91%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;server_args.py&lt;/code&gt; 想成静态 dataclass 定义，但源码里真正重要的是从参数到人格再到连接信息的编译过程。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ CLI[&amp;#34;CLI / config / kwargs&amp;#34;] --&amp;gt; Args[&amp;#34;ServerArgs&amp;#34;]
+ Args --&amp;gt; Normalize[&amp;#34;_handle_* normalization&amp;#34;]
+ Normalize --&amp;gt; Validate[&amp;#34;check_server_args()&amp;#34;]
+ Validate --&amp;gt; Ports[&amp;#34;PortArgs.init_new(...)&amp;#34;]
+ Ports --&amp;gt; Runtime[&amp;#34;engine / worker / scheduler topology&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：运行时配置不是被动读取，而是先经历归一化、约束检查，再落成具体连接和拓扑。&lt;/p&gt;</description></item><item><title>7.35 读 tp_worker.py：scheduler 与执行壳之间的 worker 外观</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tp-worker-facade/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tp-worker-facade/</guid><description>&lt;h1 id="读-tp_workerpyscheduler-与执行壳之间的-worker-外观"&gt;读 tp_worker.py：scheduler 与执行壳之间的 worker 外观&lt;a class="anchor" href="#%e8%af%bb-tp_workerpyscheduler-%e4%b8%8e%e6%89%a7%e8%a1%8c%e5%a3%b3%e4%b9%8b%e9%97%b4%e7%9a%84-worker-%e5%a4%96%e8%a7%82"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前面的运行时架构已经在：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="../runtime-architecture/tp-worker-model-runner-and-draft-boundaries/"&gt;3.12 TpWorker、ModelRunner 与 draft worker 的边界&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;里解释了 worker 壳的职责边界，而代码导读又已经分别补了：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;forward_batch_info.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;model_runner.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;model_loader&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但如果你真的顺着源码往执行层里走，仍然会遇到一个具体问题：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;scheduler 到底是怎样通过一个更稳定的 worker 外观去驱动 &lt;code&gt;ModelRunner&lt;/code&gt;，而不是直接把所有控制和执行细节都压到 &lt;code&gt;model_runner.py&lt;/code&gt; 上？&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这条链最关键的文件其实是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;python/sglang/srt/managers/tp_worker.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这章的目标，就是把这棵 worker façade 树正式收成一章。&lt;/p&gt;
+&lt;h2 id="为什么这棵树值得单独成章"&gt;为什么这棵树值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e6%a3%b5%e6%a0%91%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;因为 &lt;code&gt;tp_worker.py&lt;/code&gt; 并不是简单的“把 &lt;code&gt;ModelRunner&lt;/code&gt; 包一层”。它至少承担了三类职责：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;把配置和 rank 身份翻译成 worker 实例&lt;/li&gt;
+&lt;li&gt;把调度层的 &lt;code&gt;ModelWorkerBatch&lt;/code&gt; 编译成 &lt;code&gt;ForwardBatch&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;把一系列控制动作统一转发给 &lt;code&gt;ModelRunner&lt;/code&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;也就是说，它不仅是执行壳的外观，也是调度层与执行壳之间的正式边界。&lt;/p&gt;
+&lt;p&gt;优秀技术书在这里应该明确告诉读者：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;你不是在读一个多余封装&lt;/li&gt;
+&lt;li&gt;而是在读 scheduler 真正依赖的 worker 契约&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="一张图tpmodelworker-在执行主线里的真实位置"&gt;一张图：&lt;code&gt;TpModelWorker&lt;/code&gt; 在执行主线里的真实位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%betpmodelworker-%e5%9c%a8%e6%89%a7%e8%a1%8c%e4%b8%bb%e7%ba%bf%e9%87%8c%e7%9a%84%e7%9c%9f%e5%ae%9e%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 &lt;code&gt;Scheduler -&amp;gt; ModelRunner&lt;/code&gt; 是直接关系，但源码里其实明确存在一个 worker façade。&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Sch[&amp;#34;Scheduler&amp;#34;] --&amp;gt; Batch[&amp;#34;ModelWorkerBatch&amp;#34;]
+ Batch --&amp;gt; TP[&amp;#34;TpModelWorker&amp;#34;]
+ TP --&amp;gt; Fwd[&amp;#34;ForwardBatch.init_new(...)&amp;#34;]
+ Fwd --&amp;gt; MR[&amp;#34;ModelRunner.forward() / sample()&amp;#34;]
+ TP --&amp;gt; Ctrl[&amp;#34;weights / LoRA / memory / worker info&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;TpModelWorker&lt;/code&gt; 并不是“执行以后才有的 wrapper”，它从 batch 入口开始就在参与执行链。&lt;/p&gt;</description></item></channel></rss>
