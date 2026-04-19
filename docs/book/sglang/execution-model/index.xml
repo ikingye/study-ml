@@ -88,31 +88,35 @@
 &lt;p&gt;也正因此，execution model 章节不能只把 overlap scheduling 当性能技巧，而要把它当“执行复杂度升级器”。这是大部头技术书才会专门讲的一层。&lt;/p&gt;
 &lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章最重要的锚点包括 &lt;code&gt;docs/advanced_features/speculative_decoding.md&lt;/code&gt;、&lt;code&gt;docs/advanced_features/attention_backend.md&lt;/code&gt;、&lt;code&gt;python/sglang/srt/batch_overlap/two_batch_overlap.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/speculative/*&lt;/code&gt; 以及 &lt;code&gt;ForwardMode&lt;/code&gt; 相关路径。&lt;/p&gt;</description></item><item><title>5.8 LogitsProcessor、采样输出与 finish 语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-to-finish-semantics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-to-finish-semantics/</guid><description>&lt;h1 id="logitsprocessor采样输出与-finish-语义"&gt;LogitsProcessor、采样输出与 finish 语义&lt;a class="anchor" href="#logitsprocessor%e9%87%87%e6%a0%b7%e8%be%93%e5%87%ba%e4%b8%8e-finish-%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面的章节已经把 &lt;code&gt;forward -&amp;gt; sample&lt;/code&gt; 主循环、graph runner、speculative decoding 和 overlap scheduling 讲得比较深了，但还有一层非常关键的“输出语义层”没有被单独讲透：模型前向给出的 logits 是怎样被整理成 &lt;code&gt;LogitsProcessorOutput&lt;/code&gt;，采样之后的 token 又怎样变成 &lt;code&gt;finish_reason&lt;/code&gt;、&lt;code&gt;output_ids&lt;/code&gt;、logprobs 和最终对外 surface 看到的结束语义。&lt;/p&gt;
-&lt;p&gt;如果没有这一章，execution model 仍然会停在“next token 是怎么来的”，而缺少“系统怎么知道该不该停、停下时向外说了什么、这套语义怎样跨过 scheduler 和 API surface”的后半段。&lt;/p&gt;
-&lt;h2 id="为什么-finish-语义必须放在执行模型里"&gt;为什么 finish 语义必须放在执行模型里&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-finish-%e8%af%ad%e4%b9%89%e5%bf%85%e9%a1%bb%e6%94%be%e5%9c%a8%e6%89%a7%e8%a1%8c%e6%a8%a1%e5%9e%8b%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;很多人会把 &lt;code&gt;finish_reason&lt;/code&gt; 误以为是 API 层的包装字段。源码并不支持这个看法。&lt;code&gt;schedule_batch.py&lt;/code&gt; 里 &lt;code&gt;check_finished(...)&lt;/code&gt; 会在 decode 后直接根据 &lt;code&gt;max_new_tokens&lt;/code&gt;、grammar 终止、stop token、stop string、regex、异常 token id 等条件设置 &lt;code&gt;finished_reason&lt;/code&gt;。而 &lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt; 会在接收 &lt;code&gt;next_token_ids&lt;/code&gt; 后更新 &lt;code&gt;req.output_ids&lt;/code&gt;、调用 &lt;code&gt;req.check_finished(...)&lt;/code&gt;、再把这些信息流向后面的输出流。也就是说，finish 语义首先是执行层和调度层共同定义的运行时状态，然后才被 API surface 翻译成 OpenAI、Anthropic 或原生 response 里的字段。&lt;/p&gt;
-&lt;h2 id="先看一张图从-logits-到-finish_reason-的后半段链路"&gt;先看一张图：从 logits 到 finish_reason 的后半段链路&lt;a class="anchor" href="#%e5%85%88%e7%9c%8b%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-logits-%e5%88%b0-finish_reason-%e7%9a%84%e5%90%8e%e5%8d%8a%e6%ae%b5%e9%93%be%e8%b7%af"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图要解决的理解障碍是：&lt;code&gt;LogitsProcessor&lt;/code&gt;、&lt;code&gt;Sampler&lt;/code&gt;、&lt;code&gt;Req.check_finished()&lt;/code&gt;、API surface 的 &lt;code&gt;finish_reason&lt;/code&gt; 经常分散出现在不同文件里，读者容易只看到局部，不知道它们其实是一条连续链。&lt;/p&gt;</description></item><item><title>5.9 输出处理、reasoning token 与 streaming 边界</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/output-processing-and-stream-boundary/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/output-processing-and-stream-boundary/</guid><description>&lt;h1 id="输出处理reasoning-token-与-streaming-边界"&gt;输出处理、reasoning token 与 streaming 边界&lt;a class="anchor" href="#%e8%be%93%e5%87%ba%e5%a4%84%e7%90%86reasoning-token-%e4%b8%8e-streaming-%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面已经把 logits、sampling、finish 语义和 speculative 路径讲得比较深了，但还缺一层非常关键的后半段边界：采样出来的 token 怎样被整理成 &lt;code&gt;BatchTokenIDOutput&lt;/code&gt;，怎样附着 output logprobs、reasoning token 统计和 finish 元信息，什么时候进入 detokenizer，什么时候又直接以 token 级输出在 manager 之间流动。&lt;/p&gt;
-&lt;p&gt;如果没有这一章，execution model 仍然会停在“token 已经选出来了”，却缺少“这些 token 怎样被加工成可流式发送、可做 logprob 增量、可供 detokenizer 消费的输出对象”。&lt;/p&gt;
-&lt;h2 id="为什么这一层不该被误认为是-request-lifecycle"&gt;为什么这一层不该被误认为是 request lifecycle&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e4%b8%8d%e8%af%a5%e8%a2%ab%e8%af%af%e8%ae%a4%e4%b8%ba%e6%98%af-request-lifecycle"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;它当然与 request lifecycle 相连，但问题重心不同：&lt;/p&gt;
+&lt;p&gt;执行模型前面的章节已经把 &lt;code&gt;forward -&amp;gt; sample&lt;/code&gt; 主循环、graph runner、speculative decoding 和 overlap scheduling 讲得很深了，但如果没有一章把“输出语义层”单独收束，execution model 仍然会停在“next token 是怎么来的”。真正更贴近运行时的问题是：模型前向给出的 logits 怎样被整理成 &lt;code&gt;LogitsProcessorOutput&lt;/code&gt;，采样之后的 token 怎样重新落回 &lt;code&gt;req.output_ids&lt;/code&gt;，系统又是怎样决定该不该停、停下时向外说了什么。&lt;/p&gt;
+&lt;p&gt;这章补的正是 execution model 的后半段：不是“如何生成候选”，而是“如何把候选变成正式输出语义”。只要这部分读稳了，&lt;code&gt;finish_reason&lt;/code&gt;、output logprobs 和 surface 层看到的结束语义就不再像几处分散字段，而会变成一条完整链。&lt;/p&gt;
+&lt;h2 id="先把logits-到-finish放回同一条链"&gt;先把“logits 到 finish”放回同一条链&lt;a class="anchor" href="#%e5%85%88%e6%8a%8alogits-%e5%88%b0-finish%e6%94%be%e5%9b%9e%e5%90%8c%e4%b8%80%e6%9d%a1%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这条链最容易被读散，因为相关逻辑分布在不同文件里：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;request lifecycle 关心“请求怎么进来、怎么回去”。&lt;/li&gt;
-&lt;li&gt;这一章关心“执行层选出的 token，怎样在调度收尾阶段被加工成对外输出语义”。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/logits_processor.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;layers/sampler.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;schedule_batch.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;surface 层的 &lt;code&gt;serving_chat.py&lt;/code&gt; / &lt;code&gt;serving_completions.py&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;也就是说，这里讨论的是 execution model 的后处理边界，而不是整个请求通路。&lt;/p&gt;
-&lt;h2 id="一张图从-sampled-token-到-streaming-chunk-的最后一段执行链"&gt;一张图：从 sampled token 到 streaming chunk 的最后一段执行链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e-sampled-token-%e5%88%b0-streaming-chunk-%e7%9a%84%e6%9c%80%e5%90%8e%e4%b8%80%e6%ae%b5%e6%89%a7%e8%a1%8c%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者能理解 &lt;code&gt;forward -&amp;gt; sample&lt;/code&gt;，但不清楚 sample 之后还有一层 output processor 和 stream boundary。&lt;/p&gt;
+&lt;p&gt;下面这张图的作用，就是把它们重新压回同一条后半段执行链：&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ Fwd[&amp;#34;Model forward&amp;#34;] --&amp;gt; LP[&amp;#34;LogitsProcessorOutput&amp;#34;]
+ LP --&amp;gt; Samp[&amp;#34;Sampler / batch_next_token_ids&amp;#34;]
+ Samp --&amp;gt; Req[&amp;#34;req.output_ids append / extend&amp;#34;]
+ Req --&amp;gt; Finish[&amp;#34;req.check_finished()&amp;#34;]
+ Finish --&amp;gt; Meta[&amp;#34;meta_info.finish_reason&amp;#34;]
+ Meta --&amp;gt; Surf[&amp;#34;OpenAI / native surface translation&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最关键的一点是：finish 并不是 API 层突然补出来的字段，而是沿着“logits -&amp;gt; token -&amp;gt; request state -&amp;gt; response metadata”逐层固化出来的。&lt;/p&gt;</description></item><item><title>5.9 输出处理、reasoning token 与 streaming 边界</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/output-processing-and-stream-boundary/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/output-processing-and-stream-boundary/</guid><description>&lt;h1 id="输出处理reasoning-token-与-streaming-边界"&gt;输出处理、reasoning token 与 streaming 边界&lt;a class="anchor" href="#%e8%be%93%e5%87%ba%e5%a4%84%e7%90%86reasoning-token-%e4%b8%8e-streaming-%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;执行模型前面已经把 logits、sampling、finish 语义和 speculative 路径讲得很深了，但如果在 sample 之后就停下，整条 execution model 仍然会少最后一段非常关键的边界：token 怎样被整理成 &lt;code&gt;BatchTokenIDOutput&lt;/code&gt;，怎样附着 output logprobs、reasoning token 统计和 finish 元信息，什么时候进入 detokenizer，什么时候又仍然只在 manager 之间以 token 级对象流动。&lt;/p&gt;
+&lt;p&gt;这章真正补的，是 execution model 最后那段很容易被 request lifecycle 吞掉、其实却属于执行后半段的对象加工链。只有把这段读清楚，execution model 才算真正覆盖了“从 forward 一直到对外 streaming chunk”的完整后半程。&lt;/p&gt;
+&lt;h2 id="先把-sample-之后的对象链重新画清楚"&gt;先把 sample 之后的对象链重新画清楚&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-sample-%e4%b9%8b%e5%90%8e%e7%9a%84%e5%af%b9%e8%b1%a1%e9%93%be%e9%87%8d%e6%96%b0%e7%94%bb%e6%b8%85%e6%a5%9a"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者能理解 &lt;code&gt;forward -&amp;gt; sample&lt;/code&gt;，却不太清楚 sample 之后系统还要走一段正式的 output processor 和 stream boundary。下面这张图的作用，就是把这段后半程重新压成一条稳定链：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Sample[&amp;#34;sampled token ids&amp;#34;] --&amp;gt; Proc[&amp;#34;scheduler_output_processor_mixin&amp;#34;]
  Proc --&amp;gt; Batch[&amp;#34;BatchTokenIDOutput&amp;#34;]
  Batch --&amp;gt; Detok[&amp;#34;DetokenizerManager&amp;#34;]
  Detok --&amp;gt; Str[&amp;#34;BatchStrOutput&amp;#34;]
- Str --&amp;gt; TM[&amp;#34;TokenizerManager / ReqState / streaming merge&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：sample 之后还有一段正式的执行后处理链，它既属于 execution model，又决定了 request lifecycle 后半段的形状。&lt;/p&gt;</description></item><item><title>5.10 约束 mask、grammar 同步与 overlap 限制</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</guid><description>&lt;h1 id="约束-maskgrammar-同步与-overlap-限制"&gt;约束 mask、grammar 同步与 overlap 限制&lt;a class="anchor" href="#%e7%ba%a6%e6%9d%9f-maskgrammar-%e5%90%8c%e6%ad%a5%e4%b8%8e-overlap-%e9%99%90%e5%88%b6"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Str --&amp;gt; TM[&amp;#34;TokenizerManager / ReqState / streaming merge&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的不是“有五个节点”，而是它明确说明：sample 之后还存在一段正式的 execution-side 后处理链。它既属于执行模型，又决定了 request lifecycle 后半段最终长成什么形状。&lt;/p&gt;</description></item><item><title>5.10 约束 mask、grammar 同步与 overlap 限制</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</guid><description>&lt;h1 id="约束-maskgrammar-同步与-overlap-限制"&gt;约束 mask、grammar 同步与 overlap 限制&lt;a class="anchor" href="#%e7%ba%a6%e6%9d%9f-maskgrammar-%e5%90%8c%e6%ad%a5%e4%b8%8e-overlap-%e9%99%90%e5%88%b6"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;执行模型前面已经解释了 sampling、finish 语义、output processing 和结构化生成会在这附近相遇，但还缺最后一层非常关键的桥：grammar / structured output 到底怎样真正影响采样本身？为什么使用 grammar 时 token id 要更严格同步？为什么 overlap + spec + grammar 会触发执行路径限制？&lt;/p&gt;
 &lt;p&gt;这一章专门解释“约束如何插进执行循环”。&lt;/p&gt;
@@ -179,55 +183,52 @@
  SBI --&amp;gt; Mask[&amp;#34;vocab_mask + apply_mask_func&amp;#34;]
  Mask --&amp;gt; Logits[&amp;#34;masked logits&amp;#34;]
  Logits --&amp;gt; Sample[&amp;#34;Sampler token selection&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：约束一旦进入 execution，不再是“对输出结果做检查”，而是直接改写 logits 空间。&lt;/p&gt;</description></item><item><title>5.13 SamplingParams 的规范化、互斥约束与 stop 语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampling-params-normalization-and-stop-semantics/</guid><description>&lt;h1 id="samplingparams-的规范化互斥约束与-stop-语义"&gt;SamplingParams 的规范化、互斥约束与 stop 语义&lt;a class="anchor" href="#samplingparams-%e7%9a%84%e8%a7%84%e8%8c%83%e5%8c%96%e4%ba%92%e6%96%a5%e7%ba%a6%e6%9d%9f%e4%b8%8e-stop-%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面已经讲了 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask、grammar sync 和 structure-aware sampling，但还有一层很基础、同时又特别容易被忽略的内容没有单独讲：&lt;code&gt;SamplingParams&lt;/code&gt; 自己在进入 batch 之前，会做哪些规范化、互斥检查和 stop 语义预处理？&lt;/p&gt;
-&lt;p&gt;没有这一章，读者会知道采样参数很重要，却不清楚：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;哪些字段在进入执行前就已经被改写&lt;/li&gt;
-&lt;li&gt;哪些组合会被显式拒绝&lt;/li&gt;
-&lt;li&gt;stop string / stop regex 为什么需要先做长度上界估计&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为 &lt;code&gt;SamplingParams&lt;/code&gt; 不是一个被动结构体。&lt;code&gt;__init__()&lt;/code&gt;、&lt;code&gt;verify()&lt;/code&gt;、&lt;code&gt;normalize()&lt;/code&gt; 已经在做非常实质性的工作：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;把接近 greedy 的温度归一化&lt;/li&gt;
-&lt;li&gt;把 &lt;code&gt;top_k = -1&lt;/code&gt; 改写成 &lt;code&gt;TOP_K_ALL&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;限制 grammar 字段互斥&lt;/li&gt;
-&lt;li&gt;预处理 stop string / stop regex 的长度上界&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明很多执行层行为，在 sampler 真正启动之前就已经被配置层改写过了。&lt;/p&gt;
-&lt;h2 id="一张图请求里的采样字段在真正进入-sampler-之前还要先经历一次参数语义整理"&gt;一张图：请求里的采样字段在真正进入 sampler 之前，还要先经历一次“参数语义整理”&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e9%87%8c%e7%9a%84%e9%87%87%e6%a0%b7%e5%ad%97%e6%ae%b5%e5%9c%a8%e7%9c%9f%e6%ad%a3%e8%bf%9b%e5%85%a5-sampler-%e4%b9%8b%e5%89%8d%e8%bf%98%e8%a6%81%e5%85%88%e7%bb%8f%e5%8e%86%e4%b8%80%e6%ac%a1%e5%8f%82%e6%95%b0%e8%af%ad%e4%b9%89%e6%95%b4%e7%90%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会默认 sampler 直接消费原始采样字段，而实际上中间还有一层参数规范化。&lt;/p&gt;
+&lt;p&gt;执行模型前面已经讲了 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask、grammar sync 和 structure-aware sampling，但如果没有一章把 &lt;code&gt;SamplingParams&lt;/code&gt; 自己的“预编译行为”单独讲清楚，读者仍然很容易误解一件事：sampler 看到的并不是调用方原样传进来的那份参数，而是一份已经被构造器、&lt;code&gt;verify()&lt;/code&gt; 和 &lt;code&gt;normalize()&lt;/code&gt; 主动整理过的内部采样语义。&lt;/p&gt;
+&lt;p&gt;这章真正补的是 execution model 里很基础、却最容易被忽略的一层：参数并不是被动配置，而是会在进入 batch 之前先被验证、收敛、改写，并提前决定 stop 相关的执行边界。只要这一层读稳了，后面的 sampler、grammar 和 output processor 行为就更不容易看成“很多偶然分支”。&lt;/p&gt;
+&lt;h2 id="先把这层放回采样主线"&gt;先把这层放回采样主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e5%b1%82%e6%94%be%e5%9b%9e%e9%87%87%e6%a0%b7%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人天然会把 &lt;code&gt;SamplingParams&lt;/code&gt; 想成一个字段袋子：temperature、top-p、top-k、stop，最后交给 sampler 用。源码里真正更重要的地方是，中间还隔着一次参数语义整理。下面这张图的作用，就是把这一步显式化：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Raw[&amp;#34;raw sampling fields&amp;#34;] --&amp;gt; SP[&amp;#34;SamplingParams&amp;#34;]
  SP --&amp;gt; Verify[&amp;#34;verify()&amp;#34;]
  SP --&amp;gt; Norm[&amp;#34;normalize()&amp;#34;]
  Verify --&amp;gt; SBI[&amp;#34;SamplingBatchInfo&amp;#34;]
  Norm --&amp;gt; SBI
- SBI --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：执行层真正看到的是“经过验证与规范化之后的采样语义”。&lt;/p&gt;</description></item><item><title>5.14 penalty、logit_bias 与 custom logit processor 的汇合</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</guid><description>&lt;h1 id="penaltylogit_bias-与-custom-logit-processor-的汇合"&gt;penalty、logit_bias 与 custom logit processor 的汇合&lt;a class="anchor" href="#penaltylogit_bias-%e4%b8%8e-custom-logit-processor-%e7%9a%84%e6%b1%87%e5%90%88"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面已经把 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask 和结构化约束怎样进入 sampler 讲得比较深了，但还缺最后一层很关键的“采样前改写汇合点”：&lt;code&gt;presence_penalty&lt;/code&gt;、&lt;code&gt;frequency_penalty&lt;/code&gt;、&lt;code&gt;repetition_penalty&lt;/code&gt;、&lt;code&gt;logit_bias&lt;/code&gt; 和 &lt;code&gt;custom_logit_processor&lt;/code&gt; 到底怎样在真正采样之前被统一施加到 logits 上。&lt;/p&gt;
-&lt;p&gt;如果不把这层讲出来，读者会知道这些参数存在，却仍然会把它们理解成几种互不相关的功能开关，而不是同一个采样前置变换管线中的不同来源。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为从执行角度看，这几类东西虽然来源不同，但最后都在回答同一个问题：&lt;/p&gt;
+ SBI --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：执行层真正消费的，是“经过验证与规范化之后的采样语义”，而不是调用方原样给出的字段拼盘。&lt;/p&gt;
+&lt;h2 id="samplingparams-构造阶段就已经在改写行为"&gt;&lt;code&gt;SamplingParams&lt;/code&gt; 构造阶段就已经在改写行为&lt;a class="anchor" href="#samplingparams-%e6%9e%84%e9%80%a0%e9%98%b6%e6%ae%b5%e5%b0%b1%e5%b7%b2%e7%bb%8f%e5%9c%a8%e6%94%b9%e5%86%99%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;最值得技术书点明的，不是字段多，而是对象构造阶段已经开始主动收敛语义。例如：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;在 sampler 真正选择 token 之前，要怎样改写 logits 空间？&lt;/li&gt;
+&lt;li&gt;如果 &lt;code&gt;0 &amp;lt;= temperature &amp;lt; _SAMPLING_EPS&lt;/code&gt;，系统会直接把它视作 greedy sampling，并设置 &lt;code&gt;top_k = 1&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;如果 &lt;code&gt;top_k == -1&lt;/code&gt;，系统会把它改写成统一内部语义 &lt;code&gt;TOP_K_ALL&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;其中：&lt;/p&gt;
+&lt;p&gt;这说明很多执行层行为，在 sampler 真正启动之前就已经被配置层改写过了。运行时并不要求每个下游模块都去理解“用户写的 -1 代表什么”或“几乎零温度意味着什么”，而是尽量在参数对象内部就完成统一收口。&lt;/p&gt;</description></item><item><title>5.14 penalty、logit_bias 与 custom logit processor 的汇合</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/penalties-logit-bias-and-custom-processors/</guid><description>&lt;h1 id="penaltylogit_bias-与-custom-logit-processor-的汇合"&gt;penalty、logit_bias 与 custom logit processor 的汇合&lt;a class="anchor" href="#penaltylogit_bias-%e4%b8%8e-custom-logit-processor-%e7%9a%84%e6%b1%87%e5%90%88"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;执行模型前面已经把 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;、vocab mask 和结构化约束怎样进入 sampler 讲得比较深了，但如果没有一章把“采样前改写汇合点”收束出来，读者仍然会把这些能力理解成几种互不相关的功能开关：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;penalties 更像“根据历史输出动态调节”&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;logit_bias&lt;/code&gt; 更像“调用方显式推拉某些 token”&lt;/li&gt;
-&lt;li&gt;custom processor 更像“用户自定义的额外规则”&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;presence_penalty&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;frequency_penalty&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;repetition_penalty&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logit_bias&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;custom_logit_processor&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这三层如果不放在一起讲，读者很难建立完整的“采样前变换栈”心智模型。&lt;/p&gt;
-&lt;h2 id="一张图采样前其实有一条明确的-logits-改写栈"&gt;一张图：采样前其实有一条明确的 logits 改写栈&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%87%87%e6%a0%b7%e5%89%8d%e5%85%b6%e5%ae%9e%e6%9c%89%e4%b8%80%e6%9d%a1%e6%98%8e%e7%a1%ae%e7%9a%84-logits-%e6%94%b9%e5%86%99%e6%a0%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多人会把 sampler 看成“直接吃 logits 做 softmax / argmax”，而实际上中间有一条明显的改写管线。&lt;/p&gt;
+&lt;p&gt;这章真正要补的，就是 execution model 里这条很关键的统一视图：这些来源虽然来自不同层，但最后都在回答同一个问题，namely 在 sampler 真正选择 token 之前，logits 空间到底要被怎样改写。&lt;/p&gt;
+&lt;h2 id="先把这条改写栈放回采样边界"&gt;先把这条改写栈放回采样边界&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e6%9d%a1%e6%94%b9%e5%86%99%e6%a0%88%e6%94%be%e5%9b%9e%e9%87%87%e6%a0%b7%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只从 API 参数或 feature 名字去看，这几类能力很容易被分散理解。但从执行边界看，它们最终都会落到同一条采样前变换栈里。下面这张图的价值，就是把这条栈明确压出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Raw[&amp;#34;raw logits&amp;#34;] --&amp;gt; Custom[&amp;#34;custom logit processor&amp;#34;]
  Custom --&amp;gt; Penalty[&amp;#34;additive/scaling penalties&amp;#34;]
  Penalty --&amp;gt; Mask[&amp;#34;grammar vocab mask&amp;#34;]
  Mask --&amp;gt; Bias[&amp;#34;logit_bias&amp;#34;]
- Bias --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：这些机制不是各自独立地“偶尔起作用”，而是共同构成了 sampler 之前的一条统一变换栈。&lt;/p&gt;</description></item><item><title>5.15 embedding、pooling 与 rerank 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</guid><description>&lt;h1 id="embeddingpooling-与-rerank-执行路径"&gt;embedding、pooling 与 rerank 执行路径&lt;a class="anchor" href="#embeddingpooling-%e4%b8%8e-rerank-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Bias --&amp;gt; Sampler[&amp;#34;Sampler.forward()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的作用，不是告诉你顺序有五层，而是提醒你：sampler 并不是直接吃“原始 logits”，它看到的 logits 已经经历了一次很完整的运行时改写。&lt;/p&gt;
+&lt;h2 id="samplingbatchinfo-才是这些来源真正汇合的地方"&gt;&lt;code&gt;SamplingBatchInfo&lt;/code&gt; 才是这些来源真正汇合的地方&lt;a class="anchor" href="#samplingbatchinfo-%e6%89%8d%e6%98%af%e8%bf%99%e4%ba%9b%e6%9d%a5%e6%ba%90%e7%9c%9f%e6%ad%a3%e6%b1%87%e5%90%88%e7%9a%84%e5%9c%b0%e6%96%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果要只抓一个对象，最稳的就是 &lt;code&gt;SamplingBatchInfo&lt;/code&gt;。因为从 &lt;code&gt;sampling_batch_info.py&lt;/code&gt; 看，这一层已经把几类本来分散的能力收口成同一个 batch-level sampling metadata：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;penalizer_orchestrator&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;acc_additive_penalties&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;acc_scaling_penalties&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;logit_bias&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;custom_logit_processor&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;vocab_mask&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，系统内部已经明确做了“语义归并”：无论这些东西来自历史输出、调用方显式偏置、结构化约束，还是用户自定义 processor，最终都会在这里汇成 sampler 前的一套统一工作集。技术书在这里最该做的，正是把这种内部收口讲明，而不是继续沿功能名称分散解释。&lt;/p&gt;</description></item><item><title>5.15 embedding、pooling 与 rerank 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</guid><description>&lt;h1 id="embeddingpooling-与-rerank-执行路径"&gt;embedding、pooling 与 rerank 执行路径&lt;a class="anchor" href="#embeddingpooling-%e4%b8%8e-rerank-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;到目前为止，执行模型章节几乎都围绕 token generation loop 展开：forward、sampling、finish、output processing、grammar mask、penalties。这样的主线是对的，但如果一本更厚的技术书只讲生成路径，就仍然会缺一个很真实的空白：同一套 runtime 还支持 embedding、classification、score、rerank，这些非生成请求在 execution 层到底怎么走？&lt;/p&gt;
 &lt;p&gt;这一章就是把这条非生成执行路径补进来。&lt;/p&gt;
@@ -248,33 +249,15 @@
  Batch --&amp;gt; Fwd[&amp;#34;ModelRunner.forward()&amp;#34;]
  Fwd --&amp;gt; Pool[&amp;#34;pooler / score head / embeddings&amp;#34;]
  Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item><item><title>5.16 hidden states、routed experts 与旁路返回语义</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/hidden-states-and-routed-experts-returns/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/hidden-states-and-routed-experts-returns/</guid><description>&lt;h1 id="hidden-statesrouted-experts-与旁路返回语义"&gt;hidden states、routed experts 与旁路返回语义&lt;a class="anchor" href="#hidden-statesrouted-experts-%e4%b8%8e%e6%97%81%e8%b7%af%e8%bf%94%e5%9b%9e%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;执行模型前面的章节已经把 token generation、sampling、finish、output processor 和非生成路径讲得比较完整了，但还有一类很容易被误读成“只是调试附加项”的返回语义没有单独讲清：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;return_hidden_states&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;return_routed_experts&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这两个开关并不会改变主执行循环的骨架，却会显著改变输出对象携带的信息密度，也会把执行层的一部分内部证据旁路带回调用方。&lt;/p&gt;
-&lt;p&gt;如果不把这一层单独讲出来，读者很容易出现两种误判：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;以为它们只是 API 层多加了几个字段&lt;/li&gt;
-&lt;li&gt;以为它们会另外开一条独立执行路径&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;源码表明，两者都不准确。它们更像是附着在主执行链上的“旁路返回语义”。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为它处在一个很有书写价值的位置：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;不像主生成链那样决定 token 怎样被选出来&lt;/li&gt;
-&lt;li&gt;但也不是单纯的 surface 包装&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;它真正做的是：把 execution layer 内部本来就存在的一部分中间证据，有选择地带回输出对象里。这对调试、分析、模型观测和专家路由研究都很有价值。&lt;/p&gt;
-&lt;p&gt;优秀技术书在这里应该给读者一个稳定判断框架：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;主执行链负责“生成什么”&lt;/li&gt;
-&lt;li&gt;旁路返回语义负责“额外暴露什么证据”&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="一张图旁路返回语义怎样挂在主执行链上"&gt;一张图：旁路返回语义怎样挂在主执行链上&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e6%97%81%e8%b7%af%e8%bf%94%e5%9b%9e%e8%af%ad%e4%b9%89%e6%80%8e%e6%a0%b7%e6%8c%82%e5%9c%a8%e4%b8%bb%e6%89%a7%e8%a1%8c%e9%93%be%e4%b8%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 hidden states / routed experts 想成独立输出流，但源码里它们其实挂在同一条输出对象链上。&lt;/p&gt;
+&lt;p&gt;这两个开关不会改写主执行循环的骨架，却会显著改变输出对象携带的信息密度，也会把执行层的一部分内部证据旁路带回调用方。它们既不是纯 API 装饰，也不是另开一条独立执行路径，而是挂在主执行链上的正式返回语义。&lt;/p&gt;
+&lt;h2 id="先把旁路返回放回主执行链"&gt;先把“旁路返回”放回主执行链&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e6%97%81%e8%b7%af%e8%bf%94%e5%9b%9e%e6%94%be%e5%9b%9e%e4%b8%bb%e6%89%a7%e8%a1%8c%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者第一次看到 hidden states 或 routed experts 时，会自然把它们想成“独立输出流”。更稳的理解方式是：主执行链仍然照常跑，只是 execution layer 把一部分本来就已经存在的中间证据附着到了同一条输出对象链上。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，就是把这种关系明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Fwd[&amp;#34;forward / logits processor&amp;#34;] --&amp;gt; Main[&amp;#34;main output semantics&amp;#34;]
  Fwd --&amp;gt; Hidden[&amp;#34;hidden states capture&amp;#34;]
@@ -283,7 +266,9 @@
  Hidden --&amp;gt; Proc
  Experts --&amp;gt; Proc
  Proc --&amp;gt; Tok[&amp;#34;BatchTokenIDOutput&amp;#34;]
- Tok --&amp;gt; Str[&amp;#34;BatchStrOutput / meta_info&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这不是“主输出之外另开一条 IPC”，而是把附加证据附着进同一条输出对象链。&lt;/p&gt;</description></item><item><title>5.17 MoE 路由、expert dispatch 与执行侧证据</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</guid><description>&lt;h1 id="moe-路由expert-dispatch-与执行侧证据"&gt;MoE 路由、expert dispatch 与执行侧证据&lt;a class="anchor" href="#moe-%e8%b7%af%e7%94%b1expert-dispatch-%e4%b8%8e%e6%89%a7%e8%a1%8c%e4%be%a7%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Tok --&amp;gt; Str[&amp;#34;BatchStrOutput / meta_info&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的不是“有三条箭头”，而是它明确告诉你：这不是另开一条 IPC 或另跑一遍模型，而是把附加证据附着进同一条输出对象链。&lt;/p&gt;
+&lt;h2 id="return_hidden_states-其实是-execution-side-的正式能力"&gt;&lt;code&gt;return_hidden_states&lt;/code&gt; 其实是 execution-side 的正式能力&lt;a class="anchor" href="#return_hidden_states-%e5%85%b6%e5%ae%9e%e6%98%af-execution-side-%e7%9a%84%e6%ad%a3%e5%bc%8f%e8%83%bd%e5%8a%9b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;io_struct.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 和 OpenAI utils 一侧都能看出来，&lt;code&gt;return_hidden_states&lt;/code&gt; 不是本地调试专用变量，而是正式请求字段。这一点很关键，因为它说明上游明确承认：&lt;/p&gt;</description></item><item><title>5.17 MoE 路由、expert dispatch 与执行侧证据</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/moe-routing-and-expert-dispatch/</guid><description>&lt;h1 id="moe-路由expert-dispatch-与执行侧证据"&gt;MoE 路由、expert dispatch 与执行侧证据&lt;a class="anchor" href="#moe-%e8%b7%af%e7%94%b1expert-dispatch-%e4%b8%8e%e6%89%a7%e8%a1%8c%e4%be%a7%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;执行模型前面的章节已经把主生成循环、采样、输出尾部、hidden states 和 routed experts 的旁路返回语义讲了出来，但如果系统底层是 MoE 模型，仍然还有一层很关键的执行现实没有被单独说透：&lt;/p&gt;
 &lt;ul&gt;
@@ -387,39 +372,16 @@
 &lt;li&gt;request-level speculative metrics&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;这意味着 acceptance 不是 speculative 的局部细节，而是执行后半段的核心传播变量。&lt;/p&gt;</description></item><item><title>5.20 Sampler.forward()：采样分支与 logprob 回填</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/sampler-forward-and-logprob-paths/</guid><description>&lt;h1 id="samplerforward采样分支与-logprob-回填"&gt;Sampler.forward()：采样分支与 logprob 回填&lt;a class="anchor" href="#samplerforward%e9%87%87%e6%a0%b7%e5%88%86%e6%94%af%e4%b8%8e-logprob-%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面的章节已经讲了：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;speculative acceptance&lt;/li&gt;
-&lt;li&gt;finish 传播&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;但还有一棵非常关键、同时又最容易被“反正就是抽样”轻描淡写掉的代码树没有被单独讲透：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;python/sglang/srt/layers/sampler.py&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这章的目标，就是把 &lt;code&gt;Sampler.forward()&lt;/code&gt; 这一棵树讲清楚：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;logits 在进入采样前还会经历什么改写&lt;/li&gt;
-&lt;li&gt;greedy、top-k/top-p/min-p、deterministic、Ascend backend 等分支怎样展开&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;return_logprob&lt;/code&gt; / &lt;code&gt;token_ids_logprobs&lt;/code&gt; 又怎样被回填进输出对象&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;如果没有这一章，执行模型虽然已经很厚，但在“真正选 token 的那一刻”仍然会少一块关键的代码级解释。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为 &lt;code&gt;Sampler.forward()&lt;/code&gt; 看起来像一个函数，实际却在承接多条主线：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;采样参数怎样影响 next token 选择&lt;/li&gt;
-&lt;li&gt;logprobs 怎样被回填&lt;/li&gt;
-&lt;li&gt;TP rank 之间怎样在必要时同步最终 token&lt;/li&gt;
-&lt;li&gt;为什么同样是 sampling，会有 greedy / probabilistic / deterministic / hardware-specific 多种人格&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;从技术书角度看，这不是“后处理小节”，而是 execution model 的最后一个真正决策点。&lt;/p&gt;
-&lt;h2 id="一张图samplerforward-真正站在什么位置"&gt;一张图：&lt;code&gt;Sampler.forward()&lt;/code&gt; 真正站在什么位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besamplerforward-%e7%9c%9f%e6%ad%a3%e7%ab%99%e5%9c%a8%e4%bb%80%e4%b9%88%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把采样看成 &lt;code&gt;argmax&lt;/code&gt; 或 &lt;code&gt;multinomial&lt;/code&gt; 的一行代码，而忽略它其实站在一条更长的决策链中间。&lt;/p&gt;
+&lt;p&gt;执行模型前面的章节已经把 &lt;code&gt;LogitsProcessorOutput&lt;/code&gt;、&lt;code&gt;LogitsMetadata&lt;/code&gt;、speculative acceptance 和 finish 传播逐层讲开了，但仍然有一个最容易被一句“最后就是抽样”带过去的代码中枢：&lt;code&gt;python/sglang/srt/layers/sampler.py&lt;/code&gt;。如果这里不单独讲透，执行模型在“真正选出下一个 token 的那一刻”仍然会缺一块关键解释。&lt;/p&gt;
+&lt;p&gt;这一章真正要回答的，不是“有哪些采样算法”，而是更贴近运行时的问题：logits 在进入采样前还会被怎样改写，不同请求为什么会走不同采样人格，&lt;code&gt;return_logprob&lt;/code&gt; 为什么会显著改写后半段工作量，以及最终选出来的 token 又怎样沿着输出对象链继续往后传。&lt;/p&gt;
+&lt;h2 id="先把-samplerforward-放回整条后半段执行链"&gt;先把 &lt;code&gt;Sampler.forward()&lt;/code&gt; 放回整条后半段执行链&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-samplerforward-%e6%94%be%e5%9b%9e%e6%95%b4%e6%9d%a1%e5%90%8e%e5%8d%8a%e6%ae%b5%e6%89%a7%e8%a1%8c%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人第一次看到 &lt;code&gt;Sampler.forward()&lt;/code&gt; 时，会自然把它想成某个 &lt;code&gt;argmax&lt;/code&gt; 或 &lt;code&gt;multinomial&lt;/code&gt; 的外壳。但把它放回整条执行链再看，就会发现它其实站在一个更敏感的位置：前面已经做完 &lt;code&gt;LogitsProcessor&lt;/code&gt;、工作集裁剪和部分结构化约束准备，后面则要把采样结果、logprob 证据和 TP 同步现实一起收进输出对象。&lt;/p&gt;
+&lt;p&gt;下面这张图的作用，就是把它从“一个函数”重新放回“执行链中的最后一跳决策器”。&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  LP[&amp;#34;LogitsProcessorOutput.next_token_logits&amp;#34;] --&amp;gt; Pre[&amp;#34;_preprocess_logits(...)&amp;#34;]
- Pre --&amp;gt; Branch[&amp;#34;greedy / probabilistic / deterministic / ascend&amp;#34;]
+ Pre --&amp;gt; Branch[&amp;#34;greedy / probabilistic / deterministic / Ascend&amp;#34;]
  Branch --&amp;gt; IDs[&amp;#34;batch_next_token_ids&amp;#34;]
  IDs --&amp;gt; Logprob[&amp;#34;attach logprobs / top logprobs / token-id logprobs&amp;#34;]
- Logprob --&amp;gt; Sync[&amp;#34;_sync_token_ids_across_tp(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：采样不是单步决策，而是一条“预处理 -&amp;gt; 分支 -&amp;gt; 回填 -&amp;gt; 同步”的链。&lt;/p&gt;</description></item></channel></rss>
+ Logprob --&amp;gt; Sync[&amp;#34;_sync_token_ids_across_tp(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释了一件事：采样不是一个原子动作，而是一条“预处理 -&amp;gt; 分支 -&amp;gt; 回填 -&amp;gt; 同步”的后半段链。&lt;/p&gt;
+&lt;h2 id="更稳的阅读顺序不是直接看采样分支"&gt;更稳的阅读顺序，不是直接看采样分支&lt;a class="anchor" href="#%e6%9b%b4%e7%a8%b3%e7%9a%84%e9%98%85%e8%af%bb%e9%a1%ba%e5%ba%8f%e4%b8%8d%e6%98%af%e7%9b%b4%e6%8e%a5%e7%9c%8b%e9%87%87%e6%a0%b7%e5%88%86%e6%94%af"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你一开始就跳进 greedy、top-k/top-p/min-p 和 Ascend 分支，很容易把 &lt;code&gt;Sampler&lt;/code&gt; 读成“很多 if/else 的集合”。更稳的入口其实是 &lt;code&gt;_preprocess_logits(...)&lt;/code&gt;，因为它先把两类横切逻辑统一收掉：&lt;/p&gt;</description></item></channel></rss>

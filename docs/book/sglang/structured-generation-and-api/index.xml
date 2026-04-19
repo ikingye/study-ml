@@ -209,34 +209,22 @@
  GQ --&amp;gt; Ready[&amp;#34;get_ready_grammar_requests()&amp;#34;]
  Ready --&amp;gt; WQ[&amp;#34;waiting_queue&amp;#34;]
  WQ --&amp;gt; Decode[&amp;#34;normal scheduler path&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：grammar 请求在成为普通 waiting request 之前，先要通过一层“约束就绪”检查。&lt;/p&gt;</description></item><item><title>6.13 response_format、tool constraint 与 SamplingParams 落地</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-format-to-sampling-params/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/response-format-to-sampling-params/</guid><description>&lt;h1 id="response_formattool-constraint-与-samplingparams-落地"&gt;response_format、tool constraint 与 SamplingParams 落地&lt;a class="anchor" href="#response_formattool-constraint-%e4%b8%8e-samplingparams-%e8%90%bd%e5%9c%b0"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的结构化生成章节已经讲了 schema、tool parser、grammar backend、grammar manager 和 grammar queue，但还差最后一条非常关键的协议桥：一个 OpenAI-compatible request 里的 &lt;code&gt;response_format&lt;/code&gt;、&lt;code&gt;tool_choice&lt;/code&gt;、&lt;code&gt;parallel_tool_calls&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;ebnf&lt;/code&gt; 这些字段，到底怎样一步步落成 &lt;code&gt;SamplingParams&lt;/code&gt; 上真正会被 execution 消费的字段？&lt;/p&gt;
-&lt;p&gt;这一章专门解释这条“协议约束 -&amp;gt; 采样参数”桥。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;如果你只读 &lt;code&gt;protocol.py&lt;/code&gt;，你会看到很多字段：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;response_format&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ebnf&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;tool_choice&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;parallel_tool_calls&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;stop_regex&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;如果你只读 execution 或 grammar 章节，你又会看到：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;json_schema&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;structural_tag&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ebnf&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;真正高价值的问题是：这些字段中间怎样转换、冲突时谁优先、tool-call constraint 与已有约束谁覆盖谁。没有这章，这条桥只能靠读者自己拼。&lt;/p&gt;
-&lt;h2 id="一张图协议层约束怎样落成真正的-samplingparams"&gt;一张图：协议层约束怎样落成真正的 &lt;code&gt;SamplingParams&lt;/code&gt;&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%8d%8f%e8%ae%ae%e5%b1%82%e7%ba%a6%e6%9d%9f%e6%80%8e%e6%a0%b7%e8%90%bd%e6%88%90%e7%9c%9f%e6%ad%a3%e7%9a%84-samplingparams"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者知道“response_format 会影响输出”，但不知道它是在哪一层真正被降成采样参数的。&lt;/p&gt;
+&lt;p&gt;前面的结构化生成章节已经分别讲了 schema、tool parser、grammar backend、grammar manager 和 grammar queue，但如果停在这里，整条链还缺最后一座桥：一个 OpenAI-compatible request 里的 &lt;code&gt;response_format&lt;/code&gt;、&lt;code&gt;tool_choice&lt;/code&gt;、&lt;code&gt;parallel_tool_calls&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;ebnf&lt;/code&gt; 这些字段，到底怎样一步步落成 &lt;code&gt;SamplingParams&lt;/code&gt; 上真正会被 execution 消费的字段。&lt;/p&gt;
+&lt;p&gt;这章真正补的，不是又一层协议知识，而是“协议约束怎样正式进入执行边界”的最后一跳。只要这座桥读稳了，前面的结构化生成章节和后面的 execution model 就会真正咬合起来，而不再像一组互相引用的平行专题。&lt;/p&gt;
+&lt;h2 id="先把这条桥放回完整主线"&gt;先把这条桥放回完整主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e6%9d%a1%e6%a1%a5%e6%94%be%e5%9b%9e%e5%ae%8c%e6%95%b4%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者知道 &lt;code&gt;response_format&lt;/code&gt; 会影响输出，也知道 sampler 最后会看 grammar / vocab mask，但中间往往会少一层稳定理解：协议字段并不会直接进入 grammar backend，而是先在协议层被归一化、收束，再落成统一的 &lt;code&gt;SamplingParams&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，就是把这条桥压成一条最短路径：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;ChatCompletionRequest / CompletionRequest&amp;#34;] --&amp;gt; Conv[&amp;#34;to_sampling_params() / _convert_to_internal_request()&amp;#34;]
  Conv --&amp;gt; SP[&amp;#34;SamplingParams fields&amp;#34;]
  SP --&amp;gt; GM[&amp;#34;GrammarManager / grammar backend&amp;#34;]
- GM --&amp;gt; Exec[&amp;#34;SamplingBatchInfo / sampler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：&lt;code&gt;response_format&lt;/code&gt; 并不是直接进 grammar backend，而是先被协议层压成统一采样参数。&lt;/p&gt;</description></item><item><title>6.14 Responses API、background request 与取消语义</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</guid><description>&lt;h1 id="responses-apibackground-request-与取消语义"&gt;Responses API、background request 与取消语义&lt;a class="anchor" href="#responses-apibackground-request-%e4%b8%8e%e5%8f%96%e6%b6%88%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ GM --&amp;gt; Exec[&amp;#34;SamplingBatchInfo / sampler&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的不是“有四个框”，而是它明确拆开了两件常被混读的事情：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;协议层负责把约束翻成统一采样参数&lt;/li&gt;
+&lt;li&gt;运行时层再决定怎样把这些采样参数变成 grammar 对象与 sampler 边界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="最值得先读的地方其实不是-grammar而是-to_sampling_params"&gt;最值得先读的地方其实不是 grammar，而是 &lt;code&gt;to_sampling_params(...)&lt;/code&gt;&lt;a class="anchor" href="#%e6%9c%80%e5%80%bc%e5%be%97%e5%85%88%e8%af%bb%e7%9a%84%e5%9c%b0%e6%96%b9%e5%85%b6%e5%ae%9e%e4%b8%8d%e6%98%af-grammar%e8%80%8c%e6%98%af-to_sampling_params"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果你一开始就跳进 grammar backend，最容易错过的就是协议层已经做过的一次语义收敛。&lt;code&gt;protocol.py&lt;/code&gt; 里的 &lt;code&gt;to_sampling_params(...)&lt;/code&gt; 真正有价值的地方，不是字段多，而是它在这里已经开始做“约束归一化”：&lt;/p&gt;</description></item><item><title>6.14 Responses API、background request 与取消语义</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</guid><description>&lt;h1 id="responses-apibackground-request-与取消语义"&gt;Responses API、background request 与取消语义&lt;a class="anchor" href="#responses-apibackground-request-%e4%b8%8e%e5%8f%96%e6%b6%88%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、response_format 和 tool-call 约束怎样进入采样参数，但还缺一个非常值得单独讲的表面：&lt;code&gt;Responses API&lt;/code&gt;。它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把这条工作流讲透。&lt;/p&gt;

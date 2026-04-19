@@ -314,50 +314,26 @@
  Release --&amp;gt; Evictable[&amp;#34;evictable_size&amp;#34;]
  Evictable --&amp;gt; Policy[&amp;#34;LRU / LFU / FIFO / Priority / SLRU&amp;#34;]
  Policy --&amp;gt; Evict[&amp;#34;evict(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：一个 prefix 节点不是天然可驱逐，也不是天然永久保留，而是在受保护和可驱逐之间迁移。&lt;/p&gt;</description></item><item><title>4.15 Req 对象：从 origin_input_ids 到 output_ids</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/req-object-state-evolution/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/req-object-state-evolution/</guid><description>&lt;h1 id="req-对象从-origin_input_ids-到-output_ids"&gt;Req 对象：从 origin_input_ids 到 output_ids&lt;a class="anchor" href="#req-%e5%af%b9%e8%b1%a1%e4%bb%8e-origin_input_ids-%e5%88%b0-output_ids"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的调度与内存章节已经分别讲了：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;batch 状态机&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ReqToTokenPool&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;prefix match 与 &lt;code&gt;cache_protected_len&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;host hit / load-back&lt;/li&gt;
-&lt;li&gt;eviction policy&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;但还有一个全书级核心对象还没有被单独收成一章：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;schedule_batch.py&lt;/code&gt; 里的 &lt;code&gt;Req&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这非常关键，因为很多前文讲过的字段和行为，最终都落在它身上：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;origin_input_ids&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;fill_ids&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;prefix_indices&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;output_ids&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;kv_committed_len&lt;/code&gt; / &lt;code&gt;kv_allocated_len&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;cache_protected_len&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;to_finish&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;time_stats&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;如果不把 &lt;code&gt;Req&lt;/code&gt; 这条状态生命史单独讲清楚，读者会知道很多局部机制，但很难真正回答：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;这些机制最后到底在改谁的状态&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="为什么-req-值得单独成章"&gt;为什么 &lt;code&gt;Req&lt;/code&gt; 值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88-req-%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为在 scheduler 视角里，&lt;code&gt;Req&lt;/code&gt; 几乎就是单请求的“真实运行时本体”。&lt;/p&gt;
-&lt;p&gt;你在不同章节里看到的很多东西，其实都是它的不同切面：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;request lifecycle 里，它像请求实体&lt;/li&gt;
-&lt;li&gt;scheduling 里，它像 batch 元素&lt;/li&gt;
-&lt;li&gt;memory 里，它像 KV 持有人&lt;/li&gt;
-&lt;li&gt;execution 里，它像 finish 和输出语义的宿主&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;优秀技术书在这里应该主动把它收束成一个明确对象，而不是让读者自己在几千行代码和十几章正文里慢慢拼。&lt;/p&gt;
-&lt;h2 id="一张图req-不是静态对象而是一条状态演化线"&gt;一张图：&lt;code&gt;Req&lt;/code&gt; 不是静态对象，而是一条状态演化线&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bereq-%e4%b8%8d%e6%98%af%e9%9d%99%e6%80%81%e5%af%b9%e8%b1%a1%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e7%8a%b6%e6%80%81%e6%bc%94%e5%8c%96%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;Req&lt;/code&gt; 理解成“请求字段全集”，但源码里它更像一条持续演化的状态容器。&lt;/p&gt;
+&lt;p&gt;前面的调度与内存章节已经分别讲了 batch 状态机、&lt;code&gt;ReqToTokenPool&lt;/code&gt;、prefix match、&lt;code&gt;cache_protected_len&lt;/code&gt;、host hit / load-back 和 eviction policy，但这些机制如果不最终落回同一个对象上，读者仍然会遇到一个很典型的问题：我知道这些局部机制都成立，可它们最后到底在改谁的状态？&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;schedule_batch.py&lt;/code&gt; 里的 &lt;code&gt;Req&lt;/code&gt; 正是这个问题的答案。它几乎可以被看成 scheduler 视角下单请求的真实运行时本体：输入怎样被保持、前缀怎样被挂上、KV 怎样被承认、输出怎样增长、什么时候该 finished，最后都落在它身上。没有这一章，很多前文讲过的细节会继续像“很多彼此正确的局部事实”；有了这一章，它们才会重新汇成一条单请求状态生命史。&lt;/p&gt;
+&lt;h2 id="先把-req-看成一条状态演化线而不是字段清单"&gt;先把 &lt;code&gt;Req&lt;/code&gt; 看成一条状态演化线，而不是字段清单&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-req-%e7%9c%8b%e6%88%90%e4%b8%80%e6%9d%a1%e7%8a%b6%e6%80%81%e6%bc%94%e5%8c%96%e7%ba%bf%e8%80%8c%e4%b8%8d%e6%98%af%e5%ad%97%e6%ae%b5%e6%b8%85%e5%8d%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人第一次读 &lt;code&gt;Req&lt;/code&gt; 时会自然把它当成“请求字段全集”。更稳的理解是：它是一条持续演化的状态线。下面这张图的价值就在这里，它不是在列字段，而是在压缩这条状态生命史的几个关键转折点。&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  In[&amp;#34;origin_input_ids&amp;#34;] --&amp;gt; Fill[&amp;#34;fill_ids&amp;#34;]
  Fill --&amp;gt; Prefix[&amp;#34;prefix_indices / cache_protected_len&amp;#34;]
  Prefix --&amp;gt; Extend[&amp;#34;extend_input_len&amp;#34;]
  Extend --&amp;gt; Out[&amp;#34;output_ids&amp;#34;]
  Out --&amp;gt; Finish[&amp;#34;to_finish / finished_reason&amp;#34;]
- Finish --&amp;gt; KV[&amp;#34;kv_committed_len / kv_allocated_len&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;Req&lt;/code&gt; 的关键不是它有哪些字段，而是这些字段会随着调度和执行不断改写。&lt;/p&gt;</description></item></channel></rss>
+ Finish --&amp;gt; KV[&amp;#34;kv_committed_len / kv_allocated_len&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：&lt;code&gt;Req&lt;/code&gt; 的关键不是“有多少字段”，而是这些字段会随着调度、cache、执行和收尾不断改写。只要这个视角稳住，前面很多章节看起来分散的内容就会突然重新连起来。&lt;/p&gt;
+&lt;h2 id="第一层输入从一开始就不是单一视图"&gt;第一层：输入从一开始就不是单一视图&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e5%b1%82%e8%be%93%e5%85%a5%e4%bb%8e%e4%b8%80%e5%bc%80%e5%a7%8b%e5%b0%b1%e4%b8%8d%e6%98%af%e5%8d%95%e4%b8%80%e8%a7%86%e5%9b%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;Req&lt;/code&gt; 构造时最先出现的是输入本体：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;origin_input_ids&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;origin_input_ids_unpadded&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这两个字段看起来只差一点，但它们已经在提醒读者：请求对象从一开始就不是简单 token list。更贴近运行时的理解是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;origin_input_ids&lt;/code&gt; 更接近当前系统真正持有的输入视图&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;origin_input_ids_unpadded&lt;/code&gt; 更像 padding 之前的原始序列边界&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这种区分在多模态、增量 detokenize，以及某些需要回到原始输入边界的逻辑里特别重要。也就是说，&lt;code&gt;Req&lt;/code&gt; 从构造之初就已经在为后面的多层视图做准备，而不是等到问题复杂时才临时补字段。&lt;/p&gt;</description></item></channel></rss>
