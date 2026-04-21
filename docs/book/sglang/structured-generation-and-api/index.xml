@@ -225,11 +225,10 @@
 &lt;/ul&gt;
 &lt;h2 id="最值得先读的地方其实不是-grammar而是-to_sampling_params"&gt;最值得先读的地方其实不是 grammar，而是 &lt;code&gt;to_sampling_params(...)&lt;/code&gt;&lt;a class="anchor" href="#%e6%9c%80%e5%80%bc%e5%be%97%e5%85%88%e8%af%bb%e7%9a%84%e5%9c%b0%e6%96%b9%e5%85%b6%e5%ae%9e%e4%b8%8d%e6%98%af-grammar%e8%80%8c%e6%98%af-to_sampling_params"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;如果你一开始就跳进 grammar backend，最容易错过的就是协议层已经做过的一次语义收敛。&lt;code&gt;protocol.py&lt;/code&gt; 里的 &lt;code&gt;to_sampling_params(...)&lt;/code&gt; 真正有价值的地方，不是字段多，而是它在这里已经开始做“约束归一化”：&lt;/p&gt;</description></item><item><title>6.14 Responses API、background request 与取消语义</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</guid><description>&lt;h1 id="responses-apibackground-request-与取消语义"&gt;Responses API、background request 与取消语义&lt;a class="anchor" href="#responses-apibackground-request-%e4%b8%8e%e5%8f%96%e6%b6%88%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、response_format 和 tool-call 约束怎样进入采样参数，但还缺一个非常值得单独讲的表面：&lt;code&gt;Responses API&lt;/code&gt;。它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
-&lt;p&gt;这一章的目标，就是把这条工作流讲透。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为 &lt;code&gt;Responses API&lt;/code&gt; 不是 chat/completions 的简单别名。它额外引入了几件会明显改变请求语义的东西：&lt;/p&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、&lt;code&gt;response_format&lt;/code&gt; 和 tool-call 约束怎样进入采样参数，但如果没有一章把 &lt;code&gt;Responses API&lt;/code&gt; 单独讲透，这一部分就仍然会缺一个很关键的表面：它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，不是“又多一个 API”，而是“响应何时不再是一次性结果，而变成一个可被追踪、检索和取消的运行中实体”。只要这一层讲稳了，第 6 节对外部接口表面的覆盖就不再只停在 chat/completions 两条主线。&lt;/p&gt;
+&lt;h2 id="先把-responses-api-放回系统主线"&gt;先把 &lt;code&gt;Responses API&lt;/code&gt; 放回系统主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-responses-api-%e6%94%be%e5%9b%9e%e7%b3%bb%e7%bb%9f%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会自然把 &lt;code&gt;Responses API&lt;/code&gt; 理解成“只是返回格式不同”。源码给出的现实要更强：一旦进入它的 background 模式，请求就不再只是一次性的 request-response，而会长出：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;background&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;previous_response_id&lt;/code&gt;&lt;/li&gt;
@@ -238,38 +237,29 @@
 &lt;li&gt;background task lifecycle&lt;/li&gt;
 &lt;li&gt;retrieve / cancel 语义&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这说明它更像一层“带生命周期管理的响应接口”，而不是单次请求-响应壳。&lt;/p&gt;
-&lt;h2 id="一张图responses-api-为什么比普通-chatcompletions-多了一条后台工作流"&gt;一张图：&lt;code&gt;Responses API&lt;/code&gt; 为什么比普通 chat/completions 多了一条后台工作流&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beresponses-api-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%af%94%e6%99%ae%e9%80%9a-chatcompletions-%e5%a4%9a%e4%ba%86%e4%b8%80%e6%9d%a1%e5%90%8e%e5%8f%b0%e5%b7%a5%e4%bd%9c%e6%b5%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把它理解成“只是返回格式不同”，但源码清楚地表明它会长出 response store 和后台任务生命周期。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，就是把这种“工作流化”明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;ResponsesRequest&amp;#34;] --&amp;gt; Make[&amp;#34;create_responses()&amp;#34;]
  Make --&amp;gt; Run[&amp;#34;foreground full response&amp;#34;]
  Make --&amp;gt; Bg[&amp;#34;background task + response_store&amp;#34;]
  Bg --&amp;gt; Get[&amp;#34;retrieve_responses()&amp;#34;]
- Bg --&amp;gt; Cancel[&amp;#34;cancel_responses()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：一旦进入 background 模式，请求就不再是一次性的 surface，而是变成了一个可被后续查询和取消的运行中实体。&lt;/p&gt;</description></item><item><title>6.15 MCP tool server、browser/python 工具与工作流接口</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</guid><description>&lt;h1 id="mcp-tool-serverbrowserpython-工具与工作流接口"&gt;MCP tool server、browser/python 工具与工作流接口&lt;a class="anchor" href="#mcp-tool-serverbrowserpython-%e5%b7%a5%e5%85%b7%e4%b8%8e%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%8e%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的结构化生成与 API 章节已经覆盖了 function calling、tool parser、Responses API 的 background 语义，但还有一层非常值得单独讲的接口能力：当系统真的要接入外部工具时，&lt;code&gt;tool_server&lt;/code&gt;、MCP 会话、以及内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具是怎样进入工作流的？&lt;/p&gt;
-&lt;p&gt;这一章的目标，就是把这条“工具工作流接口”讲清楚。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为它不是普通 function calling 的自然延长。当前实现里至少已经出现了两种非常不同的工具入口：&lt;/p&gt;
+ Bg --&amp;gt; Cancel[&amp;#34;cancel_responses()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的不是“比 chat 多几个框”，而是它把 &lt;code&gt;Responses API&lt;/code&gt; 的核心区别说透了：一旦走 background，请求就变成了一个之后还能被查询和取消的运行中实体。&lt;/p&gt;</description></item><item><title>6.15 MCP tool server、browser/python 工具与工作流接口</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</guid><description>&lt;h1 id="mcp-tool-serverbrowserpython-工具与工作流接口"&gt;MCP tool server、browser/python 工具与工作流接口&lt;a class="anchor" href="#mcp-tool-serverbrowserpython-%e5%b7%a5%e5%85%b7%e4%b8%8e%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%8e%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经覆盖了 function calling、tool parser 和 &lt;code&gt;Responses API&lt;/code&gt; 的 background 语义，但如果没有一章把“工具到底怎样进入工作流”单独讲透，第 6 节对外部接口的覆盖仍然会缺一条关键支线。很多读者会自然把工具系统理解成“模型输出一个函数调用 JSON，再去执行一下”。当前实现已经明显比这更厚：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;MCPToolServer&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;DemoToolServer&lt;/code&gt;（内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;有 &lt;code&gt;MCPToolServer&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;有内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具人格&lt;/li&gt;
+&lt;li&gt;有 tool session&lt;/li&gt;
+&lt;li&gt;有把工具描述注入请求上下文的流程&lt;/li&gt;
+&lt;li&gt;还有 background / streaming 场景下的模式限制&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;而 &lt;code&gt;serving_responses.py&lt;/code&gt; 又会据此决定：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;要不要创建 tool session&lt;/li&gt;
-&lt;li&gt;要不要把工具描述注入系统消息&lt;/li&gt;
-&lt;li&gt;background / streaming 模式下是否直接拒绝某些 MCP 工具&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明这里已经不是“模型输出一个工具调用 JSON”那么简单，而是一层真正的工作流接口。&lt;/p&gt;
-&lt;h2 id="一张图工具并不是在模型之外平行运行而是被-responses-工作流显式调度"&gt;一张图：工具并不是在模型之外平行运行，而是被 Responses 工作流显式调度&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%b7%a5%e5%85%b7%e5%b9%b6%e4%b8%8d%e6%98%af%e5%9c%a8%e6%a8%a1%e5%9e%8b%e4%b9%8b%e5%a4%96%e5%b9%b3%e8%a1%8c%e8%bf%90%e8%a1%8c%e8%80%8c%e6%98%af%e8%a2%ab-responses-%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%98%be%e5%bc%8f%e8%b0%83%e5%ba%a6"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多人把工具系统想成外部插件，但当前实现更像“Responses API 主流程显式管理的上下文资源”。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这条“工具工作流接口”本身，而不是再重复一遍 parser 或 tool-call schema。&lt;/p&gt;
+&lt;h2 id="先把工具放回-responses-工作流而不是函数调用-json"&gt;先把工具放回 Responses 工作流，而不是函数调用 JSON&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e5%b7%a5%e5%85%b7%e6%94%be%e5%9b%9e-responses-%e5%b7%a5%e4%bd%9c%e6%b5%81%e8%80%8c%e4%b8%8d%e6%98%af%e5%87%bd%e6%95%b0%e8%b0%83%e7%94%a8-json"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只站在 function calling 角度看，工具似乎只是模型输出的一种结构化结果；从 &lt;code&gt;Responses API&lt;/code&gt; 的实现看，工具实际上在更早就进入了工作流。下面这张图的价值就在于把这一点明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;ResponsesRequest + tools&amp;#34;] --&amp;gt; Server[&amp;#34;tool_server / MCPToolServer / DemoToolServer&amp;#34;]
  Server --&amp;gt; Session[&amp;#34;tool session(s)&amp;#34;]
  Session --&amp;gt; Ctx[&amp;#34;HarmonyContext / StreamingHarmonyContext&amp;#34;]
- Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：工具不是后处理附属物，而是会在请求开始前就进入上下文。&lt;/p&gt;</description></item><item><title>6.16 tool_choice、parallel_tool_calls 与约束降级</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</guid><description>&lt;h1 id="tool_choiceparallel_tool_calls-与约束降级"&gt;tool_choice、parallel_tool_calls 与约束降级&lt;a class="anchor" href="#tool_choiceparallel_tool_calls-%e4%b8%8e%e7%ba%a6%e6%9d%9f%e9%99%8d%e7%ba%a7"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：工具不是在模型之外平行运行的插件，而是会在请求开始前就被准备成上下文资源。只要这一点稳住，读者就不再会把“工具工作流”误读成 parser 的附属品。&lt;/p&gt;</description></item><item><title>6.16 tool_choice、parallel_tool_calls 与约束降级</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-choice-and-parallel-tool-calls/</guid><description>&lt;h1 id="tool_choiceparallel_tool_calls-与约束降级"&gt;tool_choice、parallel_tool_calls 与约束降级&lt;a class="anchor" href="#tool_choiceparallel_tool_calls-%e4%b8%8e%e7%ba%a6%e6%9d%9f%e9%99%8d%e7%ba%a7"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的结构化生成章节已经解释了 &lt;code&gt;response_format&lt;/code&gt;、grammar backend、tool parser、&lt;code&gt;SamplingParams&lt;/code&gt; 和 Responses 工作流，但还有一层非常工程化的细节值得单独成章：当调用方提供 &lt;code&gt;tools&lt;/code&gt; 以后，&lt;code&gt;tool_choice&lt;/code&gt; 和 &lt;code&gt;parallel_tool_calls&lt;/code&gt; 到底怎样改变请求的约束形状？如果同时又给了 &lt;code&gt;response_format&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt; 或 &lt;code&gt;ebnf&lt;/code&gt;，系统会怎样处理？&lt;/p&gt;
 &lt;p&gt;这不是协议边角料，而是结构化输出在真实工程里最容易踩坑的一层。&lt;/p&gt;

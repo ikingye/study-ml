@@ -1221,31 +1221,30 @@
  C --&amp;gt; D[&amp;#34;PrefillAdder / admission&amp;#34;]
  D --&amp;gt; E[&amp;#34;ScheduleBatch shape&amp;#34;]
  E --&amp;gt; F[&amp;#34;下一轮运行批次&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图的职责不是重复 scheduler 主流程，而是让读者看到：batch 形成之前，还有一层“策略过滤”。也就是说，batch 不是自然长出来的，它是被 runtime 政策塑形后的结果。&lt;/p&gt;</description></item><item><title>3.15 模型定义、执行壳与 backend 实现边界</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/model-definitions-and-execution-shells/</guid><description>&lt;h1 id="模型定义执行壳与-backend-实现边界"&gt;模型定义、执行壳与 backend 实现边界&lt;a class="anchor" href="#%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e6%89%a7%e8%a1%8c%e5%a3%b3%e4%b8%8e-backend-%e5%ae%9e%e7%8e%b0%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ModelConfig&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt; 和并行 rank 身份，但还缺一层非常关键的边界：上游 &lt;code&gt;models/&lt;/code&gt; 目录里的模型定义、&lt;code&gt;layers/&lt;/code&gt; 目录里的后端实现，以及 &lt;code&gt;TpModelWorker / ModelRunner&lt;/code&gt; 这层执行壳到底是怎样互相咬合的。&lt;/p&gt;
-&lt;p&gt;如果不把这层讲出来，读者会知道“模型很多、backend 很多、runner 也很多”，却不清楚这些东西在架构上谁包谁、谁依赖谁。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;从 &lt;code&gt;tp_worker.py&lt;/code&gt; 的初始化链可以看得很清楚：&lt;/p&gt;
-&lt;ol&gt;
-&lt;li&gt;先 &lt;code&gt;_init_model_config()&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;再 &lt;code&gt;_init_model_runner()&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;必要时再补 multi-layer eagle runners&lt;/li&gt;
-&lt;li&gt;再根据是否 multimodal 去拿 tokenizer / processor&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;这说明模型定义与执行壳的关系并不是扁平的：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;models/&lt;/code&gt; 提供模型级定义&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;layers/&lt;/code&gt; 提供更底层的 attention、sampler、quantization、moe 等执行砖块&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 把这些砖块组装成真正可执行的 runtime 壳&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 再把它挂进分布式 worker 边界&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="一张图从模型定义到真正执行的层次关系"&gt;一张图：从模型定义到真正执行的层次关系&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%bb%8e%e6%a8%a1%e5%9e%8b%e5%ae%9a%e4%b9%89%e5%88%b0%e7%9c%9f%e6%ad%a3%e6%89%a7%e8%a1%8c%e7%9a%84%e5%b1%82%e6%ac%a1%e5%85%b3%e7%b3%bb"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 想成两个平行目录，而忽略了它们要经过 &lt;code&gt;ModelRunner&lt;/code&gt; 这层执行壳才真正落地。&lt;/p&gt;
+&lt;p&gt;运行时架构前面已经讲了 &lt;code&gt;ModelConfig&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt; 和并行 rank 身份，但如果不把 &lt;code&gt;models/&lt;/code&gt;、&lt;code&gt;layers/&lt;/code&gt;、&lt;code&gt;ModelRunner&lt;/code&gt; 和 &lt;code&gt;TpModelWorker&lt;/code&gt; 之间的边界重新压成一章，读者还是很容易停留在一种模糊认识上：模型很多、backend 很多、runner 也很多，却说不清这些东西在架构上到底谁包谁、谁依赖谁、谁才是 scheduler 真正驱动的执行单元。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这条“从模型定义到执行壳”的层次关系。只要这一层稳住，前面那些关于 &lt;code&gt;ModelRunner&lt;/code&gt;、&lt;code&gt;TpModelWorker&lt;/code&gt;、&lt;code&gt;layers/&lt;/code&gt; 的章节就会自然接起来，而不会像几个互相回扣的分散点。&lt;/p&gt;
+&lt;h2 id="先把这几层放回同一张层次图里"&gt;先把这几层放回同一张层次图里&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e5%87%a0%e5%b1%82%e6%94%be%e5%9b%9e%e5%90%8c%e4%b8%80%e5%bc%a0%e5%b1%82%e6%ac%a1%e5%9b%be%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多人直觉上会把 &lt;code&gt;models/&lt;/code&gt; 和 &lt;code&gt;layers/&lt;/code&gt; 看成两个平行目录。更稳的理解方式是：它们都要经过执行壳这一层，才真正落到 runtime 里。下面这张图的作用，就是把这个层次关系明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Models[&amp;#34;models/&amp;#34;] --&amp;gt; Runner[&amp;#34;ModelRunner&amp;#34;]
  Layers[&amp;#34;layers/&amp;#34;] --&amp;gt; Runner
  Runner --&amp;gt; Worker[&amp;#34;TpModelWorker / draft worker&amp;#34;]
- Worker --&amp;gt; Scheduler[&amp;#34;Scheduler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：真正被 scheduler 操作的，不是裸模型定义，而是已经被执行壳包起来的 worker。&lt;/p&gt;</description></item><item><title>4.5 Runtime checker、SessionAwareCache 与内存不变量</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</guid><description>&lt;h1 id="runtime-checkersessionawarecache-与内存不变量"&gt;Runtime checker、SessionAwareCache 与内存不变量&lt;a class="anchor" href="#runtime-checkersessionawarecache-%e4%b8%8e%e5%86%85%e5%ad%98%e4%b8%8d%e5%8f%98%e9%87%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Worker --&amp;gt; Scheduler[&amp;#34;Scheduler&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：scheduler 真正驱动的并不是裸模型定义，而是已经被执行壳和 worker 壳包起来的执行单元。&lt;/p&gt;
+&lt;h2 id="modelconfigfrom_server_args-先决定的是模型人格而不是模型文件"&gt;&lt;code&gt;ModelConfig.from_server_args(...)&lt;/code&gt; 先决定的是模型人格，而不是模型文件&lt;a class="anchor" href="#modelconfigfrom_server_args-%e5%85%88%e5%86%b3%e5%ae%9a%e7%9a%84%e6%98%af%e6%a8%a1%e5%9e%8b%e4%ba%ba%e6%a0%bc%e8%80%8c%e4%b8%8d%e6%98%af%e6%a8%a1%e5%9e%8b%e6%96%87%e4%bb%b6"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;从 &lt;code&gt;TpModelWorker._init_model_config()&lt;/code&gt; 这条链看，系统并不是直接从 &lt;code&gt;models/&lt;/code&gt; 里挑一个文件就算完，而是先经过：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;ModelConfig.from_server_args(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这层人格归一化会结合：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;model_path&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;draft / non-draft 模型&lt;/li&gt;
+&lt;li&gt;revision&lt;/li&gt;
+&lt;li&gt;server args 里的多种能力开关&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;去决定后续模型到底以什么人格进入执行壳。也就是说，模型定义在这里先被抽成一组统一能力与边界，而不是直接以目录树形态进入运行时。对系统书来说，这一点特别重要，因为它能帮助读者先理解“模型人格怎样被收敛”，再去看后面为什么有 processor、多模态、draft path 等更具体分支。&lt;/p&gt;
+&lt;h2 id="tpmodelworker-更像外层执行壳而不是带-rank-的包装器"&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 更像外层执行壳，而不是“带 rank 的包装器”&lt;a class="anchor" href="#tpmodelworker-%e6%9b%b4%e5%83%8f%e5%a4%96%e5%b1%82%e6%89%a7%e8%a1%8c%e5%a3%b3%e8%80%8c%e4%b8%8d%e6%98%af%e5%b8%a6-rank-%e7%9a%84%e5%8c%85%e8%a3%85%e5%99%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;TpModelWorker&lt;/code&gt; 之所以值得单独点出来，是因为它不只是在传 rank 身份。更准确地说，它承担的是：&lt;/p&gt;</description></item><item><title>4.5 Runtime checker、SessionAwareCache 与内存不变量</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/runtime-checkers-and-session-aware-cache/</guid><description>&lt;h1 id="runtime-checkersessionawarecache-与内存不变量"&gt;Runtime checker、SessionAwareCache 与内存不变量&lt;a class="anchor" href="#runtime-checkersessionawarecache-%e4%b8%8e%e5%86%85%e5%ad%98%e4%b8%8d%e5%8f%98%e9%87%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面四章已经把 scheduler、cache reuse、allocator 和 batch 策略讲得比较深了，但还缺一层特别像“维护者手册”的内容：系统如何确认这些复杂状态没有悄悄漂移？如果 streaming session 介入之后，prefix cache 又怎样在不改写整个调度流水线的前提下接住会话态 KV？&lt;/p&gt;
 &lt;p&gt;这一章的任务就是把两个看似分散、实际高度相关的机制放到一起：&lt;/p&gt;
@@ -1311,33 +1310,23 @@
  Retract --&amp;gt; Release[&amp;#34;release_req() + release_kv_cache()&amp;#34;]
  Release --&amp;gt; Queue[&amp;#34;re-add request to waiting/retracted queue&amp;#34;]
  Retract --&amp;gt; Abort[&amp;#34;abort last request if still cannot fit&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：retract 不是失败后的补丁，而是 decode 调度本身内建的分支。&lt;/p&gt;</description></item><item><title>3.17 warmup、权重就绪与 readiness 门</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/warmup-and-readiness-gates/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/warmup-and-readiness-gates/</guid><description>&lt;h1 id="warmup权重就绪与-readiness-门"&gt;warmup、权重就绪与 readiness 门&lt;a class="anchor" href="#warmup%e6%9d%83%e9%87%8d%e5%b0%b1%e7%bb%aa%e4%b8%8e-readiness-%e9%97%a8"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的运行时架构章节已经解释了启动入口、进程装配、并行身份和分布式 group 初始化，但还有一层很关键的启动后语义没有单独展开：子进程都已经拉起来之后，系统什么时候才算“真的可以接流量”？这个问题在 SGLang 里并不是一句“HTTP 端口监听成功”就能回答。&lt;/p&gt;
-&lt;p&gt;真正的 readiness 还要穿过几道门：&lt;/p&gt;
+&lt;p&gt;前面的运行时架构章节已经解释了启动入口、进程装配、并行身份和分布式 group 初始化，但如果没有一章把“什么时候才算真正 ready”讲清楚，读者很容易把三件完全不同的事混成一句“服务起来了”：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;权重是否已经准备好&lt;/li&gt;
-&lt;li&gt;warmup 请求是否成功走通&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;TokenizerManager.server_status&lt;/code&gt; 是否从 &lt;code&gt;Starting&lt;/code&gt; 切到 &lt;code&gt;Up&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;某些多节点场景下，当前节点是否只是等待 completion 的非零 rank&lt;/li&gt;
+&lt;li&gt;进程已经拉起来&lt;/li&gt;
+&lt;li&gt;端口已经可达&lt;/li&gt;
+&lt;li&gt;服务真的可以接流量&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这章的目标，就是把这条启动后门禁链讲透。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;很多系统书会把启动写成“进程拉起来就算结束”，但真实生产系统不是这样。对 SGLang 而言，&lt;code&gt;Engine._launch_subprocesses(...)&lt;/code&gt; 解决的是“组件被装起来了”，而 &lt;code&gt;_wait_and_warmup(...)&lt;/code&gt;、&lt;code&gt;_execute_server_warmup(...)&lt;/code&gt; 和 &lt;code&gt;initial_weights_loaded&lt;/code&gt; 这些路径解决的是“组件已经被证明确实能跑了”。&lt;/p&gt;
-&lt;p&gt;如果不把这一层讲清楚，读者会混淆三件事：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;进程存在&lt;/li&gt;
-&lt;li&gt;端口可达&lt;/li&gt;
-&lt;li&gt;服务真正 ready&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这三者在实现上并不等价。&lt;/p&gt;
-&lt;h2 id="一张图readiness-不是单点而是一条门禁链"&gt;一张图：readiness 不是单点，而是一条门禁链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%bereadiness-%e4%b8%8d%e6%98%af%e5%8d%95%e7%82%b9%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e9%97%a8%e7%a6%81%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 ready 理解成 HTTP server 已启动，但源码实际上把 ready 拆成了权重、warmup 和状态位三段。&lt;/p&gt;
+&lt;p&gt;对 SGLang 来说，这三者在实现上并不等价。&lt;code&gt;Engine._launch_subprocesses(...)&lt;/code&gt; 解决的是“系统被装起来了”，而 &lt;code&gt;_wait_and_warmup(...)&lt;/code&gt;、&lt;code&gt;_execute_server_warmup(...)&lt;/code&gt; 和 &lt;code&gt;initial_weights_loaded&lt;/code&gt; 这些路径解决的是“系统已经被证明真的能跑”。这条启动后门禁链，正是这章要补齐的核心。&lt;/p&gt;
+&lt;h2 id="先把-readiness-画成一条门禁链"&gt;先把 readiness 画成一条门禁链&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-readiness-%e7%94%bb%e6%88%90%e4%b8%80%e6%9d%a1%e9%97%a8%e7%a6%81%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多系统文档在这里都会偷懒，把 ready 简化成“HTTP 端口监听成功”。SGLang 的源码明显更严格。下面这张图的职责，就是把这种严格性明确压成一条链：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart TD
  Boot[&amp;#34;Engine._launch_subprocesses()&amp;#34;] --&amp;gt; WaitW[&amp;#34;wait_weights_ready ?&amp;#34;]
  WaitW --&amp;gt; Warm[&amp;#34;execute_server_warmup()&amp;#34;]
  Warm --&amp;gt; Status[&amp;#34;TokenizerManager.server_status = Up&amp;#34;]
  Status --&amp;gt; Ready[&amp;#34;ready to serve traffic&amp;#34;]
- Warm --&amp;gt; Unhealthy[&amp;#34;warmup failed -&amp;gt; UnHealthy / kill process tree&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：readiness 是一条时序化的门禁链，而不是一个布尔标志。&lt;/p&gt;</description></item><item><title>4.7 Priority、routing key 与 waiting queue 重排</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</guid><description>&lt;h1 id="priorityrouting-key-与-waiting-queue-重排"&gt;Priority、routing key 与 waiting queue 重排&lt;a class="anchor" href="#priorityrouting-key-%e4%b8%8e-waiting-queue-%e9%87%8d%e6%8e%92"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Warm --&amp;gt; Unhealthy[&amp;#34;warmup failed -&amp;gt; UnHealthy / kill process tree&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：readiness 不是一个布尔开关，而是一条时序化门禁链。只要这个区别站稳，后面再读启动日志、health check 和 watchdog，读者就不容易把“能连上”和“真 ready”混成一回事。&lt;/p&gt;
+&lt;h2 id="server_status-是这条链真正对外暴露的状态"&gt;&lt;code&gt;server_status&lt;/code&gt; 是这条链真正对外暴露的状态&lt;a class="anchor" href="#server_status-%e6%98%af%e8%bf%99%e6%9d%a1%e9%93%be%e7%9c%9f%e6%ad%a3%e5%af%b9%e5%a4%96%e6%9a%b4%e9%9c%b2%e7%9a%84%e7%8a%b6%e6%80%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;TokenizerManager&lt;/code&gt; 初始化时会把 &lt;code&gt;server_status&lt;/code&gt; 设成 &lt;code&gt;ServerStatus.Starting&lt;/code&gt;。只有 warmup 路径成功之后，&lt;code&gt;http_server.py&lt;/code&gt; 才会显式把它切到 &lt;code&gt;ServerStatus.Up&lt;/code&gt;；如果 warmup 或 health check 失败，又会切成 &lt;code&gt;ServerStatus.UnHealthy&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>4.7 Priority、routing key 与 waiting queue 重排</title><link>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/scheduling-and-memory/priority-routing-and-waiting-queue-order/</guid><description>&lt;h1 id="priorityrouting-key-与-waiting-queue-重排"&gt;Priority、routing key 与 waiting queue 重排&lt;a class="anchor" href="#priorityrouting-key-%e4%b8%8e-waiting-queue-%e9%87%8d%e6%8e%92"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的调度与内存章节已经解释了 batch 怎么形成、内存不够时怎样 retract、allocator 和 cache 怎样共同工作，但还缺一层更贴近“请求在真正进入 batch 之前怎样被排队重排”的逻辑：priority scheduling、routing key 亲和、FCFS、最长输出优先、随机化，以及 cache-aware policy 之间到底怎样组合。&lt;/p&gt;
 &lt;p&gt;如果不把这层讲出来，读者会知道 scheduler 最终拿到了一个 batch，却说不清 waiting queue 在这之前经历了哪些策略性重排。&lt;/p&gt;
@@ -2299,11 +2288,10 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;查回归与维护：
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;test/README.md -&amp;gt; run_suite.py -&amp;gt; registered/manual tests -&amp;gt; contribution_guide.md&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章本质上是把前一章列出的入口重新按任务重组，所以锚点仍然主要落在 &lt;code&gt;README.md&lt;/code&gt;、&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;docs/basic_usage/*&lt;/code&gt;、&lt;code&gt;docs/advanced_features/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt; 与 &lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>6.14 Responses API、background request 与取消语义</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/responses-api-and-background-workflow/</guid><description>&lt;h1 id="responses-apibackground-request-与取消语义"&gt;Responses API、background request 与取消语义&lt;a class="anchor" href="#responses-apibackground-request-%e4%b8%8e%e5%8f%96%e6%b6%88%e8%af%ad%e4%b9%89"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、response_format 和 tool-call 约束怎样进入采样参数，但还缺一个非常值得单独讲的表面：&lt;code&gt;Responses API&lt;/code&gt;。它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
-&lt;p&gt;这一章的目标，就是把这条工作流讲透。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为 &lt;code&gt;Responses API&lt;/code&gt; 不是 chat/completions 的简单别名。它额外引入了几件会明显改变请求语义的东西：&lt;/p&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经讲了 OpenAI-compatible chat/completions、tool parser、&lt;code&gt;response_format&lt;/code&gt; 和 tool-call 约束怎样进入采样参数，但如果没有一章把 &lt;code&gt;Responses API&lt;/code&gt; 单独讲透，这一部分就仍然会缺一个很关键的表面：它不仅是又一个兼容接口，更重要的是它把 background request、response retrieval、response cancellation 和 built-in tool context 串成了一条更长的工作流。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，不是“又多一个 API”，而是“响应何时不再是一次性结果，而变成一个可被追踪、检索和取消的运行中实体”。只要这一层讲稳了，第 6 节对外部接口表面的覆盖就不再只停在 chat/completions 两条主线。&lt;/p&gt;
+&lt;h2 id="先把-responses-api-放回系统主线"&gt;先把 &lt;code&gt;Responses API&lt;/code&gt; 放回系统主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-responses-api-%e6%94%be%e5%9b%9e%e7%b3%bb%e7%bb%9f%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会自然把 &lt;code&gt;Responses API&lt;/code&gt; 理解成“只是返回格式不同”。源码给出的现实要更强：一旦进入它的 background 模式，请求就不再只是一次性的 request-response，而会长出：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;background&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;previous_response_id&lt;/code&gt;&lt;/li&gt;
@@ -2312,15 +2300,13 @@
 &lt;li&gt;background task lifecycle&lt;/li&gt;
 &lt;li&gt;retrieve / cancel 语义&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这说明它更像一层“带生命周期管理的响应接口”，而不是单次请求-响应壳。&lt;/p&gt;
-&lt;h2 id="一张图responses-api-为什么比普通-chatcompletions-多了一条后台工作流"&gt;一张图：&lt;code&gt;Responses API&lt;/code&gt; 为什么比普通 chat/completions 多了一条后台工作流&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%beresponses-api-%e4%b8%ba%e4%bb%80%e4%b9%88%e6%af%94%e6%99%ae%e9%80%9a-chatcompletions-%e5%a4%9a%e4%ba%86%e4%b8%80%e6%9d%a1%e5%90%8e%e5%8f%b0%e5%b7%a5%e4%bd%9c%e6%b5%81"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把它理解成“只是返回格式不同”，但源码清楚地表明它会长出 response store 和后台任务生命周期。&lt;/p&gt;
+&lt;p&gt;下面这张图的职责，就是把这种“工作流化”明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;ResponsesRequest&amp;#34;] --&amp;gt; Make[&amp;#34;create_responses()&amp;#34;]
  Make --&amp;gt; Run[&amp;#34;foreground full response&amp;#34;]
  Make --&amp;gt; Bg[&amp;#34;background task + response_store&amp;#34;]
  Bg --&amp;gt; Get[&amp;#34;retrieve_responses()&amp;#34;]
- Bg --&amp;gt; Cancel[&amp;#34;cancel_responses()&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：一旦进入 background 模式，请求就不再是一次性的 surface，而是变成了一个可被后续查询和取消的运行中实体。&lt;/p&gt;</description></item><item><title>7.4 遇到 bug 时，先从仓库哪几处下手</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</guid><description>&lt;h1 id="遇到-bug-时先从仓库哪几处下手"&gt;遇到 bug 时，先从仓库哪几处下手&lt;a class="anchor" href="#%e9%81%87%e5%88%b0-bug-%e6%97%b6%e5%85%88%e4%bb%8e%e4%bb%93%e5%ba%93%e5%93%aa%e5%87%a0%e5%a4%84%e4%b8%8b%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Bg --&amp;gt; Cancel[&amp;#34;cancel_responses()&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的不是“比 chat 多几个框”，而是它把 &lt;code&gt;Responses API&lt;/code&gt; 的核心区别说透了：一旦走 background，请求就变成了一个之后还能被查询和取消的运行中实体。&lt;/p&gt;</description></item><item><title>7.4 遇到 bug 时，先从仓库哪几处下手</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/where-to-look-for-a-bug/</guid><description>&lt;h1 id="遇到-bug-时先从仓库哪几处下手"&gt;遇到 bug 时，先从仓库哪几处下手&lt;a class="anchor" href="#%e9%81%87%e5%88%b0-bug-%e6%97%b6%e5%85%88%e4%bb%8e%e4%bb%93%e5%ba%93%e5%93%aa%e5%87%a0%e5%a4%84%e4%b8%8b%e6%89%8b"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;知道仓库结构，和真正会用仓库排障，是两件不同的事。很多读者在读完代码导读之后，仍然会在真实问题面前卡住：目录都知道了，但第一步到底该打开哪个文件，第二步该看哪个测试，第三步又该去对照哪份文档？&lt;/p&gt;
 &lt;p&gt;这一章就是把“仓库地图”进一步压成“故障入口地图”。它不是再讲一遍目录，而是回答：遇到不同类型的 bug，先去哪几处最可能拿到高价值线索。&lt;/p&gt;
@@ -2349,29 +2335,22 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;现象：改动后不确定影响范围
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;先看：test/README.md / run_suite.py / registered / unit / benchmark 文档&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id="本章对应哪些代码路径"&gt;本章对应哪些代码路径&lt;a class="anchor" href="#%e6%9c%ac%e7%ab%a0%e5%af%b9%e5%ba%94%e5%93%aa%e4%ba%9b%e4%bb%a3%e7%a0%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一章本质上回指整本书前面已经建立好的锚点：&lt;code&gt;python/sglang/launch_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/entrypoints/http_server.py&lt;/code&gt;、&lt;code&gt;python/sglang/srt/managers/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/model_executor/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/mem_cache/*&lt;/code&gt;、&lt;code&gt;python/sglang/srt/function_call/*&lt;/code&gt;、&lt;code&gt;test/README.md&lt;/code&gt;、&lt;code&gt;test/run_suite.py&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>6.15 MCP tool server、browser/python 工具与工作流接口</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/tool-server-and-mcp-workflows/</guid><description>&lt;h1 id="mcp-tool-serverbrowserpython-工具与工作流接口"&gt;MCP tool server、browser/python 工具与工作流接口&lt;a class="anchor" href="#mcp-tool-serverbrowserpython-%e5%b7%a5%e5%85%b7%e4%b8%8e%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%8e%a5%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的结构化生成与 API 章节已经覆盖了 function calling、tool parser、Responses API 的 background 语义，但还有一层非常值得单独讲的接口能力：当系统真的要接入外部工具时，&lt;code&gt;tool_server&lt;/code&gt;、MCP 会话、以及内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具是怎样进入工作流的？&lt;/p&gt;
-&lt;p&gt;这一章的目标，就是把这条“工具工作流接口”讲清楚。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为它不是普通 function calling 的自然延长。当前实现里至少已经出现了两种非常不同的工具入口：&lt;/p&gt;
+&lt;p&gt;前面的结构化生成与 API 章节已经覆盖了 function calling、tool parser 和 &lt;code&gt;Responses API&lt;/code&gt; 的 background 语义，但如果没有一章把“工具到底怎样进入工作流”单独讲透，第 6 节对外部接口的覆盖仍然会缺一条关键支线。很多读者会自然把工具系统理解成“模型输出一个函数调用 JSON，再去执行一下”。当前实现已经明显比这更厚：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;MCPToolServer&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;DemoToolServer&lt;/code&gt;（内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt;）&lt;/li&gt;
+&lt;li&gt;有 &lt;code&gt;MCPToolServer&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;有内建 &lt;code&gt;browser&lt;/code&gt; / &lt;code&gt;python&lt;/code&gt; 工具人格&lt;/li&gt;
+&lt;li&gt;有 tool session&lt;/li&gt;
+&lt;li&gt;有把工具描述注入请求上下文的流程&lt;/li&gt;
+&lt;li&gt;还有 background / streaming 场景下的模式限制&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;而 &lt;code&gt;serving_responses.py&lt;/code&gt; 又会据此决定：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;要不要创建 tool session&lt;/li&gt;
-&lt;li&gt;要不要把工具描述注入系统消息&lt;/li&gt;
-&lt;li&gt;background / streaming 模式下是否直接拒绝某些 MCP 工具&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明这里已经不是“模型输出一个工具调用 JSON”那么简单，而是一层真正的工作流接口。&lt;/p&gt;
-&lt;h2 id="一张图工具并不是在模型之外平行运行而是被-responses-工作流显式调度"&gt;一张图：工具并不是在模型之外平行运行，而是被 Responses 工作流显式调度&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%b7%a5%e5%85%b7%e5%b9%b6%e4%b8%8d%e6%98%af%e5%9c%a8%e6%a8%a1%e5%9e%8b%e4%b9%8b%e5%a4%96%e5%b9%b3%e8%a1%8c%e8%bf%90%e8%a1%8c%e8%80%8c%e6%98%af%e8%a2%ab-responses-%e5%b7%a5%e4%bd%9c%e6%b5%81%e6%98%be%e5%bc%8f%e8%b0%83%e5%ba%a6"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多人把工具系统想成外部插件，但当前实现更像“Responses API 主流程显式管理的上下文资源”。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这条“工具工作流接口”本身，而不是再重复一遍 parser 或 tool-call schema。&lt;/p&gt;
+&lt;h2 id="先把工具放回-responses-工作流而不是函数调用-json"&gt;先把工具放回 Responses 工作流，而不是函数调用 JSON&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e5%b7%a5%e5%85%b7%e6%94%be%e5%9b%9e-responses-%e5%b7%a5%e4%bd%9c%e6%b5%81%e8%80%8c%e4%b8%8d%e6%98%af%e5%87%bd%e6%95%b0%e8%b0%83%e7%94%a8-json"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只站在 function calling 角度看，工具似乎只是模型输出的一种结构化结果；从 &lt;code&gt;Responses API&lt;/code&gt; 的实现看，工具实际上在更早就进入了工作流。下面这张图的价值就在于把这一点明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;ResponsesRequest + tools&amp;#34;] --&amp;gt; Server[&amp;#34;tool_server / MCPToolServer / DemoToolServer&amp;#34;]
  Server --&amp;gt; Session[&amp;#34;tool session(s)&amp;#34;]
  Session --&amp;gt; Ctx[&amp;#34;HarmonyContext / StreamingHarmonyContext&amp;#34;]
- Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：工具不是后处理附属物，而是会在请求开始前就进入上下文。&lt;/p&gt;</description></item><item><title>7.5 通过 tests 反向理解系统行为</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</guid><description>&lt;h1 id="通过-tests-反向理解系统行为"&gt;通过 tests 反向理解系统行为&lt;a class="anchor" href="#%e9%80%9a%e8%bf%87-tests-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Ctx --&amp;gt; Resp[&amp;#34;Responses API generation workflow&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：工具不是在模型之外平行运行的插件，而是会在请求开始前就被准备成上下文资源。只要这一点稳住，读者就不再会把“工具工作流”误读成 parser 的附属品。&lt;/p&gt;</description></item><item><title>7.5 通过 tests 反向理解系统行为</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-tests-to-understand-behavior/</guid><description>&lt;h1 id="通过-tests-反向理解系统行为"&gt;通过 tests 反向理解系统行为&lt;a class="anchor" href="#%e9%80%9a%e8%bf%87-tests-%e5%8f%8d%e5%90%91%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f%e8%a1%8c%e4%b8%ba"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;很多读者读代码时只看实现文件，直到某个行为看不懂时才想起去找测试。这种顺序当然可行，但它经常让人忽略一个重要事实：测试文件不只是验证实现，它们本身也在告诉你维护者认为哪些行为是“必须稳定存在的语义”。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把 tests 从“最后才顺手看”的材料，提升成代码导读中的正式入口。&lt;/p&gt;
