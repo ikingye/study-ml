@@ -1045,27 +1045,16 @@
  SCH --&amp;gt; DET[&amp;#34;DetokenizerManager&amp;#34;]
  DET --&amp;gt; TM
  SCH --&amp;gt; RPC[&amp;#34;RPC / DP / other workers&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：manager 之间的通信不是单一通道，而是一组“typed message + dispatcher + communicator”共同组成的织网。&lt;/p&gt;</description></item><item><title>3.9 DataParallelController、rank 路由与负载分发</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/data-parallel-controller-and-rank-routing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/data-parallel-controller-and-rank-routing/</guid><description>&lt;h1 id="dataparallelcontrollerrank-路由与负载分发"&gt;DataParallelController、rank 路由与负载分发&lt;a class="anchor" href="#dataparallelcontrollerrank-%e8%b7%af%e7%94%b1%e4%b8%8e%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;运行时架构前面已经讲了 manager 边界、typed IPC、模板解释层和热变更控制面，但还有一层对真实部署非常关键的路径没有单独展开：当 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 时，请求不是直接进单个 scheduler，而是先经过 &lt;code&gt;DataParallelController&lt;/code&gt;。这意味着运行时不仅要回答“请求怎样进系统”，还要回答“它最终被送到哪一个 data parallel worker，以及为什么是它”。&lt;/p&gt;
-&lt;p&gt;这一章专门解释这一层 rank 路由与负载分发控制面。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;DataParallelController&lt;/code&gt; 并不是一个简单 round-robin 小工具。它至少同时负责：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;接收来自 tokenizer 侧的请求&lt;/li&gt;
-&lt;li&gt;根据 &lt;code&gt;LoadBalanceMethod&lt;/code&gt; 选择目标 worker&lt;/li&gt;
-&lt;li&gt;处理显式 &lt;code&gt;routed_dp_rank&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;在 &lt;code&gt;enable_dp_attention&lt;/code&gt; 场景下组织更复杂的 worker 拓扑&lt;/li&gt;
-&lt;li&gt;更新负载预算与 active ranks&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明它已经是运行时架构里的正式节点，而不是部署脚本外的一层代理。&lt;/p&gt;
-&lt;h2 id="一张图多-dp-场景下请求怎样被分发"&gt;一张图：多 DP 场景下，请求怎样被分发&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a-dp-%e5%9c%ba%e6%99%af%e4%b8%8b%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e8%a2%ab%e5%88%86%e5%8f%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者把“发送给 scheduler”默认理解成“发送给某个固定 scheduler”，但 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 时，中间其实多了一层控制面。&lt;/p&gt;
+&lt;p&gt;运行时架构前面已经讲了 manager 边界、typed IPC、模板解释层和热变更控制面，但如果 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt;，请求进入系统之后其实还多了一层非常关键的控制面：它不会直接落到某个固定 scheduler，而是先经过 &lt;code&gt;DataParallelController&lt;/code&gt; 做一次 rank 级分发决策。也就是说，运行时除了要回答“请求怎样进系统”，还必须回答“它最终被送到哪一个 data parallel worker，以及为什么是它”。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这层 rank 路由与负载分发控制面。它的价值不在于“再多一个组件名”，而在于让多 DP 场景不再被简化成“复制多份 scheduler”，而能被理解成 runtime 自己正式拥有的一层 placement control plane。&lt;/p&gt;
+&lt;h2 id="先把-dataparallelcontroller-放回请求主线"&gt;先把 &lt;code&gt;DataParallelController&lt;/code&gt; 放回请求主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-dataparallelcontroller-%e6%94%be%e5%9b%9e%e8%af%b7%e6%b1%82%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者默认“发送给 scheduler”就意味着“发送给某个固定 scheduler”。在 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 场景下，真实路径要更长。下面这张图的职责，就是把这层中间控制面明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  TM[&amp;#34;TokenizerManager&amp;#34;] --&amp;gt; DPC[&amp;#34;DataParallelController&amp;#34;]
  DPC --&amp;gt; W0[&amp;#34;DP worker 0 / scheduler&amp;#34;]
  DPC --&amp;gt; W1[&amp;#34;DP worker 1 / scheduler&amp;#34;]
  DPC --&amp;gt; WN[&amp;#34;DP worker N / scheduler&amp;#34;]
- Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：请求在进入某个具体 scheduler 之前，先经过了一次 rank 级控制决策。&lt;/p&gt;</description></item><item><title>3.10 Scheduler event loop 矩阵与运行模式切换</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</guid><description>&lt;h1 id="scheduler-event-loop-矩阵与运行模式切换"&gt;Scheduler event loop 矩阵与运行模式切换&lt;a class="anchor" href="#scheduler-event-loop-%e7%9f%a9%e9%98%b5%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%bc%8f%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;这张图最重要的地方是：请求在进入某个具体 scheduler 之前，先经过一次 rank 级别的路由决策。这正是多 DP 运行时和单实例运行时最值得单独成章的差别。&lt;/p&gt;</description></item><item><title>3.10 Scheduler event loop 矩阵与运行模式切换</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</guid><description>&lt;h1 id="scheduler-event-loop-矩阵与运行模式切换"&gt;Scheduler event loop 矩阵与运行模式切换&lt;a class="anchor" href="#scheduler-event-loop-%e7%9f%a9%e9%98%b5%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%bc%8f%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;运行时架构前面已经把分层、装配、消息织网和 data parallel controller 讲出来了，但还有一个非常容易让读者困惑的点没有单独展开：&lt;code&gt;Scheduler&lt;/code&gt; 并不是只有一个 event loop。根据 overlap、pipeline parallel、pdmux 以及 disaggregation mode 的组合，系统会进入一组不同的 event loop 变体。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把这组“模式矩阵”讲清楚。&lt;/p&gt;
@@ -1768,29 +1757,20 @@
  Batch --&amp;gt; Detok[&amp;#34;DetokenizerManager&amp;#34;]
  Detok --&amp;gt; Str[&amp;#34;BatchStrOutput&amp;#34;]
  Str --&amp;gt; TM[&amp;#34;TokenizerManager / ReqState / streaming merge&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的不是“有五个节点”，而是它明确说明：sample 之后还存在一段正式的 execution-side 后处理链。它既属于执行模型，又决定了 request lifecycle 后半段最终长成什么形状。&lt;/p&gt;</description></item><item><title>5.10 约束 mask、grammar 同步与 overlap 限制</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/constrained-masks-and-grammar-sync/</guid><description>&lt;h1 id="约束-maskgrammar-同步与-overlap-限制"&gt;约束 mask、grammar 同步与 overlap 限制&lt;a class="anchor" href="#%e7%ba%a6%e6%9d%9f-maskgrammar-%e5%90%8c%e6%ad%a5%e4%b8%8e-overlap-%e9%99%90%e5%88%b6"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面已经解释了 sampling、finish 语义、output processing 和结构化生成会在这附近相遇，但还缺最后一层非常关键的桥：grammar / structured output 到底怎样真正影响采样本身？为什么使用 grammar 时 token id 要更严格同步？为什么 overlap + spec + grammar 会触发执行路径限制？&lt;/p&gt;
-&lt;p&gt;这一章专门解释“约束如何插进执行循环”。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;执行模型前面已经解释了 sampling、finish 语义、output processing 和结构化生成会在这附近相遇，但如果没有一章把“grammar 到底怎样真正影响采样和执行模式”单独讲透，这条桥仍然会显得断裂。很多读者会自然把 grammar 想成“sample 之后再检查输出是否合法”；源码真正做的事情远不止如此。&lt;/p&gt;
+&lt;p&gt;这章的价值，正在于把 grammar 从结构化生成章节里重新拉回 execution loop：它不仅会改写 vocab 空间，还会改变 token 同步策略，甚至在 overlap + spec 场景下直接收紧执行路径。也就是说，这不是“功能层的约束”，而是 execution model 自己的一部分。&lt;/p&gt;
+&lt;h2 id="先把-grammar-放回采样边界"&gt;先把 grammar 放回采样边界&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-grammar-%e6%94%be%e5%9b%9e%e9%87%87%e6%a0%b7%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;如果只读结构化生成章节，你会知道：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;grammar backend 能生成 vocab mask&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;GrammarManager&lt;/code&gt; 会准备 grammar 对象&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;但你仍然不知道这些对象怎样进入 execution loop。真正的答案分散在三处：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt; 把 &lt;code&gt;req.grammar&lt;/code&gt; 收进 &lt;code&gt;sampling_info.grammars&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;sampler 在 grammar 存在时改变 token 同步策略&lt;/li&gt;
-&lt;li&gt;scheduler 在 overlap/spec/grammar 组合出现时主动收紧执行路径&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;把这三处放到一起，才能形成一条完整的 execution 解释链。&lt;/p&gt;
-&lt;h2 id="一张图约束不是采样之外的附属层而是直接卡在采样边界上"&gt;一张图：约束不是“采样之外的附属层”，而是直接卡在采样边界上&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e7%ba%a6%e6%9d%9f%e4%b8%8d%e6%98%af%e9%87%87%e6%a0%b7%e4%b9%8b%e5%a4%96%e7%9a%84%e9%99%84%e5%b1%9e%e5%b1%82%e8%80%8c%e6%98%af%e7%9b%b4%e6%8e%a5%e5%8d%a1%e5%9c%a8%e9%87%87%e6%a0%b7%e8%be%b9%e7%95%8c%e4%b8%8a"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 grammar 想成“sample 之后再检查”，但实际上它在 sample 前后都在参与。&lt;/p&gt;
+&lt;p&gt;但你仍然不知道这些对象怎样真正进入 execution loop。下面这张图的职责，就是把这条桥明确压成一条 execution-side 链：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Grammar[&amp;#34;req.grammar / vocab mask&amp;#34;] --&amp;gt; SInfo[&amp;#34;sampling_info.grammars&amp;#34;]
  SInfo --&amp;gt; Samp[&amp;#34;Sampler / token selection&amp;#34;]
  Samp --&amp;gt; Sync[&amp;#34;TP sync when grammars present&amp;#34;]
- Sync --&amp;gt; Out[&amp;#34;output processing / accept_token&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：grammar 并不只在“输出是否合法”这一步起作用，而是直接进入了 sampling 边界。&lt;/p&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;Stable Diffusion&lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Sync --&amp;gt; Out[&amp;#34;output processing / accept_token&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：grammar 并不是“采样之外的附属层”，而是直接卡在 sampling 边界上，并继续影响后面的同步和输出处理。&lt;/p&gt;</description></item><item><title>Stable Diffusion</title><link>https://kingye.me/study-ml/docs/basic/llm/sd/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/basic/llm/sd/</guid><description>&lt;h1 id="stable-diffusion"&gt;Stable Diffusion&lt;a class="anchor" href="#stable-diffusion"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/Stability-AI/stablediffusion"&gt;Stability-AI/stablediffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/Stability-AI/stablediffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/Stability-AI/stablediffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/Stability-AI/stablediffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/Stability-AI/stablediffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/Stability-AI/stablediffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/CompVis/stable-diffusion"&gt;CompVis/stable-diffusion&lt;/a&gt; &lt;img src="https://img.shields.io/github/stars/CompVis/stable-diffusion.svg" alt="Github stars" /&gt; &lt;img src="https://img.shields.io/github/forks/CompVis/stable-diffusion.svg" alt="Github forks" /&gt; &lt;img src="https://img.shields.io/github/languages/top/CompVis/stable-diffusion.svg" alt="Language" /&gt; &lt;img src="https://img.shields.io/github/v/tag/CompVis/stable-diffusion.svg?sort=semver" alt="Last Tag" /&gt; &lt;img src="https://img.shields.io/github/last-commit/CompVis/stable-diffusion.svg" alt="Last commit" /&gt;&lt;/li&gt;
@@ -1966,26 +1946,23 @@
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;{
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &amp;#34;request&amp;#34;: &amp;#34;Please tell me the full weather situation in a rich natural language paragraph&amp;#34;
 &lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;}&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这个对照不是说自由文本没价值，而是提醒你：如果目标是“可消费”，结构应该尽量先把机器需要的部分固定下来，再把解释性文本放在外围。&lt;/p&gt;</description></item><item><title>5.15 embedding、pooling 与 rerank 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/embedding-pooling-and-rerank-paths/</guid><description>&lt;h1 id="embeddingpooling-与-rerank-执行路径"&gt;embedding、pooling 与 rerank 执行路径&lt;a class="anchor" href="#embeddingpooling-%e4%b8%8e-rerank-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;到目前为止，执行模型章节几乎都围绕 token generation loop 展开：forward、sampling、finish、output processing、grammar mask、penalties。这样的主线是对的，但如果一本更厚的技术书只讲生成路径，就仍然会缺一个很真实的空白：同一套 runtime 还支持 embedding、classification、score、rerank，这些非生成请求在 execution 层到底怎么走？&lt;/p&gt;
-&lt;p&gt;这一章就是把这条非生成执行路径补进来。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为从运行时角度看，embedding / rerank 路径并不是“生成路径减掉 sampler”这么简单。它会显式改变：&lt;/p&gt;
+&lt;p&gt;到这里为止，execution model 章节几乎都围绕 token generation loop 展开：forward、sampling、finish、output processing、grammar mask、penalties。这样的主线当然是对的，但如果一本更厚的技术书只讲生成路径，它仍然会留下一个很真实的空白：同一套 runtime 还支持 embedding、classification、score、rerank，这些非生成请求在 execution layer 里到底怎么走？&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这条非生成执行支线。它的意义不只是“再补一种请求类型”，而是证明 execution model 从来都不只是“token 怎样被生成”，而是“同一套执行壳怎样根据请求人格切换不同后半段语义”。&lt;/p&gt;
+&lt;h2 id="先把非生成路径放回同一套执行壳"&gt;先把非生成路径放回同一套执行壳&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e9%9d%9e%e7%94%9f%e6%88%90%e8%b7%af%e5%be%84%e6%94%be%e5%9b%9e%e5%90%8c%e4%b8%80%e5%a5%97%e6%89%a7%e8%a1%8c%e5%a3%b3"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会自然把 embedding / rerank 理解成“生成路径减掉 sampler”。源码给出的现实比这更精确：它们会显式改写&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;request object（&lt;code&gt;EmbeddingReqInput&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;scheduler 对 batch 的理解（&lt;code&gt;is_prefill_only&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;worker 的执行调用（&lt;code&gt;forward_batch_embedding(...)&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;输出对象（&lt;code&gt;EmbeddingBatchResult&lt;/code&gt;）&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;layers/pooler.py&lt;/code&gt; 中的池化与 score head 行为&lt;/li&gt;
+&lt;li&gt;request object：&lt;code&gt;EmbeddingReqInput&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;scheduler 对 batch 的理解：&lt;code&gt;is_prefill_only&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;worker 的执行入口：&lt;code&gt;forward_batch_embedding(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;最终输出对象：&lt;code&gt;EmbeddingBatchResult&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;以及 &lt;code&gt;layers/pooler.py&lt;/code&gt; 里的池化 / score head 行为&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;也就是说，它已经是 execution model 的正式分支，而不是附录。&lt;/p&gt;
-&lt;h2 id="一张图非生成执行路径的核心不是-sample而是-pool--score"&gt;一张图：非生成执行路径的核心不是 sample，而是 pool / score&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e9%9d%9e%e7%94%9f%e6%88%90%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84%e7%9a%84%e6%a0%b8%e5%bf%83%e4%b8%8d%e6%98%af-sample%e8%80%8c%e6%98%af-pool--score"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会默认所有执行路径都要经过 &lt;code&gt;sample()&lt;/code&gt;，而源码清楚地表明 embedding/rerank 路径是在这里分叉的。&lt;/p&gt;
+&lt;p&gt;也就是说，这已经不是“主路径上的轻微变体”，而是 execution model 的一条正式分支。下面这张图就专门用来把这条分支和生成主线拆开：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Req[&amp;#34;EmbeddingReqInput / cross-encoder pairs&amp;#34;] --&amp;gt; Batch[&amp;#34;ModelWorkerBatch (prefill-only)&amp;#34;]
  Batch --&amp;gt; Fwd[&amp;#34;ModelRunner.forward()&amp;#34;]
  Fwd --&amp;gt; Pool[&amp;#34;pooler / score head / embeddings&amp;#34;]
- Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：非生成路径的输出语义不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item><item><title>6.5 Reasoning Parser、多轮工具回路与结果回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</guid><description>&lt;h1 id="reasoning-parser多轮工具回路与结果回填"&gt;Reasoning Parser、多轮工具回路与结果回填&lt;a class="anchor" href="#reasoning-parser%e5%a4%9a%e8%bd%ae%e5%b7%a5%e5%85%b7%e5%9b%9e%e8%b7%af%e4%b8%8e%e7%bb%93%e6%9e%9c%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Pool --&amp;gt; Out[&amp;#34;EmbeddingBatchResult&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最关键的一点是：非生成路径的输出语义并不在 sampler，而在 pooling / score 这一层。&lt;/p&gt;</description></item><item><title>6.5 Reasoning Parser、多轮工具回路与结果回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/reasoning-and-tool-roundtrips/</guid><description>&lt;h1 id="reasoning-parser多轮工具回路与结果回填"&gt;Reasoning Parser、多轮工具回路与结果回填&lt;a class="anchor" href="#reasoning-parser%e5%a4%9a%e8%bd%ae%e5%b7%a5%e5%85%b7%e5%9b%9e%e8%b7%af%e4%b8%8e%e7%bb%93%e6%9e%9c%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;仅仅理解 schema、regex 和 parser 还不够，因为真实系统里常见的不是“一次结构化输出就结束”，而是多轮工具回路：模型先给 reasoning 或 tool call，外部系统执行工具，再把结果回填，模型最后继续输出。这一层如果不补，结构化生成章节仍然会偏静态。&lt;/p&gt;
 &lt;p&gt;这一章要解决的，就是“结构化结果怎样进入多轮回路”。这是很多好技术书都会继续补的一层：不只讲一次调用，而讲真实工作流。&lt;/p&gt;
@@ -2099,35 +2076,16 @@
 &lt;p&gt;这类问题通常更靠近 &lt;code&gt;SamplingParams&lt;/code&gt;、grammar backend 和约束输入本身。也就是说，先回到 &lt;code&gt;sampling_params.py&lt;/code&gt;、frontend &lt;code&gt;gen(...)&lt;/code&gt; 或 structured outputs 文档确认约束是否真的进入了 generation path，通常比直接查 parser 更有效。&lt;/p&gt;
 &lt;h2 id="当结构合法但语义不对时先查哪里"&gt;当“结构合法但语义不对”时先查哪里&lt;a class="anchor" href="#%e5%bd%93%e7%bb%93%e6%9e%84%e5%90%88%e6%b3%95%e4%bd%86%e8%af%ad%e4%b9%89%e4%b8%8d%e5%af%b9%e6%97%b6%e5%85%88%e6%9f%a5%e5%93%aa%e9%87%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这类问题反而未必是 grammar backend 的责任。因为结构已经合法，说明约束至少部分生效了。此时更应该去看 schema 设计、工具结果回填和业务侧解释，而不是继续在“为什么没有约束住”上打转。&lt;/p&gt;</description></item><item><title>5.18 LogitsMetadata、裁剪状态与选择性算 logits</title><link>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-metadata-and-pruned-state-selection/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/execution-model/logits-metadata-and-pruned-state-selection/</guid><description>&lt;h1 id="logitsmetadata裁剪状态与选择性算-logits"&gt;LogitsMetadata、裁剪状态与选择性算 logits&lt;a class="anchor" href="#logitsmetadata%e8%a3%81%e5%89%aa%e7%8a%b6%e6%80%81%e4%b8%8e%e9%80%89%e6%8b%a9%e6%80%a7%e7%ae%97-logits"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;执行模型前面的章节已经讲了：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;LogitsProcessorOutput&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;Sampler&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;Req.check_finished()&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;hidden states / routed experts 的旁路返回&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;但还有一层非常关键、又很容易被忽略的执行现实没有被单独讲清：&lt;/p&gt;
-&lt;p&gt;系统并不会对 batch 里每一个位置都一视同仁地算 logits、算 logprobs、保存 hidden states。真正决定“哪些位置要被拿出来继续处理”的，是：&lt;/p&gt;
+&lt;p&gt;执行模型前面的章节已经把 &lt;code&gt;LogitsProcessorOutput&lt;/code&gt;、&lt;code&gt;Sampler&lt;/code&gt;、&lt;code&gt;Req.check_finished()&lt;/code&gt; 和 hidden states / routed experts 的旁路返回逐层讲开了，但如果没有一章把“哪些位置会继续进入 logits、logprobs 和 hidden states 处理链”单独讲清，execution model 仍然会少一个关键现实：系统并不会对 batch 里每一个位置都一视同仁地继续算下去。&lt;/p&gt;
+&lt;p&gt;真正决定“哪些位置值得继续处理”的，是：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;_get_pruned_states()&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;_get_hidden_states_to_store()&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这章的目标，就是把这条“选择性处理”链讲透。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为它正好解释了很多前文反复出现、但若不拆开就会显得神秘的现象：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;为什么 decode 模式下有时只关心最后一个 token&lt;/li&gt;
-&lt;li&gt;为什么 prefill-only 和 return-logprob 路径会走完全不同的 logits 处理分支&lt;/li&gt;
-&lt;li&gt;为什么 &lt;code&gt;return_hidden_states&lt;/code&gt; 打开后，返回的仍然不一定是整段 full hidden states&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;如果不把这层讲出来，读者虽然知道系统“能算 logits、能返 logprobs、能返 hidden states”，却仍然很难准确回答：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;到底是哪些位置进入了这些计算&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2 id="一张图不是所有-hidden-states-都会继续进入-logits-与返回链"&gt;一张图：不是所有 hidden states 都会继续进入 logits 与返回链&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e4%b8%8d%e6%98%af%e6%89%80%e6%9c%89-hidden-states-%e9%83%bd%e4%bc%9a%e7%bb%a7%e7%bb%ad%e8%bf%9b%e5%85%a5-logits-%e4%b8%8e%e8%bf%94%e5%9b%9e%e9%93%be"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 &lt;code&gt;hidden_states&lt;/code&gt; 想成“forward 出来多少，后面就处理多少”，但实际系统会先做一次裁剪和选择。&lt;/p&gt;
+&lt;p&gt;这章的价值就在于把这条选择性处理链讲透。只要这层读稳了，前面那些看起来像“系统为什么有时只看最后一个 token、有时又要保留更多位置”的现象，就会重新变成一条可理解的执行优化主线。&lt;/p&gt;
+&lt;h2 id="先把这层放回-execution-model-的真正问题"&gt;先把这层放回 execution model 的真正问题&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e5%b1%82%e6%94%be%e5%9b%9e-execution-model-%e7%9a%84%e7%9c%9f%e6%ad%a3%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会自然假设：forward 出来多少 hidden states，后半段就继续处理多少 hidden states。源码并不是这样工作的。execution model 到这里首先要解决的不是“怎样算更多”，而是“哪些位置值得继续算”。下面这张图的作用，就是把这条工作集选择链画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Hidden[&amp;#34;forward hidden_states&amp;#34;] --&amp;gt; Meta[&amp;#34;LogitsMetadata&amp;#34;]
  Meta --&amp;gt; Prune[&amp;#34;_get_pruned_states()&amp;#34;]
@@ -2135,7 +2093,9 @@
  Prune --&amp;gt; Sample[&amp;#34;sample_indices&amp;#34;]
  Prune --&amp;gt; InputLP[&amp;#34;input_logprob_indices&amp;#34;]
  Prune --&amp;gt; Store[&amp;#34;_get_hidden_states_to_store()&amp;#34;]
- Store --&amp;gt; Return[&amp;#34;optional returned hidden states&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：执行后半段首先解决的是“哪些位置值得继续处理”，而不是立刻对整段状态做统一操作。&lt;/p&gt;</description></item><item><title>6.8 结果回路的维护者视角：从 response_format 到 tool result 回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/maintainer-view-of-structured-results/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/maintainer-view-of-structured-results/</guid><description>&lt;h1 id="结果回路的维护者视角从-response_format-到-tool-result-回填"&gt;结果回路的维护者视角：从 response_format 到 tool result 回填&lt;a class="anchor" href="#%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af%e7%9a%84%e7%bb%b4%e6%8a%a4%e8%80%85%e8%a7%86%e8%a7%92%e4%bb%8e-response_format-%e5%88%b0-tool-result-%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Store --&amp;gt; Return[&amp;#34;optional returned hidden states&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：执行后半段首先解决的是“哪些位置值得继续处理”，而不是立刻对整段状态做统一操作。&lt;/p&gt;
+&lt;h2 id="logitsmetadata-不是参数袋而是后半段的执行计划"&gt;&lt;code&gt;LogitsMetadata&lt;/code&gt; 不是参数袋，而是后半段的执行计划&lt;a class="anchor" href="#logitsmetadata-%e4%b8%8d%e6%98%af%e5%8f%82%e6%95%b0%e8%a2%8b%e8%80%8c%e6%98%af%e5%90%8e%e5%8d%8a%e6%ae%b5%e7%9a%84%e6%89%a7%e8%a1%8c%e8%ae%a1%e5%88%92"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只看字段，&lt;code&gt;LogitsMetadata&lt;/code&gt; 很容易被读成普通配置对象。更稳的理解是，它其实在回答执行后半段最关键的几个问题：&lt;/p&gt;</description></item><item><title>6.8 结果回路的维护者视角：从 response_format 到 tool result 回填</title><link>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/maintainer-view-of-structured-results/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/structured-generation-and-api/maintainer-view-of-structured-results/</guid><description>&lt;h1 id="结果回路的维护者视角从-response_format-到-tool-result-回填"&gt;结果回路的维护者视角：从 response_format 到 tool result 回填&lt;a class="anchor" href="#%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af%e7%9a%84%e7%bb%b4%e6%8a%a4%e8%80%85%e8%a7%86%e8%a7%92%e4%bb%8e-response_format-%e5%88%b0-tool-result-%e5%9b%9e%e5%a1%ab"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;这一整节前面已经分别讲了 schema、parser、API 表面、多轮工具回路和排障入口，但对维护者来说，还差最后一步：怎样把这些分散视角重新压成一条完整的排查路径。换句话说，当结构化结果真的出问题时，如何从 &lt;code&gt;response_format&lt;/code&gt; 一路走到 parser，再走到 tool result 回填，而不是在不同 surface 之间来回跳。&lt;/p&gt;
 &lt;h2 id="一条完整的结果回路检查顺序"&gt;一条完整的结果回路检查顺序&lt;a class="anchor" href="#%e4%b8%80%e6%9d%a1%e5%ae%8c%e6%95%b4%e7%9a%84%e7%bb%93%e6%9e%9c%e5%9b%9e%e8%b7%af%e6%a3%80%e6%9f%a5%e9%a1%ba%e5%ba%8f"&gt;#&lt;/a&gt;&lt;/h2&gt;
@@ -2969,13 +2929,10 @@
  Recv --&amp;gt; Out[&amp;#34;response / metrics / request log&amp;#34;]
  Control[&amp;#34;abort / pause / profile / weights / LoRA&amp;#34;] --&amp;gt; Send
  Control --&amp;gt; State&lt;/pre&gt;&lt;p&gt;这张图比“列几个函数名”更重要，因为它提醒读者：&lt;code&gt;TokenizerManager&lt;/code&gt; 不是单向入口，而是一座双向状态桥，控制面分支也都挂在这座桥上。&lt;/p&gt;</description></item><item><title>8.10 Watchdog、health check 与 liveness 链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/watchdogs-health-checks-and-liveness/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/watchdogs-health-checks-and-liveness/</guid><description>&lt;h1 id="watchdoghealth-check-与-liveness-链"&gt;Watchdog、health check 与 liveness 链&lt;a class="anchor" href="#watchdoghealth-check-%e4%b8%8e-liveness-%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;扩展与调试这一节已经覆盖了 observability、profiling、dump、failure workflow 和更深层缓存故障面，但还缺一层非常像生产维护现实的内容：系统如何判断自己“还活着”，以及当它可能卡住、子进程崩掉、health check 被长 prefill 阻塞时，运行时怎样把这些现象暴露出来。&lt;/p&gt;
-&lt;p&gt;这一章专门讲 liveness 链。它回答的不是“请求慢不慢”，而是“系统有没有继续前进”“卡住时谁先发现”“健康检查为什么有时会和真实流量互相影响”。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;watchdog_timeout&lt;/code&gt;、&lt;code&gt;soft_watchdog_timeout&lt;/code&gt;、&lt;code&gt;SubprocessWatchdog&lt;/code&gt;、dummy health check server、scheduler 的 health check signal 路径，这些在代码里分散在 &lt;code&gt;server_args.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt;、&lt;code&gt;tokenizer_manager.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;detokenizer_manager.py&lt;/code&gt; 和 &lt;code&gt;utils/watchdog.py&lt;/code&gt;。如果不把它们收拢成一章，读者会知道“系统有 watchdog”，却不知道它其实是一整条跨进程 liveness 机制。&lt;/p&gt;
-&lt;h2 id="一张图sglang-的-liveness-链是怎样串起来的"&gt;一张图：SGLang 的 liveness 链是怎样串起来的&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%besglang-%e7%9a%84-liveness-%e9%93%be%e6%98%af%e6%80%8e%e6%a0%b7%e4%b8%b2%e8%b5%b7%e6%9d%a5%e7%9a%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：health check、soft watchdog、硬 watchdog、subprocess watchdog 看起来像四套东西，但它们在运行时里是串联关系。&lt;/p&gt;
+&lt;p&gt;扩展与调试这一节已经覆盖了 observability、profiling、dump、failure workflow 和更深层缓存故障面，但还有一层特别像生产维护现实的内容，如果不单独收束就很容易被低估：系统怎样判断自己“还活着”，以及当它可能卡住、子进程崩掉、health check 被长 prefill 阻塞时，运行时怎样把这些现象暴露出来。&lt;/p&gt;
+&lt;p&gt;这章真正讲的不是“请求慢不慢”，而是另一件更底层的事：系统有没有继续前进，卡住时谁先发现，健康检查为什么有时会和真实流量互相影响。把这一层讲清楚之后，维护层才算真正触到 inference runtime 最贴地面的部分。&lt;/p&gt;
+&lt;h2 id="先把-liveness-看成一条跨进程链而不是几个零散功能"&gt;先把 liveness 看成一条跨进程链，而不是几个零散功能&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-liveness-%e7%9c%8b%e6%88%90%e4%b8%80%e6%9d%a1%e8%b7%a8%e8%bf%9b%e7%a8%8b%e9%93%be%e8%80%8c%e4%b8%8d%e6%98%af%e5%87%a0%e4%b8%aa%e9%9b%b6%e6%95%a3%e5%8a%9f%e8%83%bd"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只看配置项和路由名，watchdog、soft watchdog、health check、dummy health server 看起来像四套互不相干的东西。更稳的理解方式是：它们其实共同组成一条 liveness 观察链。&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  HC[&amp;#34;HTTP health check&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager&amp;#34;]
  TM --&amp;gt; SCH[&amp;#34;Scheduler&amp;#34;]
@@ -2983,7 +2940,9 @@
  TM --&amp;gt; SW[&amp;#34;SubprocessWatchdog&amp;#34;]
  SCH --&amp;gt; W1[&amp;#34;Scheduler watchdog&amp;#34;]
  TM --&amp;gt; W2[&amp;#34;Tokenizer soft watchdog&amp;#34;]
- DET --&amp;gt; W3[&amp;#34;Detokenizer soft watchdog&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释了一点：health check 不只是 HTTP 路由，而是要穿过 manager 和 scheduler 才能真正说明系统健康；watchdog 则从不同层并行观察这条链是否还在推进。&lt;/p&gt;</description></item><item><title>7.21 读输出尾部：scheduler output processor 与 detokenizer</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</guid><description>&lt;h1 id="读输出尾部scheduler-output-processor-与-detokenizer"&gt;读输出尾部：scheduler output processor 与 detokenizer&lt;a class="anchor" href="#%e8%af%bb%e8%be%93%e5%87%ba%e5%b0%be%e9%83%a8scheduler-output-processor-%e4%b8%8e-detokenizer"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ DET --&amp;gt; W3[&amp;#34;Detokenizer soft watchdog&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：health check 不只是 HTTP 路由，而要穿过 manager 和 scheduler 才能真正说明系统健康；watchdog 则从不同层并行观察这条链是不是还在前进。&lt;/p&gt;
+&lt;h2 id="server_argspy-已经把-liveness-面显式暴露出来了"&gt;&lt;code&gt;server_args.py&lt;/code&gt; 已经把 liveness 面显式暴露出来了&lt;a class="anchor" href="#server_argspy-%e5%b7%b2%e7%bb%8f%e6%8a%8a-liveness-%e9%9d%a2%e6%98%be%e5%bc%8f%e6%9a%b4%e9%9c%b2%e5%87%ba%e6%9d%a5%e4%ba%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;ServerArgs&lt;/code&gt; 里至少公开了：&lt;/p&gt;</description></item><item><title>7.21 读输出尾部：scheduler output processor 与 detokenizer</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-output-tail-pipeline/</guid><description>&lt;h1 id="读输出尾部scheduler-output-processor-与-detokenizer"&gt;读输出尾部：scheduler output processor 与 detokenizer&lt;a class="anchor" href="#%e8%af%bb%e8%be%93%e5%87%ba%e5%b0%be%e9%83%a8scheduler-output-processor-%e4%b8%8e-detokenizer"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的代码导读已经把 &lt;code&gt;TokenizerManager&lt;/code&gt; 收成了一棵正式的桥梁树，但还有一段同样关键、却更容易被忽略的尾部链路没有被单独讲清：模型前向结束、sampler 给出下一个 token 之后，系统到底怎样把这些执行层结果整理成可回包的输出？这里真正负责收尾的并不是单个函数，而是两棵紧密咬合的树：&lt;/p&gt;
 &lt;ul&gt;
@@ -3017,26 +2976,25 @@
  IPC --&amp;gt; Det[&amp;#34;DetokenizerManager.event_loop()&amp;#34;]
  Det --&amp;gt; Str[&amp;#34;BatchStrOutput&amp;#34;]
  Str --&amp;gt; TM[&amp;#34;TokenizerManager handle_loop&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：sample 之后并不是立刻回到调用方，中间还有一个 token 输出层和一个文本收口层。&lt;/p&gt;</description></item><item><title>8.11 Request metrics exporter 与证据落盘链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-metrics-exporters-and-evidence-sinks/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-metrics-exporters-and-evidence-sinks/</guid><description>&lt;h1 id="request-metrics-exporter-与证据落盘链"&gt;Request metrics exporter 与证据落盘链&lt;a class="anchor" href="#request-metrics-exporter-%e4%b8%8e%e8%af%81%e6%8d%ae%e8%90%bd%e7%9b%98%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;扩展与调试部分前面已经讲了 metrics、trace、profiling、dump、watchdog 和 liveness，但还有一条很容易被忽略、却非常接近“工程证据落地”的链：请求完成后，那些 request-level 的性能与元信息如何被真正导出到文件或其他 sink，而不是只停留在内存里的 &lt;code&gt;meta_info&lt;/code&gt;。&lt;/p&gt;
-&lt;p&gt;这一章专门讲 &lt;code&gt;request_metrics_exporter.py&lt;/code&gt; 及其在 &lt;code&gt;TokenizerManager&lt;/code&gt; 收尾路径中的位置。&lt;/p&gt;
-&lt;h2 id="为什么它值得单独成章"&gt;为什么它值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e5%ae%83%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;很多技术书在讲 observability 时会止步于“系统有 metrics”和“系统能 trace”。但对运行时维护者来说，另一类很关键的能力是：当一条请求结束后，能否把它的 request parameters、finish reason、latency 和 token 统计持久化，供之后离线分析、批量对比或合规存档。&lt;/p&gt;
-&lt;p&gt;&lt;code&gt;python/sglang/srt/observability/request_metrics_exporter.py&lt;/code&gt; 正在做这件事，而且它不是外围脚本，而是已经接入 &lt;code&gt;TokenizerManager&lt;/code&gt; 请求收尾路径的正式能力。&lt;/p&gt;
-&lt;h2 id="一张图请求完成之后证据怎样被落盘"&gt;一张图：请求完成之后，证据怎样被落盘&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e5%ae%8c%e6%88%90%e4%b9%8b%e5%90%8e%e8%af%81%e6%8d%ae%e6%80%8e%e6%a0%b7%e8%a2%ab%e8%90%bd%e7%9b%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多人会把 request-level exporter 误以为是 Prometheus metrics 的附属物，但它实际上走的是另一条链。&lt;/p&gt;
+&lt;p&gt;扩展与调试部分前面已经讲了 metrics、trace、profiling、dump、watchdog 和 liveness，但如果只停在这些能力上，维护层仍然会少一条特别关键的证据落地链：请求完成后，那些 request-level 的性能与元信息怎样真正被导出到文件或其他 sink，而不是只停留在内存里的 &lt;code&gt;meta_info&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这条“请求完成 -&amp;gt; 结构化证据落盘”的链。它的重点不是介绍又一个 exporter，而是解释：为什么 request-level 证据不能只存在于日志流和 in-memory 对象里，为什么它必须有一条正式的、可离线消费的落盘路径。&lt;/p&gt;
+&lt;h2 id="先把它放回维护主线而不是-observability-名词堆"&gt;先把它放回维护主线，而不是 observability 名词堆&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e5%ae%83%e6%94%be%e5%9b%9e%e7%bb%b4%e6%8a%a4%e4%b8%bb%e7%ba%bf%e8%80%8c%e4%b8%8d%e6%98%af-observability-%e5%90%8d%e8%af%8d%e5%a0%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多技术书在讲 observability 时会停在“系统有 metrics”“系统能 trace”。对 inference runtime 的维护者来说，这还不够。另一类真正值钱的能力是：一条请求结束之后，能否把它的 request parameters、finish reason、latency 和 token 统计持久化，供之后离线分析、批量对比或合规存档。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;python/sglang/srt/observability/request_metrics_exporter.py&lt;/code&gt; 做的正是这件事，而且它不是外围脚本，而是已经挂进 &lt;code&gt;TokenizerManager&lt;/code&gt; 请求收尾链里的正式能力。也就是说，这条链不是“导出一点额外日志”，而是运行时正式承认的一条 request-level evidence sink。&lt;/p&gt;
+&lt;h2 id="这条链真正长成什么样"&gt;这条链真正长成什么样&lt;a class="anchor" href="#%e8%bf%99%e6%9d%a1%e9%93%be%e7%9c%9f%e6%ad%a3%e9%95%bf%e6%88%90%e4%bb%80%e4%b9%88%e6%a0%b7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;下面这张图的作用，是把请求完成之后的证据落地链重新压出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Done[&amp;#34;request finished in _wait_one_response()&amp;#34;] --&amp;gt; Log[&amp;#34;request_logger.log_finished_request()&amp;#34;]
  Log --&amp;gt; Export[&amp;#34;RequestMetricsExporterManager.write_record()&amp;#34;]
  Export --&amp;gt; File[&amp;#34;FileRequestMetricsExporter&amp;#34;]
- File --&amp;gt; Sink[&amp;#34;sglang-request-metrics-*.log&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这是请求收尾链上的持久化分支，而不是常驻 scrape 指标路径。&lt;/p&gt;
-&lt;h2 id="requestmetricsexporter-抽象的核心是什么"&gt;&lt;code&gt;RequestMetricsExporter&lt;/code&gt; 抽象的核心是什么&lt;a class="anchor" href="#requestmetricsexporter-%e6%8a%bd%e8%b1%a1%e7%9a%84%e6%a0%b8%e5%bf%83%e6%98%af%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;request_metrics_exporter.py&lt;/code&gt; 里的基类已经把职责切得很清楚：&lt;/p&gt;
+ File --&amp;gt; Sink[&amp;#34;sglang-request-metrics-*.log&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：这不是 Prometheus scrape 路径的变体，而是请求收尾链上的另一条正式持久化分支。&lt;/p&gt;
+&lt;h2 id="真正的抽象重点不在怎么写文件而在什么算一条可持久化请求证据"&gt;真正的抽象重点不在“怎么写文件”，而在“什么算一条可持久化请求证据”&lt;a class="anchor" href="#%e7%9c%9f%e6%ad%a3%e7%9a%84%e6%8a%bd%e8%b1%a1%e9%87%8d%e7%82%b9%e4%b8%8d%e5%9c%a8%e6%80%8e%e4%b9%88%e5%86%99%e6%96%87%e4%bb%b6%e8%80%8c%e5%9c%a8%e4%bb%80%e4%b9%88%e7%ae%97%e4%b8%80%e6%9d%a1%e5%8f%af%e6%8c%81%e4%b9%85%e5%8c%96%e8%af%b7%e6%b1%82%e8%af%81%e6%8d%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;request_metrics_exporter.py&lt;/code&gt; 最值得先看的，不是 &lt;code&gt;FileRequestMetricsExporter&lt;/code&gt;，而是更高一层的抽象边界。因为基类已经把职责切得很清楚：&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;code&gt;_format_output_data(...)&lt;/code&gt; 先把 request parameters 和 &lt;code&gt;meta_info&lt;/code&gt; 里的可序列化字段整理成记录。&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;write_record(...)&lt;/code&gt; 再把这条记录写到具体 exporter。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_format_output_data(...)&lt;/code&gt; 负责把 request parameters 和 &lt;code&gt;meta_info&lt;/code&gt; 里可序列化的字段整理成一条记录&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;write_record(...)&lt;/code&gt; 负责把这条记录交给具体 exporter&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;也就是说，exporter 抽象的重点不是“怎么写文件”，而是先定义“什么叫一条可持久化的请求证据”。&lt;/p&gt;</description></item><item><title>7.22 读 io_struct.py：请求对象、批对象与输出对象家族</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</guid><description>&lt;h1 id="读-io_structpy请求对象批对象与输出对象家族"&gt;读 io_struct.py：请求对象、批对象与输出对象家族&lt;a class="anchor" href="#%e8%af%bb-io_structpy%e8%af%b7%e6%b1%82%e5%af%b9%e8%b1%a1%e6%89%b9%e5%af%b9%e8%b1%a1%e4%b8%8e%e8%be%93%e5%87%ba%e5%af%b9%e8%b1%a1%e5%ae%b6%e6%97%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这说明 request-level exporter 的真正核心不是文件 I/O，而是先定义“什么叫一条可长期保存、可离线消费的请求事实”。只要这一层概念稳住了，后面的 file sink、private sink 扩展和分析链就都更容易理解。&lt;/p&gt;</description></item><item><title>7.22 读 io_struct.py：请求对象、批对象与输出对象家族</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-io-struct-object-families/</guid><description>&lt;h1 id="读-io_structpy请求对象批对象与输出对象家族"&gt;读 io_struct.py：请求对象、批对象与输出对象家族&lt;a class="anchor" href="#%e8%af%bb-io_structpy%e8%af%b7%e6%b1%82%e5%af%b9%e8%b1%a1%e6%89%b9%e5%af%b9%e8%b1%a1%e4%b8%8e%e8%be%93%e5%87%ba%e5%af%b9%e8%b1%a1%e5%ae%b6%e6%97%8f"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的代码导读已经在 &lt;a href="./protocol-and-io-struct-bridge/"&gt;7.9 读 &lt;code&gt;protocol.py&lt;/code&gt; 与 &lt;code&gt;io_struct.py&lt;/code&gt;&lt;/a&gt; 里解释了“公开协议怎样变成内部对象”，但还有一层更适合单独讲清的内容：&lt;code&gt;io_struct.py&lt;/code&gt; 自己并不是一堆零散 dataclass，而是一套层次非常稳定的对象家族。&lt;/p&gt;
 &lt;p&gt;如果只知道：&lt;/p&gt;
@@ -3073,33 +3031,23 @@
  Exec --&amp;gt; Out1[&amp;#34;BatchTokenIDOutput&amp;#34;]
  Out1 --&amp;gt; Out2[&amp;#34;BatchStrOutput / BatchEmbeddingOutput&amp;#34;]
  Base --&amp;gt; Ctl[&amp;#34;AbortReq / PauseGenerationReqInput / OpenSessionReqInput ...&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;io_struct.py&lt;/code&gt; 里的类不是按“功能模块”随意摆放，而是按 runtime 阶段分层。&lt;/p&gt;</description></item><item><title>8.12 Request logger、straggler 与 crash dump 证据链</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-logger-and-crash-dumps/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/request-logger-and-crash-dumps/</guid><description>&lt;h1 id="request-loggerstraggler-与-crash-dump-证据链"&gt;Request logger、straggler 与 crash dump 证据链&lt;a class="anchor" href="#request-loggerstraggler-%e4%b8%8e-crash-dump-%e8%af%81%e6%8d%ae%e9%93%be"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;扩展与调试部分已经讲了 observability、request metrics exporter、dump 工具和 liveness，但还缺一条非常贴近实际事故调查的链：系统在请求收尾时怎样记录 request log，怎样积累定期 dump，怎样保留 crash 前后的请求材料，以及怎样把 straggler 请求从普通流量里筛出来。&lt;/p&gt;
-&lt;p&gt;这一章专门把 &lt;code&gt;RequestLogger&lt;/code&gt; 和 &lt;code&gt;TokenizerManager&lt;/code&gt; 里的 dump/crash/straggler 证据链拉成一条完整路径。&lt;/p&gt;
-&lt;h2 id="为什么这一层不该和普通日志混为一谈"&gt;为什么这一层不该和“普通日志”混为一谈&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e4%b8%80%e5%b1%82%e4%b8%8d%e8%af%a5%e5%92%8c%e6%99%ae%e9%80%9a%e6%97%a5%e5%bf%97%e6%b7%b7%e4%b8%ba%e4%b8%80%e8%b0%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;RequestLogger&lt;/code&gt; 不是简单的 &lt;code&gt;logger.info(...)&lt;/code&gt; 包装。它负责的是：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;接收请求时的结构化记录&lt;/li&gt;
-&lt;li&gt;请求完成时的结构化记录&lt;/li&gt;
-&lt;li&gt;与 metrics exporter 的字段筛选口径协同&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;而 &lt;code&gt;TokenizerManager&lt;/code&gt; 在它之上又叠了一层：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;dump_request_list&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;crash_dump_request_list&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;straggler_request_list&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dump_requests_folder&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;dump_requests_threshold&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明“请求日志”和“事故证据”虽然共享部分信息，但在系统里是两层不同能力。&lt;/p&gt;
-&lt;h2 id="一张图请求从完成到事故证据的几条分支"&gt;一张图：请求从完成到事故证据的几条分支&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%af%b7%e6%b1%82%e4%bb%8e%e5%ae%8c%e6%88%90%e5%88%b0%e4%ba%8b%e6%95%85%e8%af%81%e6%8d%ae%e7%9a%84%e5%87%a0%e6%9d%a1%e5%88%86%e6%94%af"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把 finished request 只联想到日志输出，但实际上它可能同时流向多个证据槽。&lt;/p&gt;
+&lt;p&gt;扩展与调试部分已经讲了 observability、request metrics exporter、dump 工具和 liveness，但如果没有一章把 request logger、straggler 样本和 crash dump 窗口材料真正串起来，维护层仍然会缺一条特别贴近事故调查现场的证据链：系统在请求收尾时怎样留下结构化首尾事实，又怎样把“最近发生了什么”“哪些请求特别慢”“crash 前后还挂着什么请求”分别放进不同容器里。&lt;/p&gt;
+&lt;p&gt;这章真正要补的，不是“还有哪些日志功能”，而是 request-level 事故证据怎样分层。只要这条分层读稳了，request logger、metrics exporter、dump / replay 和 liveness 章节就会开始自然咬合，而不会像几篇互相引用的工具说明。&lt;/p&gt;
+&lt;h2 id="先把请求完成之后看成一条分叉链而不是一条日志语句"&gt;先把“请求完成之后”看成一条分叉链，而不是一条日志语句&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%af%b7%e6%b1%82%e5%ae%8c%e6%88%90%e4%b9%8b%e5%90%8e%e7%9c%8b%e6%88%90%e4%b8%80%e6%9d%a1%e5%88%86%e5%8f%89%e9%93%be%e8%80%8c%e4%b8%8d%e6%98%af%e4%b8%80%e6%9d%a1%e6%97%a5%e5%bf%97%e8%af%ad%e5%8f%a5"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者会把 finished request 自然联想到“写一条日志”。对 SGLang 来说，请求完成之后其实会进入多条不同的证据分支。下面这张图的作用，就是把这些分支明确摆出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  Finish[&amp;#34;request finished&amp;#34;] --&amp;gt; Log[&amp;#34;RequestLogger.log_finished_request()&amp;#34;]
  Finish --&amp;gt; Metrics[&amp;#34;request metrics exporter&amp;#34;]
  Finish --&amp;gt; Dump[&amp;#34;dump_request_list / thresholded flush&amp;#34;]
  Finish --&amp;gt; Crash[&amp;#34;crash_dump_request_list (recent window)&amp;#34;]
- Finish --&amp;gt; Strag[&amp;#34;straggler_request_list&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：一个请求在完成之后，并不是只写一条日志，而可能按不同调查目的进入不同证据容器。&lt;/p&gt;</description></item><item><title>7.23 读 detokenizer_manager.py：decode_status、stop trim 与文本收口</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</guid><description>&lt;h1 id="读-detokenizer_managerpydecode_statusstop-trim-与文本收口"&gt;读 detokenizer_manager.py：decode_status、stop trim 与文本收口&lt;a class="anchor" href="#%e8%af%bb-detokenizer_managerpydecode_statusstop-trim-%e4%b8%8e%e6%96%87%e6%9c%ac%e6%94%b6%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Finish --&amp;gt; Strag[&amp;#34;straggler_request_list&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：finished request 并不是只留下“一条日志”，而会根据不同调查目的被送进不同容器。这正是维护层和普通开发日志的主要差异之一。&lt;/p&gt;
+&lt;h2 id="requestlogger-先提供的是结构化首尾事实"&gt;&lt;code&gt;RequestLogger&lt;/code&gt; 先提供的是结构化首尾事实&lt;a class="anchor" href="#requestlogger-%e5%85%88%e6%8f%90%e4%be%9b%e7%9a%84%e6%98%af%e7%bb%93%e6%9e%84%e5%8c%96%e9%a6%96%e5%b0%be%e4%ba%8b%e5%ae%9e"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;utils/request_logger.py&lt;/code&gt; 里最重要的两个入口是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;log_received_request(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;log_finished_request(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这两者特别值钱，因为它们正好卡在请求生命周期的首尾两端。也就是说，request logger 并不只是“记录一下运行中的打印信息”，而是在为后面的事故调查提供一条最稳的外部故事线：&lt;/p&gt;</description></item><item><title>7.23 读 detokenizer_manager.py：decode_status、stop trim 与文本收口</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-detokenizer-manager/</guid><description>&lt;h1 id="读-detokenizer_managerpydecode_statusstop-trim-与文本收口"&gt;读 detokenizer_manager.py：decode_status、stop trim 与文本收口&lt;a class="anchor" href="#%e8%af%bb-detokenizer_managerpydecode_statusstop-trim-%e4%b8%8e%e6%96%87%e6%9c%ac%e6%94%b6%e5%8f%a3"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的代码导读已经在 &lt;a href="./reading-output-tail-pipeline/"&gt;7.21 读输出尾部&lt;/a&gt; 里把 &lt;code&gt;scheduler_output_processor_mixin.py&lt;/code&gt; 和 &lt;code&gt;detokenizer_manager.py&lt;/code&gt; 配对成了一条尾部链路，但如果你真的打开 &lt;code&gt;python/sglang/srt/managers/detokenizer_manager.py&lt;/code&gt;，仍然会遇到一个具体问题：这棵文件树本身应该怎么读？&lt;/p&gt;
 &lt;p&gt;因为这棵树里虽然只有一条主 loop，但它同时牵涉：&lt;/p&gt;
@@ -3374,47 +3322,32 @@
 &lt;p&gt;这说明对外控制面并不只有 flush/load/profile，也包括更偏内部观测的控制动作。&lt;/p&gt;
 &lt;h2 id="get_internal_state-为什么很有价值"&gt;&lt;code&gt;get_internal_state()&lt;/code&gt; 为什么很有价值&lt;a class="anchor" href="#get_internal_state-%e4%b8%ba%e4%bb%80%e4%b9%88%e5%be%88%e6%9c%89%e4%bb%b7%e5%80%bc"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;它会通过 communicator 发 &lt;code&gt;GetInternalStateReq()&lt;/code&gt;，然后收各 rank 返回的 &lt;code&gt;GetInternalStateReqOutput&lt;/code&gt;。这意味着内部状态快照不是本地线程里临时打印一下，而是可以跨 rank 正式收集。&lt;/p&gt;</description></item><item><title>7.28 读运行时控制面：logging、weights group 与 expert record</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</guid><description>&lt;h1 id="读运行时控制面loggingweights-group-与-expert-record"&gt;读运行时控制面：logging、weights group 与 expert record&lt;a class="anchor" href="#%e8%af%bb%e8%bf%90%e8%a1%8c%e6%97%b6%e6%8e%a7%e5%88%b6%e9%9d%a2loggingweights-group-%e4%b8%8e-expert-record"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的代码导读已经把：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;请求主线&lt;/li&gt;
-&lt;li&gt;输出尾部&lt;/li&gt;
-&lt;li&gt;prefix cache&lt;/li&gt;
-&lt;li&gt;多 worker&lt;/li&gt;
-&lt;li&gt;session&lt;/li&gt;
-&lt;li&gt;health check&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这些主要脊梁都落回了源码，但还有一类对维护者非常重要、却仍然散落在 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 与若干 util 文件里的控制面没有被正式收束：&lt;/p&gt;
+&lt;p&gt;前面的代码导读已经把请求主线、输出尾部、prefix cache、多 worker、session 和 health check 这些主要脊梁都落回了源码，但还有一类对维护者特别重要、却仍然容易散在 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 和若干 util 文件里的控制面没有被正式收束：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;configure_logging&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;init_weights_update_group&lt;/code&gt; / &lt;code&gt;destroy_weights_update_group&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;start_expert_distribution_record&lt;/code&gt; / &lt;code&gt;dump_expert_distribution_record&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;remote_instance_transfer_engine_info&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这些不是普通业务 API，也不是最底层 debug hack，而是运行时真正对外暴露的维护和协调动作。&lt;/p&gt;
-&lt;p&gt;这章的目标，就是把这组运行时控制面收成一条可读的源码路径。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为技术书如果只讲：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;请求怎样跑&lt;/li&gt;
-&lt;li&gt;模型怎样执行&lt;/li&gt;
-&lt;li&gt;指标怎样看&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;却不讲“维护者怎样通过正式控制面改变系统行为”，整本书最终还是会偏向架构概览，而不是能带去现场用的系统书。&lt;/p&gt;
-&lt;p&gt;这些控制面共同回答的是：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;你怎样切换请求日志与 dump 行为&lt;/li&gt;
-&lt;li&gt;你怎样初始化远端权重更新组&lt;/li&gt;
-&lt;li&gt;你怎样打开 / 关闭 expert distribution 记录&lt;/li&gt;
-&lt;li&gt;你怎样查询远端 transfer 协调信息&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;也就是说，它们构成了“系统运行中怎样被控制和协同”的另一条脊梁。&lt;/p&gt;
-&lt;h2 id="一张图这组控制面不是平铺端点而是三类维护动作"&gt;一张图：这组控制面不是平铺端点，而是三类维护动作&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%bb%84%e6%8e%a7%e5%88%b6%e9%9d%a2%e4%b8%8d%e6%98%af%e5%b9%b3%e9%93%ba%e7%ab%af%e7%82%b9%e8%80%8c%e6%98%af%e4%b8%89%e7%b1%bb%e7%bb%b4%e6%8a%a4%e5%8a%a8%e4%bd%9c"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把这些 API 看成一串零散运维端点，但它们实际上可以分成三个稳定簇。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是把这组运行时控制面收成一条稳定的源码阅读路径，让读者知道：系统跑起来以后，维护者怎样通过正式控制面去看它、配它、协同它，而不是只知道“代码怎么跑”。&lt;/p&gt;
+&lt;h2 id="先把这组控制面看成三类维护动作而不是零散端点"&gt;先把这组控制面看成三类维护动作，而不是零散端点&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e7%bb%84%e6%8e%a7%e5%88%b6%e9%9d%a2%e7%9c%8b%e6%88%90%e4%b8%89%e7%b1%bb%e7%bb%b4%e6%8a%a4%e5%8a%a8%e4%bd%9c%e8%80%8c%e4%b8%8d%e6%98%af%e9%9b%b6%e6%95%a3%e7%ab%af%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只扫路由，很容易把这些 API 看成一串平铺的运维端点。更稳的理解方式，是先把它们分成三个稳定簇：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart TD
  Log[&amp;#34;日志与证据控制\nconfigure_logging&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager&amp;#34;]
  Weights[&amp;#34;远端权重协调\nweights_update_group / transfer info&amp;#34;] --&amp;gt; Comm[&amp;#34;Communicator / tp_worker / model_runner&amp;#34;]
- Experts[&amp;#34;专家分布记录\nstart/stop/dump expert record&amp;#34;] --&amp;gt; Rec[&amp;#34;scheduler / expert_distribution recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这组控制面不是同一层级的“杂项端点”，而是三类不同的维护动作。&lt;/p&gt;</description></item><item><title>8.18 model_info、server_info 与在线控制面</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/introspection-and-live-control-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/introspection-and-live-control-surfaces/</guid><description>&lt;h1 id="model_infoserver_info-与在线控制面"&gt;model_info、server_info 与在线控制面&lt;a class="anchor" href="#model_infoserver_info-%e4%b8%8e%e5%9c%a8%e7%ba%bf%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Experts[&amp;#34;专家分布记录\nstart/stop/dump expert record&amp;#34;] --&amp;gt; Rec[&amp;#34;scheduler / expert_distribution recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：这组控制面并不在同一层做同一件事，而是在回答三类完全不同的维护动作。&lt;/p&gt;
+&lt;h2 id="第一组configure_logging-是运行中可切换的证据控制面"&gt;第一组：&lt;code&gt;configure_logging&lt;/code&gt; 是运行中可切换的证据控制面&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e7%bb%84configure_logging-%e6%98%af%e8%bf%90%e8%a1%8c%e4%b8%ad%e5%8f%af%e5%88%87%e6%8d%a2%e7%9a%84%e8%af%81%e6%8d%ae%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;http_server.py&lt;/code&gt; 暴露 &lt;code&gt;/configure_logging&lt;/code&gt;，最终落到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TokenizerManager.configure_logging(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;再进入 &lt;code&gt;RequestLogger.configure(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明请求日志并不是“启动时定好就永远不能变”的静态配置，而是一条运行中可调整的正式控制面。它的工程价值很直接：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;正常运行时可以保持轻量&lt;/li&gt;
+&lt;li&gt;到问题窗口期再把 request logger / dump 粒度切重&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，日志控制不是外围工具，而是 live control plane 的一部分。对维护者来说，理解这点特别重要，因为它会直接改变你对“证据应该在什么时候加重采集”的做法。&lt;/p&gt;</description></item><item><title>8.18 model_info、server_info 与在线控制面</title><link>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/introspection-and-live-control-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/extension-and-debugging/introspection-and-live-control-surfaces/</guid><description>&lt;h1 id="model_infoserver_info-与在线控制面"&gt;model_info、server_info 与在线控制面&lt;a class="anchor" href="#model_infoserver_info-%e4%b8%8e%e5%9c%a8%e7%ba%bf%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;p&gt;扩展与调试这一节前面已经讲了证据链、watchdog、internal state 和低层控制工具，但还有一层特别贴近真实值班与平台运维的能力，如果不单独收束就很容易被误用：系统对外到底暴露了哪些 introspection endpoint、哪些 live control endpoint，它们分别回答什么问题，又应该按什么风险层级使用。&lt;/p&gt;
 &lt;p&gt;这个问题不能只靠扫一遍 &lt;code&gt;http_server.py&lt;/code&gt; 的路由列表解决。因为这些端点虽然挂在同一个入口文件里，但职责差异极大：&lt;/p&gt;
 &lt;ul&gt;

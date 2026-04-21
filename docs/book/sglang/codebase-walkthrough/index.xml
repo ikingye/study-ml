@@ -678,47 +678,32 @@
  Radix --&amp;gt; Node[&amp;#34;TreeNode / RadixKey&amp;#34;]
  Radix --&amp;gt; Reuse[&amp;#34;cache_unfinished_req / cache_finished_req&amp;#34;]
  Radix --&amp;gt; Evict[&amp;#34;evictable / protected / eviction policy&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：&lt;code&gt;radix_cache.py&lt;/code&gt; 不是孤立大文件，它是在实现 &lt;code&gt;BasePrefixCache&lt;/code&gt; 这一层统一语义。&lt;/p&gt;</description></item><item><title>7.28 读运行时控制面：logging、weights group 与 expert record</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-runtime-control-surfaces/</guid><description>&lt;h1 id="读运行时控制面loggingweights-group-与-expert-record"&gt;读运行时控制面：logging、weights group 与 expert record&lt;a class="anchor" href="#%e8%af%bb%e8%bf%90%e8%a1%8c%e6%97%b6%e6%8e%a7%e5%88%b6%e9%9d%a2loggingweights-group-%e4%b8%8e-expert-record"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;前面的代码导读已经把：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;请求主线&lt;/li&gt;
-&lt;li&gt;输出尾部&lt;/li&gt;
-&lt;li&gt;prefix cache&lt;/li&gt;
-&lt;li&gt;多 worker&lt;/li&gt;
-&lt;li&gt;session&lt;/li&gt;
-&lt;li&gt;health check&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这些主要脊梁都落回了源码，但还有一类对维护者非常重要、却仍然散落在 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 与若干 util 文件里的控制面没有被正式收束：&lt;/p&gt;
+&lt;p&gt;前面的代码导读已经把请求主线、输出尾部、prefix cache、多 worker、session 和 health check 这些主要脊梁都落回了源码，但还有一类对维护者特别重要、却仍然容易散在 &lt;code&gt;http_server.py&lt;/code&gt;、&lt;code&gt;tokenizer_communicator_mixin.py&lt;/code&gt;、&lt;code&gt;scheduler.py&lt;/code&gt;、&lt;code&gt;engine.py&lt;/code&gt; 和若干 util 文件里的控制面没有被正式收束：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;code&gt;configure_logging&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;init_weights_update_group&lt;/code&gt; / &lt;code&gt;destroy_weights_update_group&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;start_expert_distribution_record&lt;/code&gt; / &lt;code&gt;dump_expert_distribution_record&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;remote_instance_transfer_engine_info&lt;/code&gt;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;这些不是普通业务 API，也不是最底层 debug hack，而是运行时真正对外暴露的维护和协调动作。&lt;/p&gt;
-&lt;p&gt;这章的目标，就是把这组运行时控制面收成一条可读的源码路径。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;因为技术书如果只讲：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;请求怎样跑&lt;/li&gt;
-&lt;li&gt;模型怎样执行&lt;/li&gt;
-&lt;li&gt;指标怎样看&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;却不讲“维护者怎样通过正式控制面改变系统行为”，整本书最终还是会偏向架构概览，而不是能带去现场用的系统书。&lt;/p&gt;
-&lt;p&gt;这些控制面共同回答的是：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;你怎样切换请求日志与 dump 行为&lt;/li&gt;
-&lt;li&gt;你怎样初始化远端权重更新组&lt;/li&gt;
-&lt;li&gt;你怎样打开 / 关闭 expert distribution 记录&lt;/li&gt;
-&lt;li&gt;你怎样查询远端 transfer 协调信息&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;也就是说，它们构成了“系统运行中怎样被控制和协同”的另一条脊梁。&lt;/p&gt;
-&lt;h2 id="一张图这组控制面不是平铺端点而是三类维护动作"&gt;一张图：这组控制面不是平铺端点，而是三类维护动作&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e8%bf%99%e7%bb%84%e6%8e%a7%e5%88%b6%e9%9d%a2%e4%b8%8d%e6%98%af%e5%b9%b3%e9%93%ba%e7%ab%af%e7%82%b9%e8%80%8c%e6%98%af%e4%b8%89%e7%b1%bb%e7%bb%b4%e6%8a%a4%e5%8a%a8%e4%bd%9c"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者会把这些 API 看成一串零散运维端点，但它们实际上可以分成三个稳定簇。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是把这组运行时控制面收成一条稳定的源码阅读路径，让读者知道：系统跑起来以后，维护者怎样通过正式控制面去看它、配它、协同它，而不是只知道“代码怎么跑”。&lt;/p&gt;
+&lt;h2 id="先把这组控制面看成三类维护动作而不是零散端点"&gt;先把这组控制面看成三类维护动作，而不是零散端点&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a%e8%bf%99%e7%bb%84%e6%8e%a7%e5%88%b6%e9%9d%a2%e7%9c%8b%e6%88%90%e4%b8%89%e7%b1%bb%e7%bb%b4%e6%8a%a4%e5%8a%a8%e4%bd%9c%e8%80%8c%e4%b8%8d%e6%98%af%e9%9b%b6%e6%95%a3%e7%ab%af%e7%82%b9"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只扫路由，很容易把这些 API 看成一串平铺的运维端点。更稳的理解方式，是先把它们分成三个稳定簇：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart TD
  Log[&amp;#34;日志与证据控制\nconfigure_logging&amp;#34;] --&amp;gt; TM[&amp;#34;TokenizerManager&amp;#34;]
  Weights[&amp;#34;远端权重协调\nweights_update_group / transfer info&amp;#34;] --&amp;gt; Comm[&amp;#34;Communicator / tp_worker / model_runner&amp;#34;]
- Experts[&amp;#34;专家分布记录\nstart/stop/dump expert record&amp;#34;] --&amp;gt; Rec[&amp;#34;scheduler / expert_distribution recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：这组控制面不是同一层级的“杂项端点”，而是三类不同的维护动作。&lt;/p&gt;</description></item><item><title>7.29 读 request_logger 与 schedule_simulator</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</guid><description>&lt;h1 id="读-request_logger-与-schedule_simulator"&gt;读 request_logger 与 schedule_simulator&lt;a class="anchor" href="#%e8%af%bb-request_logger-%e4%b8%8e-schedule_simulator"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Experts[&amp;#34;专家分布记录\nstart/stop/dump expert record&amp;#34;] --&amp;gt; Rec[&amp;#34;scheduler / expert_distribution recorder&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：这组控制面并不在同一层做同一件事，而是在回答三类完全不同的维护动作。&lt;/p&gt;
+&lt;h2 id="第一组configure_logging-是运行中可切换的证据控制面"&gt;第一组：&lt;code&gt;configure_logging&lt;/code&gt; 是运行中可切换的证据控制面&lt;a class="anchor" href="#%e7%ac%ac%e4%b8%80%e7%bb%84configure_logging-%e6%98%af%e8%bf%90%e8%a1%8c%e4%b8%ad%e5%8f%af%e5%88%87%e6%8d%a2%e7%9a%84%e8%af%81%e6%8d%ae%e6%8e%a7%e5%88%b6%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;code&gt;http_server.py&lt;/code&gt; 暴露 &lt;code&gt;/configure_logging&lt;/code&gt;，最终落到：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TokenizerManager.configure_logging(...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;再进入 &lt;code&gt;RequestLogger.configure(...)&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明请求日志并不是“启动时定好就永远不能变”的静态配置，而是一条运行中可调整的正式控制面。它的工程价值很直接：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;正常运行时可以保持轻量&lt;/li&gt;
+&lt;li&gt;到问题窗口期再把 request logger / dump 粒度切重&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，日志控制不是外围工具，而是 live control plane 的一部分。对维护者来说，理解这点特别重要，因为它会直接改变你对“证据应该在什么时候加重采集”的做法。&lt;/p&gt;</description></item><item><title>7.29 读 request_logger 与 schedule_simulator</title><link>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/codebase-walkthrough/reading-request-logger-and-schedule-simulator/</guid><description>&lt;h1 id="读-request_logger-与-schedule_simulator"&gt;读 request_logger 与 schedule_simulator&lt;a class="anchor" href="#%e8%af%bb-request_logger-%e4%b8%8e-schedule_simulator"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;前面的代码导读已经把请求主线、cache 树、输出尾部和运行时控制面都落回了源码，但还有一条很有工程价值、同时也很像“大书后半程才会出现”的闭环没有被放进代码导读：&lt;/p&gt;
 &lt;ul&gt;

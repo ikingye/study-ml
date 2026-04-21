@@ -224,27 +224,16 @@
  SCH --&amp;gt; DET[&amp;#34;DetokenizerManager&amp;#34;]
  DET --&amp;gt; TM
  SCH --&amp;gt; RPC[&amp;#34;RPC / DP / other workers&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图比纯文字多解释的一点是：manager 之间的通信不是单一通道，而是一组“typed message + dispatcher + communicator”共同组成的织网。&lt;/p&gt;</description></item><item><title>3.9 DataParallelController、rank 路由与负载分发</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/data-parallel-controller-and-rank-routing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/data-parallel-controller-and-rank-routing/</guid><description>&lt;h1 id="dataparallelcontrollerrank-路由与负载分发"&gt;DataParallelController、rank 路由与负载分发&lt;a class="anchor" href="#dataparallelcontrollerrank-%e8%b7%af%e7%94%b1%e4%b8%8e%e8%b4%9f%e8%bd%bd%e5%88%86%e5%8f%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
-&lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;运行时架构前面已经讲了 manager 边界、typed IPC、模板解释层和热变更控制面，但还有一层对真实部署非常关键的路径没有单独展开：当 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 时，请求不是直接进单个 scheduler，而是先经过 &lt;code&gt;DataParallelController&lt;/code&gt;。这意味着运行时不仅要回答“请求怎样进系统”，还要回答“它最终被送到哪一个 data parallel worker，以及为什么是它”。&lt;/p&gt;
-&lt;p&gt;这一章专门解释这一层 rank 路由与负载分发控制面。&lt;/p&gt;
-&lt;h2 id="为什么这层值得单独成章"&gt;为什么这层值得单独成章&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%bf%99%e5%b1%82%e5%80%bc%e5%be%97%e5%8d%95%e7%8b%ac%e6%88%90%e7%ab%a0"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;code&gt;DataParallelController&lt;/code&gt; 并不是一个简单 round-robin 小工具。它至少同时负责：&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;接收来自 tokenizer 侧的请求&lt;/li&gt;
-&lt;li&gt;根据 &lt;code&gt;LoadBalanceMethod&lt;/code&gt; 选择目标 worker&lt;/li&gt;
-&lt;li&gt;处理显式 &lt;code&gt;routed_dp_rank&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;在 &lt;code&gt;enable_dp_attention&lt;/code&gt; 场景下组织更复杂的 worker 拓扑&lt;/li&gt;
-&lt;li&gt;更新负载预算与 active ranks&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;这说明它已经是运行时架构里的正式节点，而不是部署脚本外的一层代理。&lt;/p&gt;
-&lt;h2 id="一张图多-dp-场景下请求怎样被分发"&gt;一张图：多 DP 场景下，请求怎样被分发&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%a4%9a-dp-%e5%9c%ba%e6%99%af%e4%b8%8b%e8%af%b7%e6%b1%82%e6%80%8e%e6%a0%b7%e8%a2%ab%e5%88%86%e5%8f%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;这张图解决的理解障碍是：很多读者把“发送给 scheduler”默认理解成“发送给某个固定 scheduler”，但 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 时，中间其实多了一层控制面。&lt;/p&gt;
+&lt;p&gt;运行时架构前面已经讲了 manager 边界、typed IPC、模板解释层和热变更控制面，但如果 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt;，请求进入系统之后其实还多了一层非常关键的控制面：它不会直接落到某个固定 scheduler，而是先经过 &lt;code&gt;DataParallelController&lt;/code&gt; 做一次 rank 级分发决策。也就是说，运行时除了要回答“请求怎样进系统”，还必须回答“它最终被送到哪一个 data parallel worker，以及为什么是它”。&lt;/p&gt;
+&lt;p&gt;这章真正要补齐的，就是这层 rank 路由与负载分发控制面。它的价值不在于“再多一个组件名”，而在于让多 DP 场景不再被简化成“复制多份 scheduler”，而能被理解成 runtime 自己正式拥有的一层 placement control plane。&lt;/p&gt;
+&lt;h2 id="先把-dataparallelcontroller-放回请求主线"&gt;先把 &lt;code&gt;DataParallelController&lt;/code&gt; 放回请求主线&lt;a class="anchor" href="#%e5%85%88%e6%8a%8a-dataparallelcontroller-%e6%94%be%e5%9b%9e%e8%af%b7%e6%b1%82%e4%b8%bb%e7%ba%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;很多读者默认“发送给 scheduler”就意味着“发送给某个固定 scheduler”。在 &lt;code&gt;dp_size &amp;gt; 1&lt;/code&gt; 场景下，真实路径要更长。下面这张图的职责，就是把这层中间控制面明确画出来：&lt;/p&gt;
 &lt;pre class="mermaid"&gt;flowchart LR
  TM[&amp;#34;TokenizerManager&amp;#34;] --&amp;gt; DPC[&amp;#34;DataParallelController&amp;#34;]
  DPC --&amp;gt; W0[&amp;#34;DP worker 0 / scheduler&amp;#34;]
  DPC --&amp;gt; W1[&amp;#34;DP worker 1 / scheduler&amp;#34;]
  DPC --&amp;gt; WN[&amp;#34;DP worker N / scheduler&amp;#34;]
- Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;图比纯文字多解释的一点是：请求在进入某个具体 scheduler 之前，先经过了一次 rank 级控制决策。&lt;/p&gt;</description></item><item><title>3.10 Scheduler event loop 矩阵与运行模式切换</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</guid><description>&lt;h1 id="scheduler-event-loop-矩阵与运行模式切换"&gt;Scheduler event loop 矩阵与运行模式切换&lt;a class="anchor" href="#scheduler-event-loop-%e7%9f%a9%e9%98%b5%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%bc%8f%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
+ Load[&amp;#34;load budget / active ranks / routing hints&amp;#34;] --&amp;gt; DPC&lt;/pre&gt;&lt;p&gt;这张图最重要的地方是：请求在进入某个具体 scheduler 之前，先经过一次 rank 级别的路由决策。这正是多 DP 运行时和单实例运行时最值得单独成章的差别。&lt;/p&gt;</description></item><item><title>3.10 Scheduler event loop 矩阵与运行模式切换</title><link>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang/runtime-architecture/scheduler-event-loop-matrix/</guid><description>&lt;h1 id="scheduler-event-loop-矩阵与运行模式切换"&gt;Scheduler event loop 矩阵与运行模式切换&lt;a class="anchor" href="#scheduler-event-loop-%e7%9f%a9%e9%98%b5%e4%b8%8e%e8%bf%90%e8%a1%8c%e6%a8%a1%e5%bc%8f%e5%88%87%e6%8d%a2"&gt;#&lt;/a&gt;&lt;/h1&gt;
 &lt;h2 id="这章解决什么问题"&gt;这章解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e7%ab%a0%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
 &lt;p&gt;运行时架构前面已经把分层、装配、消息织网和 data parallel controller 讲出来了，但还有一个非常容易让读者困惑的点没有单独展开：&lt;code&gt;Scheduler&lt;/code&gt; 并不是只有一个 event loop。根据 overlap、pipeline parallel、pdmux 以及 disaggregation mode 的组合，系统会进入一组不同的 event loop 变体。&lt;/p&gt;
 &lt;p&gt;这一章的目标，就是把这组“模式矩阵”讲清楚。&lt;/p&gt;
