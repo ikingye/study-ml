@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第五章 调度、批处理与 KV Cache on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/</link><description>Recent content in 第五章 调度、批处理与 KV Cache on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/index.xml" rel="self" type="application/rss+xml"/><item><title>5.1 waiting queue 与 batch shaping</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/waiting-queue-and-batch-shaping/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/waiting-queue-and-batch-shaping/</guid><description>&lt;h1 id="waiting-queue-与-batch-shaping"&gt;waiting queue 与 batch shaping&lt;a class="anchor" href="#waiting-queue-%e4%b8%8e-batch-shaping"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;第二部分已经把请求怎样进入 runtime 讲清楚了。到了这一章，问题不再是“请求能不能进来”，而是“已经进来的请求为什么这一轮能跑、下一轮不能跑，为什么有些请求先 prefill，有些请求继续 decode，最终 batch 又为什么长成了现在这个样子”。&lt;/p&gt;
+&lt;p&gt;这一节只聚焦 waiting queue 和 batch shaping。更具体地说，它回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;scheduler 在等待队列里到底看什么；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt; 为什么是调度层和执行层之间的桥；&lt;/li&gt;
+&lt;li&gt;batch 形状是被哪些运行时约束共同塑造出来的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看-batch-成形路径"&gt;一张图先看 batch 成形路径&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b-batch-%e6%88%90%e5%bd%a2%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ A[&amp;#34;waiting queue&amp;#34;] --&amp;gt; B[&amp;#34;Scheduler.get_next_batch_to_run()&amp;#34;]
+ B --&amp;gt; C[&amp;#34;prefill admission / decode continuation&amp;#34;]
+ C --&amp;gt; D[&amp;#34;ScheduleBatch&amp;#34;]
+ D --&amp;gt; E[&amp;#34;ModelWorkerBatch&amp;#34;]
+ E --&amp;gt; F[&amp;#34;ForwardBatch&amp;#34;]
+ F --&amp;gt; G[&amp;#34;ModelRunner.forward(...)&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图里最重要的一点是：scheduler 并不是“从队列里取一个请求去跑”。它真正管理的是 batch 生命周期，而不是单个 request 的生命周期。&lt;/p&gt;
+&lt;h2 id="waiting-queue-里的请求并不是平等排队"&gt;waiting queue 里的请求并不是平等排队&lt;a class="anchor" href="#waiting-queue-%e9%87%8c%e7%9a%84%e8%af%b7%e6%b1%82%e5%b9%b6%e4%b8%8d%e6%98%af%e5%b9%b3%e7%ad%89%e6%8e%92%e9%98%9f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只从表面看，waiting queue 很像普通队列。但在 SGLang 里，它更像一个等待被塑形的请求集合。&lt;code&gt;Scheduler&lt;/code&gt; 真正关心的问题不是“谁先来”，而是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;当前还有多少 token 预算；&lt;/li&gt;
+&lt;li&gt;running batch 还剩多少可用空间；&lt;/li&gt;
+&lt;li&gt;现在是更适合接新 prefill，还是继续推进已有 decode；&lt;/li&gt;
+&lt;li&gt;某个请求带来的 cache、grammar、priority 或 multimodal 约束会不会把整轮 batch 推向更差状态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这也是为什么第三章之后，第四章还要专门讲 &lt;code&gt;Scheduler&lt;/code&gt; 这层边界：它不只是“执行前的最后一站”，而是 batch 政策真正开始发生的地方。&lt;/p&gt;</description></item><item><title>5.2 prefix reuse 与 cache 命中</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/prefix-reuse-and-cache-hits/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/prefix-reuse-and-cache-hits/</guid><description>&lt;h1 id="prefix-reuse-与-cache-命中"&gt;prefix reuse 与 cache 命中&lt;a class="anchor" href="#prefix-reuse-%e4%b8%8e-cache-%e5%91%bd%e4%b8%ad"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;很多人第一次读推理 runtime，会把前缀复用理解成一句很简单的话：如果两个请求前缀一样，就复用已有 KV。这个理解不算错，但远远不够。因为在真实运行时里，“命中了前缀缓存”并不自动等于“这一轮就更快”，也不自动等于“调度器就能更积极地接新请求”。&lt;/p&gt;
+&lt;p&gt;这一节只处理三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;prefix reuse 在 SGLang 里是怎样被表达的；&lt;/li&gt;
+&lt;li&gt;cache 命中的收益和调度推进是怎样互相影响的；&lt;/li&gt;
+&lt;li&gt;为什么前缀命中是 runtime 主能力，而不只是内存优化技巧。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看-prefix-reuse-的位置"&gt;一张图先看 prefix reuse 的位置&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b-prefix-reuse-%e7%9a%84%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;Req / origin_input_ids&amp;#34;] --&amp;gt; B[&amp;#34;tree_cache match&amp;#34;]
+ B --&amp;gt; C[&amp;#34;reuse committed KV&amp;#34;]
+ C --&amp;gt; D[&amp;#34;ScheduleBatch&amp;#34;]
+ D --&amp;gt; E[&amp;#34;ForwardBatch / ModelRunner&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最值得记住的一点是：prefix reuse 不发生在执行层末端，也不只是 cache 层内部动作。它在 scheduler 组织 batch 时就已经开始影响后续路径。&lt;/p&gt;
+&lt;h2 id="cache-命中不是一个布尔值而是一条状态路径"&gt;cache 命中不是一个布尔值，而是一条状态路径&lt;a class="anchor" href="#cache-%e5%91%bd%e4%b8%ad%e4%b8%8d%e6%98%af%e4%b8%80%e4%b8%aa%e5%b8%83%e5%b0%94%e5%80%bc%e8%80%8c%e6%98%af%e4%b8%80%e6%9d%a1%e7%8a%b6%e6%80%81%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;SGLang 在这一层真正依赖的是 &lt;code&gt;tree_cache&lt;/code&gt;。而默认最重要的实现之一，就是 &lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/mem_cache/radix_cache.py#L285-L360" title="python/sglang/srt/mem_cache/radix_cache.py:L285-L360"&gt;&lt;code&gt;RadixCache&lt;/code&gt;&lt;/a&gt;
+。&lt;/p&gt;
+&lt;p&gt;从 &lt;code&gt;RadixCache&lt;/code&gt; 的初始化可以直接看出它背后的几件事：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;它拿到 &lt;code&gt;req_to_token_pool&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;它拿到 &lt;code&gt;token_to_kv_pool_allocator&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;它知道 &lt;code&gt;page_size&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;它有独立的 eviction policy&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明“命中缓存”并不只是 dictionary lookup。它依赖的不是单个结构，而是一整套：&lt;/p&gt;</description></item><item><title>5.3 KV 生命周期、回收与驱逐</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/kv-lifecycle-and-eviction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/kv-lifecycle-and-eviction/</guid><description>&lt;h1 id="kv-生命周期回收与驱逐"&gt;KV 生命周期、回收与驱逐&lt;a class="anchor" href="#kv-%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e5%9b%9e%e6%94%b6%e4%b8%8e%e9%a9%b1%e9%80%90"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;前两节已经解释了 waiting queue 怎样塑形 batch，也解释了 prefix reuse 为什么不能被看成简单布尔命中。再往下走，就必须回答一个更物理的问题：这些请求背后的 KV 到底怎样被占用、引用、释放和驱逐。&lt;/p&gt;
+&lt;p&gt;这一节只处理三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;request 到 token，再到物理 KV 的映射是怎样建立起来的；&lt;/li&gt;
+&lt;li&gt;KV 在 extend、decode 和完成之后怎样继续存活或被释放；&lt;/li&gt;
+&lt;li&gt;cache 驱逐为什么不是简单的“空间满了就删最旧”。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看-kv-生命周期"&gt;一张图先看 KV 生命周期&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b-kv-%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ A[&amp;#34;Req&amp;#34;] --&amp;gt; B[&amp;#34;ReqToTokenPool&amp;#34;]
+ B --&amp;gt; C[&amp;#34;TokenToKVPoolAllocator / KVCache&amp;#34;]
+ C --&amp;gt; D[&amp;#34;ForwardBatch / ModelRunner&amp;#34;]
+ D --&amp;gt; E[&amp;#34;reuse / retain / evict&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最值得记住的一点是：KV 生命周期不是单独存在的一层，它和请求对象、调度对象、执行对象都绑在一起。&lt;/p&gt;
+&lt;h2 id="reqtotokenpool-解决的是谁占了哪些位置"&gt;&lt;code&gt;ReqToTokenPool&lt;/code&gt; 解决的是“谁占了哪些位置”&lt;a class="anchor" href="#reqtotokenpool-%e8%a7%a3%e5%86%b3%e7%9a%84%e6%98%af%e8%b0%81%e5%8d%a0%e4%ba%86%e5%93%aa%e4%ba%9b%e4%bd%8d%e7%bd%ae"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/mem_cache/memory_pool.py#L126-L189" title="python/sglang/srt/mem_cache/memory_pool.py:L126-L189"&gt;&lt;code&gt;ReqToTokenPool&lt;/code&gt;&lt;/a&gt;
+ 的角色，很适合先用一句话固定下来：它负责“某个 request 当前占了哪些 token 位置”。&lt;/p&gt;
+&lt;p&gt;这件事为什么关键？因为对 runtime 来说：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;逻辑上看到的是 request 和 token；&lt;/li&gt;
+&lt;li&gt;物理上管理的是 KV 槽位。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;如果没有这层中间映射，scheduler 很难知道某个 request 释放时应该收回哪一段资源，cache 也很难知道自己命中的到底是哪组真实位置。&lt;/p&gt;</description></item><item><title>5.4 LoRA 热加载与 adapter 路由</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/lora-hot-swap-and-adapter-routing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/scheduling-and-memory/lora-hot-swap-and-adapter-routing/</guid><description>&lt;h1 id="lora-热加载与-adapter-路由"&gt;LoRA 热加载与 adapter 路由&lt;a class="anchor" href="#lora-%e7%83%ad%e5%8a%a0%e8%bd%bd%e4%b8%8e-adapter-%e8%b7%af%e7%94%b1"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;LoRA（Low-Rank Adaptation）是当前主流的模型微调方法之一，它不修改基础模型权重，而是通过插入小型的低秩矩阵来实现对特定任务的适配。SGLang 支持在运行时动态加载 LoRA adapter、在不同请求间切换 adapter，以及同时维护多个 adapter 的活跃状态。&lt;/p&gt;
+&lt;p&gt;这一节回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;LoRA 的权重结构是什么，以及它在推理时如何工作；&lt;/li&gt;
+&lt;li&gt;SGLang 怎样在单次 forward pass 中同时处理多个使用不同 adapter 的请求；&lt;/li&gt;
+&lt;li&gt;LoRA adapter 的生命周期（加载、路由、卸载）在代码里落在哪里。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="lora-的权重结构"&gt;LoRA 的权重结构&lt;a class="anchor" href="#lora-%e7%9a%84%e6%9d%83%e9%87%8d%e7%bb%93%e6%9e%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;LoRA 不修改原有参数，而是为特定层（通常是 attention 的 Q、K、V、O projection 和 MLP 的 gate/up/down projection）添加两个小矩阵：&lt;/p&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;W_adapted = W_base + A × B
+
+其中：
+- W_base: [d_out, d_in]，冻结不变
+- A: [d_out, r]，低秩矩阵，r &amp;lt;&amp;lt; d_out
+- B: [r, d_in]，低秩矩阵
+- A × B: [d_out, d_in]，和 W_base 维度相同&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;r 是 rank（秩），通常取 8、16 或 32。当 r=16，d_in=d_out=4096 时，每层 Q projection 的参数量从 4096×4096 = 16M 降到 4096×16 + 16×4096 = 131K，压缩了约 122 倍。&lt;/p&gt;</description></item></channel></rss>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第六章 执行模型与采样 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/</link><description>Recent content in 第六章 执行模型与采样 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/index.xml" rel="self" type="application/rss+xml"/><item><title>6.1 `ForwardBatch` 与 `ModelRunner`</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/forward-batch-and-model-runner/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/forward-batch-and-model-runner/</guid><description>&lt;h1 id="forwardbatch-与-modelrunner"&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 与 &lt;code&gt;ModelRunner&lt;/code&gt;&lt;a class="anchor" href="#forwardbatch-%e4%b8%8e-modelrunner"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;第五章讲的是请求怎样成 batch，第六章开始要回答另一件事：这个 batch 最后怎样真正落到执行层。站在调度器视角看，手里还是 &lt;code&gt;Req&lt;/code&gt; 和 &lt;code&gt;ScheduleBatch&lt;/code&gt;；站在执行层看，需要的却已经是更贴近前向计算的对象。这条边界正是 &lt;code&gt;ForwardBatch&lt;/code&gt; 和 &lt;code&gt;ModelRunner&lt;/code&gt; 共同承担的。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一节主要回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;ScheduleBatch&lt;/code&gt; 为什么还不等于执行输入；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 到底把哪些调度信息压成了前向输入；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 为什么被设计成执行壳，而不是直接把模型暴露给 scheduler。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看执行前的最后两层"&gt;一张图先看执行前的最后两层&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e6%89%a7%e8%a1%8c%e5%89%8d%e7%9a%84%e6%9c%80%e5%90%8e%e4%b8%a4%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;Req / ScheduleBatch&amp;#34;] --&amp;gt; B[&amp;#34;ForwardBatch&amp;#34;]
+ B --&amp;gt; C[&amp;#34;ModelRunner&amp;#34;]
+ C --&amp;gt; D[&amp;#34;模型前向 / logits / hidden states&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：执行层接手 batch 之前，还有一层专门把调度对象翻译成前向对象的边界。&lt;/p&gt;
+&lt;h2 id="forwardbatch-解决的是执行层到底要吃什么"&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 解决的是“执行层到底要吃什么”&lt;a class="anchor" href="#forwardbatch-%e8%a7%a3%e5%86%b3%e7%9a%84%e6%98%af%e6%89%a7%e8%a1%8c%e5%b1%82%e5%88%b0%e5%ba%95%e8%a6%81%e5%90%83%e4%bb%80%e4%b9%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/model_executor/forward_batch_info.py#L280-L380" title="python/sglang/srt/model_executor/forward_batch_info.py:L280-L380"&gt;&lt;code&gt;ForwardBatch&lt;/code&gt;&lt;/a&gt;
+ 从字段定义就能看出，它已经明显偏执行层：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;input_ids&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;req_pool_indices&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;seq_lens&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;out_cache_loc&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;positions&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sampling_info&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;req_to_token_pool&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;token_to_kv_pool&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明 &lt;code&gt;ForwardBatch&lt;/code&gt; 不再关心 waiting queue 里还有谁、哪条请求为什么先入队，它只关心这一轮前向真正需要的输入、位置、缓存映射和采样附带信息。&lt;/p&gt;
+&lt;p&gt;所以 &lt;code&gt;ForwardBatch&lt;/code&gt; 的职责不是“再包一层数据”，而是把调度对象压成执行层可直接消费的形式。&lt;/p&gt;
+&lt;p&gt;如果把这层桥接再压成更短的一段代码，可以直接看到“调度对象怎样被翻译成执行对象”：&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; cls(
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; reqs&lt;span style="color:#f92672"&gt;=&lt;/span&gt;reqs,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; req_to_token_pool&lt;span style="color:#f92672"&gt;=&lt;/span&gt;req_to_token_pool,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; token_to_kv_pool_allocator&lt;span style="color:#f92672"&gt;=&lt;/span&gt;token_to_kv_pool_allocator,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; tree_cache&lt;span style="color:#f92672"&gt;=&lt;/span&gt;tree_cache,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; model_config&lt;span style="color:#f92672"&gt;=&lt;/span&gt;model_config,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; enable_overlap&lt;span style="color:#f92672"&gt;=&lt;/span&gt;enable_overlap,
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这段代码值得看的不是参数列表，而是这些参数的来源：前半部分仍然是调度器关心的 request 和 cache，后半部分已经开始偏向执行器关心的运行配置。&lt;/p&gt;</description></item><item><title>6.2 `SamplingParams` 与 token selection</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/sampling-params-and-token-selection/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/sampling-params-and-token-selection/</guid><description>&lt;h1 id="samplingparams-与-token-selection"&gt;&lt;code&gt;SamplingParams&lt;/code&gt; 与 token selection&lt;a class="anchor" href="#samplingparams-%e4%b8%8e-token-selection"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;有了 &lt;code&gt;ForwardBatch&lt;/code&gt; 和 &lt;code&gt;ModelRunner&lt;/code&gt;，执行层已经能把一轮前向跑出来。但&amp;quot;模型已经前向&amp;quot;还不等于&amp;quot;下一个 token 已经选出来&amp;quot;。这一节处理的就是这一层：采样参数怎样进入执行链，又怎样真正影响 token selection。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一节主要回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;SamplingParams&lt;/code&gt; 到底承载了哪些语义；&lt;/li&gt;
+&lt;li&gt;为什么采样参数不只是用户接口上的便利字段；&lt;/li&gt;
+&lt;li&gt;token selection 为什么必须和 stop、schema、tool constraint 等控制一起理解。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="samplingparams-不是参数袋而是运行时约束集合"&gt;&lt;code&gt;SamplingParams&lt;/code&gt; 不是参数袋，而是运行时约束集合&lt;a class="anchor" href="#samplingparams-%e4%b8%8d%e6%98%af%e5%8f%82%e6%95%b0%e8%a2%8b%e8%80%8c%e6%98%af%e8%bf%90%e8%a1%8c%e6%97%b6%e7%ba%a6%e6%9d%9f%e9%9b%86%e5%90%88"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/sampling/sampling_params.py#L31-L180" title="python/sglang/srt/sampling/sampling_params.py:L31-L180"&gt;&lt;code&gt;SamplingParams&lt;/code&gt;&lt;/a&gt;
+ 的字段范围已经说明，它承载的不只是传统采样超参：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;temperature&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;top_p&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;top_k&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;frequency_penalty&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;presence_penalty&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;max_new_tokens&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;json_schema&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;regex&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ebnf&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sampling_seed&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这说明 &lt;code&gt;SamplingParams&lt;/code&gt; 不是&amp;quot;采样超参对象&amp;quot;这么简单，而是执行层在选 token 时必须同时看的约束集合。&lt;/p&gt;
+&lt;p&gt;如果把这层关系先压成一张图，会更容易看清参数到底是在什么时候进入执行链的：&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;OpenAI / frontend request&amp;#34;] --&amp;gt; B[&amp;#34;to_sampling_params(...)&amp;#34;]
+ B --&amp;gt; C[&amp;#34;SamplingParams&amp;#34;]
+ C --&amp;gt; D[&amp;#34;token selection&amp;#34;]
+ C --&amp;gt; E[&amp;#34;stop / schema / tool constraints&amp;#34;]
+ E --&amp;gt; D&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：采样参数不是执行层事后读取的配置，而是在进入 token selection 之前就已经被统一收拢好了。&lt;/p&gt;</description></item><item><title>6.3 logprob、finish reason 与 output processing</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/logprob-finish-reason-and-output-processing/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/logprob-finish-reason-and-output-processing/</guid><description>&lt;h1 id="logprobfinish-reason-与-output-processing"&gt;logprob、finish reason 与 output processing&lt;a class="anchor" href="#logprobfinish-reason-%e4%b8%8e-output-processing"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;执行层不只负责“选出下一个 token”，还必须把这一轮选出来的结果重新组织成调用方和上层 manager 能理解的输出。这一节处理的正是执行尾部：logprob、finish reason 和 output processing 怎样被统一归档回结果对象。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一节主要回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;执行层输出为什么不只是一个 token id；&lt;/li&gt;
+&lt;li&gt;finish reason 在什么时候真正稳定下来；&lt;/li&gt;
+&lt;li&gt;logprob、输出文本和各种附带信息是怎样被统一折叠回结果对象的。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看执行尾部"&gt;一张图先看执行尾部&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e6%89%a7%e8%a1%8c%e5%b0%be%e9%83%a8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;model forward&amp;#34;] --&amp;gt; B[&amp;#34;token id / logits&amp;#34;]
+ B --&amp;gt; C[&amp;#34;finish reason / logprob / extras&amp;#34;]
+ C --&amp;gt; D[&amp;#34;BatchTokenIDOutput / BatchStrOutput&amp;#34;]
+ D --&amp;gt; E[&amp;#34;serving / final response&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图最重要的一点是：执行层的尾部并不只产出 token，而是产出一整组随后还要继续回流到返回链上的结果语义。&lt;/p&gt;
+&lt;h2 id="为什么执行层的结果不只是一个-token"&gt;为什么执行层的“结果”不只是一个 token&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e6%89%a7%e8%a1%8c%e5%b1%82%e7%9a%84%e7%bb%93%e6%9e%9c%e4%b8%8d%e5%8f%aa%e6%98%af%e4%b8%80%e4%b8%aa-token"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对运行时来说，一轮执行至少可能产出这些信息：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;新 token id&lt;/li&gt;
+&lt;li&gt;logprob / top logprobs&lt;/li&gt;
+&lt;li&gt;finish reason&lt;/li&gt;
+&lt;li&gt;hidden states&lt;/li&gt;
+&lt;li&gt;routed experts&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;也就是说，执行层不是只在做“生成文本”，而是在生产一组后续还会被不同路径消费的结果元数据。&lt;/p&gt;
+&lt;p&gt;这也是为什么第三章里 &lt;code&gt;BatchTokenIDOutput&lt;/code&gt; 和 &lt;code&gt;BatchStrOutput&lt;/code&gt; 会显得那么重：它们承接的并不是单一文本，而是执行尾部的一整组结果语义。&lt;/p&gt;</description></item><item><title>6.4 Speculative Decoding</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/speculative-decoding/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part3-execution-core/execution-model/speculative-decoding/</guid><description>&lt;h1 id="speculative-decoding"&gt;Speculative Decoding&lt;a class="anchor" href="#speculative-decoding"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;前三节讲的是标准的 prefill + autoregressive decode 路径。这一节处理一种不同的执行模式：speculative decoding。它让 &lt;code&gt;ModelRunner&lt;/code&gt; 在每一步不再只生成一个 token，而是先用一个轻量 draft model 猜多个 token，再用 target model 一次性验证，从而在不改变输出分布的前提下显著提升吞吐。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这一节主要回答三件事：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;speculative decoding 在 SGLang 里怎样被表达成执行配置；&lt;/li&gt;
+&lt;li&gt;draft + verify 两阶段怎样和 &lt;code&gt;ForwardBatch&lt;/code&gt; / &lt;code&gt;ModelRunner&lt;/code&gt; 结合；&lt;/li&gt;
+&lt;li&gt;为什么 speculative decoding 不改变输出分布，以及这个保证在 SGLang 里怎样落实。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看整体结构"&gt;一张图先看整体结构&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e6%95%b4%e4%bd%93%e7%bb%93%e6%9e%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ subgraph Draft[&amp;#34;Draft 阶段（轻量模型）&amp;#34;]
+ A[&amp;#34;当前 token&amp;#34;] --&amp;gt; B[&amp;#34;draft model forward x K 步&amp;#34;]
+ B --&amp;gt; C[&amp;#34;候选 token 序列 [t1, t2, ..., tK]&amp;#34;]
+ end
+
+ subgraph Verify[&amp;#34;Verify 阶段（target model）&amp;#34;]
+ C --&amp;gt; D[&amp;#34;target model 并行 forward K+1 个位置&amp;#34;]
+ D --&amp;gt; E[&amp;#34;接受/拒绝每个候选 token&amp;#34;]
+ end
+
+ subgraph Accept[&amp;#34;输出&amp;#34;]
+ E --&amp;gt; F[&amp;#34;接受的 token（可能 0 ~ K 个）&amp;#34;]
+ F --&amp;gt; G[&amp;#34;最多接受 K 个 + 1 个 bonus token&amp;#34;]
+ end&lt;/pre&gt;&lt;p&gt;这张图最值得记住的一点是：target model 只需要跑一次 forward（K+1 个位置并行），就能完成 K 个 token 的验证。当 draft model 的猜测大部分正确时，一次 target forward 等于原本 K 次 autoregressive decode。&lt;/p&gt;</description></item></channel></rss>

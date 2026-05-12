@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第十章 扩展点与维护策略 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/</link><description>Recent content in 第十章 扩展点与维护策略 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/index.xml" rel="self" type="application/rss+xml"/><item><title>10.1 安全扩展边界</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/safe-extension-boundaries/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/safe-extension-boundaries/</guid><description>&lt;h1 id="安全扩展边界"&gt;安全扩展边界&lt;a class="anchor" href="#%e5%ae%89%e5%85%a8%e6%89%a9%e5%b1%95%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节会回答&amp;quot;哪些层适合扩展，哪些层一动就容易破坏不变量&amp;quot;，把扩展动作从&amp;quot;能改&amp;quot;提升到&amp;quot;知道该改哪里&amp;quot;。&lt;/p&gt;
+&lt;h2 id="为什么要先讲边界再讲扩展"&gt;为什么要先讲边界再讲扩展&lt;a class="anchor" href="#%e4%b8%ba%e4%bb%80%e4%b9%88%e8%a6%81%e5%85%88%e8%ae%b2%e8%be%b9%e7%95%8c%e5%86%8d%e8%ae%b2%e6%89%a9%e5%b1%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对大型 runtime 来说，最大的风险通常不是&amp;quot;不会改&amp;quot;，而是&amp;quot;改错层&amp;quot;。如果边界判断错了，你很可能写出一个能工作、但很快就会污染主链的 patch。&lt;/p&gt;
+&lt;p&gt;下面用具体文件路径把安全层和危险层说清楚。&lt;/p&gt;
+&lt;h2 id="安全扩展层协议表面"&gt;安全扩展层：协议表面&lt;a class="anchor" href="#%e5%ae%89%e5%85%a8%e6%89%a9%e5%b1%95%e5%b1%82%e5%8d%8f%e8%ae%ae%e8%a1%a8%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;代表路径&lt;/strong&gt;：&lt;code&gt;python/sglang/srt/entrypoints/openai/&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;这里是 OpenAI-compatible API 的协议转换层：&lt;code&gt;protocol.py&lt;/code&gt; 定义请求/响应结构，&lt;code&gt;serving_chat.py&lt;/code&gt;、&lt;code&gt;serving_completions.py&lt;/code&gt; 等文件把 HTTP 请求转换成内部对象。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;为什么安全&lt;/strong&gt;：这层的改动不会影响 &lt;code&gt;Req&lt;/code&gt; 的生命周期、不会改变调度判断，只影响&amp;quot;协议层怎样呈现能力&amp;quot;。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;典型安全扩展&lt;/strong&gt;：在 &lt;code&gt;ChatCompletionRequest&lt;/code&gt; 里加一个新的可选字段（比如 &lt;code&gt;cache_hint&lt;/code&gt;），然后在 &lt;code&gt;to_sampling_params()&lt;/code&gt; 里把它映射到内部参数。整个改动局限在 &lt;code&gt;protocol.py&lt;/code&gt; 一个文件，不需要改 &lt;code&gt;scheduler.py&lt;/code&gt; 或 &lt;code&gt;model_runner.py&lt;/code&gt;。&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"&gt;&lt;code class="language-python" data-lang="python"&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#75715e"&gt;# protocol.py 里的安全扩展示例&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;&lt;span style="color:#66d9ef"&gt;class&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;ChatCompletionRequest&lt;/span&gt;(BaseModel):
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;# ... 已有字段 ...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; cache_hint: Optional[str] &lt;span style="color:#f92672"&gt;=&lt;/span&gt; &lt;span style="color:#66d9ef"&gt;None&lt;/span&gt; &lt;span style="color:#75715e"&gt;# 新增可选字段&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;def&lt;/span&gt; &lt;span style="color:#a6e22e"&gt;to_sampling_params&lt;/span&gt;(self) &lt;span style="color:#f92672"&gt;-&amp;gt;&lt;/span&gt; SamplingParams:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#75715e"&gt;# ... 已有逻辑 ...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;if&lt;/span&gt; self&lt;span style="color:#f92672"&gt;.&lt;/span&gt;cache_hint:
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; sampling_params[&lt;span style="color:#e6db74"&gt;&amp;#34;cache_key&amp;#34;&lt;/span&gt;] &lt;span style="color:#f92672"&gt;=&lt;/span&gt; self&lt;span style="color:#f92672"&gt;.&lt;/span&gt;cache_hint
+&lt;/span&gt;&lt;/span&gt;&lt;span style="display:flex;"&gt;&lt;span&gt; &lt;span style="color:#66d9ef"&gt;return&lt;/span&gt; SamplingParams(&lt;span style="color:#f92672"&gt;**&lt;/span&gt;sampling_params)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这类改动的回归路径也很短：只需要测试 &lt;code&gt;ChatCompletionRequest&lt;/code&gt; 的序列化/反序列化和 &lt;code&gt;to_sampling_params()&lt;/code&gt; 的输出，不需要跑完整的调度回归。&lt;/p&gt;
+&lt;h2 id="安全扩展层模型适配面"&gt;安全扩展层：模型适配面&lt;a class="anchor" href="#%e5%ae%89%e5%85%a8%e6%89%a9%e5%b1%95%e5%b1%82%e6%a8%a1%e5%9e%8b%e9%80%82%e9%85%8d%e9%9d%a2"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;代表路径&lt;/strong&gt;：&lt;code&gt;python/sglang/srt/model_executor/model_runner.py&lt;/code&gt; 和 &lt;code&gt;models/&lt;/code&gt; 目录&lt;/p&gt;
+&lt;p&gt;添加一个新模型架构，只需要在 &lt;code&gt;models/&lt;/code&gt; 里实现标准接口（&lt;code&gt;forward&lt;/code&gt;、&lt;code&gt;load_weights&lt;/code&gt; 等），然后在模型注册表里登记。这不会改变 &lt;code&gt;ModelRunner&lt;/code&gt; 怎样调度 batch，也不会改变 KV cache 的分配逻辑。&lt;/p&gt;</description></item><item><title>10.2 回归验证与测试路径</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/regression-and-test-paths/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/regression-and-test-paths/</guid><description>&lt;h1 id="回归验证与测试路径"&gt;回归验证与测试路径&lt;a class="anchor" href="#%e5%9b%9e%e5%bd%92%e9%aa%8c%e8%af%81%e4%b8%8e%e6%b5%8b%e8%af%95%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节把&amp;quot;改了什么就跑哪些测试&amp;quot;这件事具体化，避免每次改 scheduler、cache 或 parser 都靠临时经验拼验证。&lt;/p&gt;
+&lt;h2 id="测试目录结构"&gt;测试目录结构&lt;a class="anchor" href="#%e6%b5%8b%e8%af%95%e7%9b%ae%e5%bd%95%e7%bb%93%e6%9e%84"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;SGLang 的测试集中在两个位置：&lt;/p&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;test/
+└── srt/ # runtime 相关测试
+ ├── test_serving_chat.py # OpenAI-compatible chat 接口回归
+ ├── test_serving_completions.py # 文本补全接口回归
+ ├── test_radix_cache.py # RadixCache 单元测试
+ ├── test_grammar_backend.py # grammar constraint 测试
+ ├── test_chunked_prefill.py # chunked prefill 正确性
+ ├── test_speculative_decoding.py # speculative decoding 回归
+ ├── test_torch_compile.py # torch.compile 集成
+ └── test_bench_latency.py # 延迟 benchmark&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;code&gt;test/srt/&lt;/code&gt; 里的测试分三类：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;接口回归&lt;/strong&gt;（&lt;code&gt;test_serving_*.py&lt;/code&gt;）：发真实 HTTP 请求，验证响应格式和内容正确性；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;单元测试&lt;/strong&gt;（&lt;code&gt;test_radix_cache.py&lt;/code&gt; 等）：直接调用内部类，验证局部逻辑；&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Benchmark&lt;/strong&gt;（&lt;code&gt;test_bench_latency.py&lt;/code&gt; 等）：度量性能指标，不做 assert。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="按改动类型选测试"&gt;按改动类型选测试&lt;a class="anchor" href="#%e6%8c%89%e6%94%b9%e5%8a%a8%e7%b1%bb%e5%9e%8b%e9%80%89%e6%b5%8b%e8%af%95"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;h3 id="改动协议层entrypointsopenaiprotocolpy-或-serving_py"&gt;改动：协议层（&lt;code&gt;entrypoints/openai/protocol.py&lt;/code&gt; 或 &lt;code&gt;serving_*.py&lt;/code&gt;）&lt;a class="anchor" href="#%e6%94%b9%e5%8a%a8%e5%8d%8f%e8%ae%ae%e5%b1%82entrypointsopenaiprotocolpy-%e6%88%96-serving_py"&gt;#&lt;/a&gt;&lt;/h3&gt;
+&lt;p&gt;&lt;strong&gt;最小验证&lt;/strong&gt;：&lt;/p&gt;</description></item><item><title>10.3 版本升级与长期维护</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/upgrades-and-long-term-maintenance/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part4-debugging-maintenance/extension-points/upgrades-and-long-term-maintenance/</guid><description>&lt;h1 id="版本升级与长期维护"&gt;版本升级与长期维护&lt;a class="anchor" href="#%e7%89%88%e6%9c%ac%e5%8d%87%e7%ba%a7%e4%b8%8e%e9%95%bf%e6%9c%9f%e7%bb%b4%e6%8a%a4"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节从长期维护角度回看这本书本身和上游仓库：版本升级时哪些结论最容易漂移，哪些锚点需要优先复核，以及怎样用最小代价判断一章的内容是否仍然成立。&lt;/p&gt;
+&lt;h2 id="升级时最容易漂移的东西"&gt;升级时最容易漂移的东西&lt;a class="anchor" href="#%e5%8d%87%e7%ba%a7%e6%97%b6%e6%9c%80%e5%ae%b9%e6%98%93%e6%bc%82%e7%a7%bb%e7%9a%84%e4%b8%9c%e8%a5%bf"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;这本书当前绑定的版本是 SGLang v0.5.10（commit &lt;code&gt;1519acf37c23f2189adb93f57ca9cd2db1bebf18&lt;/code&gt;）。不同类型的内容在版本升级时的漂移速度很不一样：&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;漂移最快（小版本就可能变）：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;SamplingParams&lt;/code&gt; 的具体字段。字段增减、默认值调整、互斥约束变化是最高频的 API 变动。本书引用了 &lt;code&gt;json_schema&lt;/code&gt;、&lt;code&gt;regex&lt;/code&gt;、&lt;code&gt;ebnf&lt;/code&gt;、&lt;code&gt;structural_tag&lt;/code&gt; 等字段，这些都需要在新版本里确认仍然存在且语义没有变化。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ChatCompletionRequest.to_sampling_params()&lt;/code&gt; 的映射逻辑。这个函数把协议层字段翻译成内部参数，任何新增的 &lt;code&gt;response_format&lt;/code&gt; 类型都会改变这里的逻辑。&lt;/li&gt;
+&lt;li&gt;Prometheus metrics 名称（&lt;code&gt;sglang:num_running_reqs&lt;/code&gt; 等）。这些名称在 minor 版本里偶尔会被重命名或拆分。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;漂移中等（大版本可能变）：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;三管理器的进程拓扑（TokenizerManager / Scheduler / DetokenizerManager）。这个架构在 v0.5.x 里相对稳定，但如果引入 disaggregated prefill 等特性，拓扑会发生变化。&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ForwardBatch&lt;/code&gt; 的字段集合。执行层的核心对象，字段语义比名称更稳定，但新并行策略可能引入新字段。&lt;/li&gt;
+&lt;li&gt;RadixCache 的对外接口（&lt;code&gt;match_prefix&lt;/code&gt; / &lt;code&gt;insert&lt;/code&gt; / &lt;code&gt;evict&lt;/code&gt; 的参数类型）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;漂移慢（跨大版本仍成立）：&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;核心设计原则：Radix tree 的 prefix reuse 机制、KV cache 两级池设计、NCCL AllReduce 的 TP 模式。这些是深层架构决策，不会轻易改变。&lt;/li&gt;
+&lt;li&gt;Megatron-LM 风格的 column/row parallel 切分方式。&lt;/li&gt;
+&lt;li&gt;Grammar constraint 的 token mask 机制（DFA/PDA 编译 + per-step bitmask）。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="快速检查一章的内容是否仍然成立"&gt;快速检查：一章的内容是否仍然成立&lt;a class="anchor" href="#%e5%bf%ab%e9%80%9f%e6%a3%80%e6%9f%a5%e4%b8%80%e7%ab%a0%e7%9a%84%e5%86%85%e5%ae%b9%e6%98%af%e5%90%a6%e4%bb%8d%e7%84%b6%e6%88%90%e7%ab%8b"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对每一章，有一个最快的验证方法：&lt;strong&gt;找到书里提到的最关键的函数或字段，在新版本的源码里 grep&lt;/strong&gt;。&lt;/p&gt;</description></item></channel></rss>

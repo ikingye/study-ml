@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>第四章 运行时架构 on Machine Learning 学习笔记</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/</link><description>Recent content in 第四章 运行时架构 on Machine Learning 学习笔记</description><generator>Hugo</generator><language>en</language><atom:link href="https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/index.xml" rel="self" type="application/rss+xml"/><item><title>4.1 `launch_server.py` 与 `http_server.py` 的入口分层</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/launch-server-and-http-server/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/launch-server-and-http-server/</guid><description>&lt;h1 id="launch_serverpy-与-http_serverpy-的入口分层"&gt;&lt;code&gt;launch_server.py&lt;/code&gt; 与 &lt;code&gt;http_server.py&lt;/code&gt; 的入口分层&lt;a class="anchor" href="#launch_serverpy-%e4%b8%8e-http_serverpy-%e7%9a%84%e5%85%a5%e5%8f%a3%e5%88%86%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节解释启动入口为什么被切成现在这样，以及 CLI、bootstrap 和 HTTP server 怎样共同把运行时拉起来。重点不在“有几个入口文件”，而在“哪一层负责模式选择，哪一层负责拉起子进程，哪一层负责真正监听 HTTP”。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;如果只看文件名，SGLang 的启动入口似乎只是：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;一个 &lt;code&gt;python -m sglang.launch_server&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;一个 &lt;code&gt;sglang serve&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;一个 &lt;code&gt;http_server.py&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;但从运行时架构看，这三者的职责并不一样：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;launch_server.py&lt;/code&gt; 负责选模式；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;http_server.launch_server(...)&lt;/code&gt; 负责把 HTTP server 和 runtime engine 接起来；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;_setup_and_run_http_server(...)&lt;/code&gt; 才真正让 &lt;code&gt;uvicorn&lt;/code&gt; 对外监听。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;把这三层分清楚，后面读 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt; 和 &lt;code&gt;PortArgs&lt;/code&gt; 时才不会把启动装配逻辑和请求主链混在一起。&lt;/p&gt;
+&lt;h2 id="一张图先看入口分层"&gt;一张图先看入口分层&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e5%85%a5%e5%8f%a3%e5%88%86%e5%b1%82"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart TB
+ A[&amp;#34;launch_server.py&amp;lt;br/&amp;gt;run_server&amp;#34;] --&amp;gt; B[&amp;#34;选择模式&amp;lt;br/&amp;gt;HTTP / gRPC / Ray / encoder-only&amp;#34;]
+ B --&amp;gt; C[&amp;#34;http_server.launch_server&amp;#34;]
+ C --&amp;gt; D[&amp;#34;Engine._launch_subprocesses&amp;#34;]
+ C --&amp;gt; E[&amp;#34;_setup_and_run_http_server&amp;#34;]
+ E --&amp;gt; F[&amp;#34;uvicorn / FastAPI&amp;#34;]&lt;/pre&gt;&lt;p&gt;图里最重要的一点是：&lt;code&gt;launch_server.py&lt;/code&gt; 不直接负责把 HTTP server 跑起来，它先做模式分发；真正把 SRT runtime 和 HTTP 入口缝在一起的是 &lt;code&gt;http_server.launch_server(...)&lt;/code&gt;。&lt;/p&gt;</description></item><item><title>4.2 `TokenizerManager`、`Scheduler` 与 `DetokenizerManager` 的职责边界</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/manager-boundaries/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/manager-boundaries/</guid><description>&lt;h1 id="tokenizermanagerscheduler-与-detokenizermanager-的职责边界"&gt;&lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt; 与 &lt;code&gt;DetokenizerManager&lt;/code&gt; 的职责边界&lt;a class="anchor" href="#tokenizermanagerscheduler-%e4%b8%8e-detokenizermanager-%e7%9a%84%e8%81%8c%e8%b4%a3%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节把最关键的 manager 边界讲清楚。它们不是简单的功能模块拼盘，而是一组为了把请求主链拆成可维护 handoff 点而设计出来的运行时边界。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;第三章已经把请求主链走通了，但还留下一个更基础的问题：为什么非得拆成 &lt;code&gt;TokenizerManager&lt;/code&gt;、&lt;code&gt;Scheduler&lt;/code&gt; 和 &lt;code&gt;DetokenizerManager&lt;/code&gt; 三个 manager？如果只是“功能不同”这么简单，其实完全可以塞进一个大 process 里慢慢分函数写。&lt;/p&gt;
+&lt;p&gt;这一节真正要回答的是：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;三个 manager 各自托管了什么状态；&lt;/li&gt;
+&lt;li&gt;为什么这些状态不能都堆在同一个对象里；&lt;/li&gt;
+&lt;li&gt;后面读调度、回包和调试时，应该先回到哪一个边界上。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看三条边界"&gt;一张图先看三条边界&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e4%b8%89%e6%9d%a1%e8%be%b9%e7%95%8c"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;TokenizerManager&amp;lt;br/&amp;gt;请求接入 / 状态宿主 / tokenization&amp;#34;] --&amp;gt; B[&amp;#34;Scheduler&amp;lt;br/&amp;gt;Req / queue / batch / runtime gate&amp;#34;]
+ B --&amp;gt; C[&amp;#34;DetokenizerManager&amp;lt;br/&amp;gt;token ids -&amp;gt; text delta&amp;#34;]
+ C --&amp;gt; A&lt;/pre&gt;&lt;p&gt;这张图更强调边界职责，而不是流向。三个 manager 不是主链上的三个“顺路函数”，而是三层不同的状态托管面。&lt;/p&gt;
+&lt;h2 id="tokenizermanager-站在-api-server-一侧"&gt;&lt;code&gt;TokenizerManager&lt;/code&gt; 站在 API server 一侧&lt;a class="anchor" href="#tokenizermanager-%e7%ab%99%e5%9c%a8-api-server-%e4%b8%80%e4%be%a7"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/managers/tokenizer_manager.py#L178-L224" title="python/sglang/srt/managers/tokenizer_manager.py:L178-L224"&gt;&lt;code&gt;TokenizerManager&lt;/code&gt;&lt;/a&gt;
+ 的初始化顺序已经很能说明它的定位：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;读 &lt;code&gt;ServerArgs&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;初始化 tokenizer / multimodal processor&lt;/li&gt;
+&lt;li&gt;建 IPC 通道&lt;/li&gt;
+&lt;li&gt;建运行时状态&lt;/li&gt;
+&lt;li&gt;建日志、LoRA 和 weight update 相关状态&lt;/li&gt;
+&lt;li&gt;最后建 request dispatcher&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这意味着它托管的不只是 tokenize，还包括：&lt;/p&gt;</description></item><item><title>4.3 Process、rank、port 与 IPC 拓扑</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/process-rank-port-and-ipc/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/process-rank-port-and-ipc/</guid><description>&lt;h1 id="processrankport-与-ipc-拓扑"&gt;Process、rank、port 与 IPC 拓扑&lt;a class="anchor" href="#processrankport-%e4%b8%8e-ipc-%e6%8b%93%e6%89%91"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;这一节负责把进程、rank、port 和 IPC 拓扑稳定下来。很多行为差异根本不是业务逻辑分支，而是拓扑位置变化。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;前两节已经把入口分层和 manager 边界讲清楚了，但还缺最后一层：这些 manager 到底怎样跨进程互相说话？同样是 &lt;code&gt;TokenizerManager -&amp;gt; Scheduler -&amp;gt; DetokenizerManager&lt;/code&gt; 这条链，单进程心智和多进程拓扑心智完全不是一回事。&lt;/p&gt;
+&lt;p&gt;这一节要解决的是三类问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;PortArgs&lt;/code&gt; 到底在命名什么；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;get_zmq_socket(...)&lt;/code&gt; 怎样把这些名字变成真正的 IPC 端点；&lt;/li&gt;
+&lt;li&gt;rank、worker 数和 &lt;code&gt;enable_dp_attention&lt;/code&gt; 这些条件怎样改写拓扑。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看默认拓扑"&gt;一张图先看默认拓扑&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b%e9%bb%98%e8%ae%a4%e6%8b%93%e6%89%91"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;先看最普通的单 tokenizer、非 DP attention 拓扑：&lt;/p&gt;
+&lt;pre class="mermaid"&gt;flowchart LR
+ A[&amp;#34;TokenizerManager&amp;lt;br/&amp;gt;scheduler_input_ipc_name&amp;#34;] --&amp;gt; B[&amp;#34;Scheduler&amp;#34;]
+ B --&amp;gt; C[&amp;#34;DetokenizerManager&amp;lt;br/&amp;gt;detokenizer_ipc_name&amp;#34;]
+ C --&amp;gt; D[&amp;#34;TokenizerManager&amp;lt;br/&amp;gt;tokenizer_ipc_name&amp;#34;]&lt;/pre&gt;&lt;p&gt;这张图虽然简单，但已经足够说明一件事：请求主链的跨进程通信不是抽象概念，而是三个被明确命名的端点。&lt;/p&gt;
+&lt;h2 id="portargs-是拓扑字典"&gt;&lt;code&gt;PortArgs&lt;/code&gt; 是拓扑字典&lt;a class="anchor" href="#portargs-%e6%98%af%e6%8b%93%e6%89%91%e5%ad%97%e5%85%b8"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://github.com/sgl-project/sglang/blob/1519acf37c23f2189adb93f57ca9cd2db1bebf18/python/sglang/srt/server_args.py#L6547-L6645" title="python/sglang/srt/server_args.py:L6547-L6645"&gt;&lt;code&gt;PortArgs&lt;/code&gt;&lt;/a&gt;
+ 的字段本身就很像一张拓扑表：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;tokenizer_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;scheduler_input_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;detokenizer_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;rpc_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;metrics_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;tokenizer_worker_ipc_name&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;这些名字不是普通配置项，而是在给整张进程通信图命名。对读者来说，理解 &lt;code&gt;PortArgs&lt;/code&gt; 最稳的方式不是记每个字段，而是先记住：后面每个 manager 读到的不是随意字符串，而是当前拓扑里的通信端点表。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;PortArgs.init_new(...)&lt;/code&gt; 还进一步说明，拓扑不是固定不变的：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;非 DP attention 时，默认用本地 &lt;code&gt;ipc://...&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;开了 DP attention 以后，会切到 TCP + 明确端口&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;所以这里的“port”并不只是网络端口，而是整套通信方式选择的一部分。&lt;/p&gt;</description></item><item><title>4.4 Tensor Parallelism 执行路径</title><link>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/tensor-parallelism/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://kingye.me/study-ml/docs/book/sglang-internals/part2-request-runtime/runtime-architecture/tensor-parallelism/</guid><description>&lt;h1 id="tensor-parallelism-执行路径"&gt;Tensor Parallelism 执行路径&lt;a class="anchor" href="#tensor-parallelism-%e6%89%a7%e8%a1%8c%e8%b7%af%e5%be%84"&gt;#&lt;/a&gt;&lt;/h1&gt;
+&lt;p&gt;第四章前三节解释了 manager 边界和 IPC 拓扑。这一节回答另一个问题：当 &lt;code&gt;tp_size &amp;gt; 1&lt;/code&gt; 时，同一个 forward pass 是怎样被分配到多张 GPU 上的？&lt;/p&gt;
+&lt;p&gt;这不是&amp;quot;多 GPU 各跑各的请求&amp;quot;，而是&amp;quot;同一个请求的同一次前向，被拆开在多张 GPU 上协同计算&amp;quot;。&lt;/p&gt;
+&lt;h2 id="这一节解决什么问题"&gt;这一节解决什么问题&lt;a class="anchor" href="#%e8%bf%99%e4%b8%80%e8%8a%82%e8%a7%a3%e5%86%b3%e4%bb%80%e4%b9%88%e9%97%ae%e9%a2%98"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;Tensor Parallelism 的权重切分方式——哪些矩阵被横切，哪些被纵切；&lt;/li&gt;
+&lt;li&gt;每次前向计算后，多个 rank 怎样通过 AllReduce 把结果合并；&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ModelRunner&lt;/code&gt; 在多 rank 场景下怎样让所有 rank 保持动作一致；&lt;/li&gt;
+&lt;li&gt;调试 TP 相关问题时先看哪里。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id="一张图先看-tp-的权重切分"&gt;一张图先看 TP 的权重切分&lt;a class="anchor" href="#%e4%b8%80%e5%bc%a0%e5%9b%be%e5%85%88%e7%9c%8b-tp-%e7%9a%84%e6%9d%83%e9%87%8d%e5%88%87%e5%88%86"&gt;#&lt;/a&gt;&lt;/h2&gt;
+&lt;p&gt;对 Transformer 模型，TP 主要切分两类矩阵：&lt;/p&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;单 GPU（tp_size=1） 4 GPU（tp_size=4）
+───────────────────── ──────────────────────────────────
+Attention QKV projection 每 GPU 处理 1/4 的 attention heads
+ [d_model, 3*d_model] → [d_model, 3*d_model/4] × 4 GPU
+
+Attention output projection 每 GPU 处理 1/4 的行
+ [d_model, d_model] → [d_model/4, d_model] × 4 GPU
+ + AllReduce
+MLP gate/up projection 每 GPU 处理 1/4 的 hidden_dim
+ [d_model, 4*d_model] → [d_model, d_model] × 4 GPU
+
+MLP down projection 每 GPU 处理 1/4 的输入维度
+ [4*d_model, d_model] → [d_model, d_model] × 4 GPU
+ + AllReduce&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;这种切分方式被称为 &lt;strong&gt;Megatron-LM 风格的 TP&lt;/strong&gt;：attention heads 被均匀分配给各 rank（column parallel），输出矩阵按行切分（row parallel），每层结束时通过 AllReduce 合并各 rank 的部分结果。&lt;/p&gt;</description></item></channel></rss>
